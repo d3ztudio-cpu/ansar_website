@@ -36,6 +36,7 @@ import ArticleView from './ArticleView';
 import AdminSettings from './AdminSettings';
 import AdminPublicDisclosure from './AdminPublicDisclosure';
 import MandatoryDisclosure from './MandatoryDisclosure';
+import SopPage, { SchoolPoliciesPage } from './SopPage';
 import ElectionPage from './ElectionPage';
 import ElectionAnalytics from './ElectionAnalytics';
 import AdminElection from './AdminElection';
@@ -47,7 +48,7 @@ import FieldTrips from './FieldTrips';
 import LearningLabsSection from './LearningLabsSection';
 import { SettingsProvider, useSettings } from './SettingsContext';
 import { DEFAULT_SPORTS_PAGE, mergeListWithDefaults } from './contentDefaults';
-import { formatDisplayDate, getDateTime, getDisplayYear, isYearOnly } from './dateUtils';
+import { compareContentNewestFirst, formatDisplayDate, getDisplayYear, isYearOnly } from './dateUtils';
 import { applySeoMetadata, createMetaDescription } from './seoUtils';
 
 // --- AUTHORIZED ADMIN EMAILS ---
@@ -158,9 +159,14 @@ const ROUTE_SEO = {
     keywords: 'Ansar English School alumni, Ansar alumni community, school alumni Thrissur'
   },
   '/sop': {
-    title: 'School Procedures and Guidelines | Ansar English School',
-    description: 'Read essential school routines, safety practices, academic procedures, and campus guidelines followed at Ansar English School.',
-    keywords: 'Ansar English School procedures, school safety guidelines, school SOP'
+    title: 'Standard Operating Procedures | Ansar English School',
+    description: 'View approved academic, administrative, safety, and student-support standard operating procedures at Ansar English School.',
+    keywords: 'Ansar English School SOP, standard operating procedures, school operational procedures'
+  },
+  '/school-policies': {
+    title: 'AES School Policies | Ansar English School',
+    description: 'View safeguarding, academic, staff, student-life, and governance policies followed at Ansar English School.',
+    keywords: 'Ansar English School policies, AES policies, school policy documents'
   },
   '/ansar-media-production': {
     title: 'Ansar Media Productions | Ansar English School',
@@ -981,17 +987,10 @@ function SportsPage() {
   const sportsItems = mergeListWithDefaults(settings?.sportsItems, DEFAULT_SPORTS_PAGE.items);
   const title = settings?.sportsPageTitle || DEFAULT_SPORTS_PAGE.title;
   const description = settings?.sportsPageDescription || DEFAULT_SPORTS_PAGE.description;
-  const getAchievementTime = (item) => {
-    const dateTime = getDateTime(item.date, null);
-    if (dateTime != null) return dateTime;
-    if (item.createdAt?.toMillis) return item.createdAt.toMillis();
-    if (item.createdAt?.seconds) return item.createdAt.seconds * 1000;
-    return Number.MIN_SAFE_INTEGER;
-  };
   const getAchievementYear = (item) => getDisplayYear(item.date, 'Other');
   const publishedAchievements = achievements
     .filter(item => item.published !== false)
-    .sort((a, b) => getAchievementTime(b) - getAchievementTime(a));
+    .sort(compareContentNewestFirst);
   const achievementYears = [...new Set(publishedAchievements.map(getAchievementYear))];
 
   return (
@@ -1321,7 +1320,8 @@ export default function App() {
         <Route path="/alumni" element={<DynamicPage slug="alumni" />} />
         <Route path="/achievements" element={<Achievements />} />
         <Route path="/sports-achievements/:id" element={<ArticleView />} />
-        <Route path="/sop" element={<DynamicPage slug="sop" />} />
+        <Route path="/sop" element={<SopPage />} />
+        <Route path="/school-policies" element={<SchoolPoliciesPage />} />
         <Route path="/mandatory-public-disclosure" element={<MandatoryDisclosure />} />
         <Route path="/learning/:slug" element={<LearningFeaturePage />} />
         <Route path="/:slug" element={<DynamicPage />} />

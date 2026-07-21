@@ -8,7 +8,7 @@ import { useSettings } from './SettingsContext';
 import { useContentCollection } from './useContentCollection';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Link } from 'react-router-dom';
-import { isYearOnly } from './dateUtils';
+import { compareContentNewestFirst, getDisplayYear, isYearOnly } from './dateUtils';
 import ElectionFloatingButton from './ElectionFloatingButton';
 
 const SchoolChatbot = lazy(() => import('./SchoolChatbot'));
@@ -100,26 +100,7 @@ function AnimatedCounter({ target, suffix = "" }) {
   return <span ref={ref}>{count}{suffix}</span>;
 }
 
-function getContentDateTime(item) {
-  const dateTime = Date.parse(item.date);
-  if (!Number.isNaN(dateTime)) return dateTime;
-  const ddmmyyyy = String(item.date || '').trim().match(/^(\d{1,2})[/-](\d{1,2})[/-](\d{4})$/);
-  if (ddmmyyyy) {
-    const [, day, month, year] = ddmmyyyy;
-    const parsed = new Date(Number(year), Number(month) - 1, Number(day)).getTime();
-    if (!Number.isNaN(parsed)) return parsed;
-  }
-  if (item.createdAt?.toMillis) return item.createdAt.toMillis();
-  if (item.createdAt?.seconds) return item.createdAt.seconds * 1000;
-  return Number.MIN_SAFE_INTEGER;
-}
-
-function getContentYear(item) {
-  const ddmmyyyy = String(item.date || '').trim().match(/^(\d{1,2})[/-](\d{1,2})[/-](\d{4})$/);
-  if (ddmmyyyy) return ddmmyyyy[3];
-  const parsed = new Date(item.date);
-  return Number.isNaN(parsed.getTime()) ? 'Sports' : parsed.getFullYear();
-}
+const getContentYear = item => getDisplayYear(item.date, 'Sports');
 
 function VerticalCarousel({ images, onImageClick }) {
   const [index, setIndex] = useState(0);
@@ -293,12 +274,12 @@ export default function Home() {
 
   const publishedUpdates = updates
     .filter(item => item.published !== false)
-    .sort((a, b) => getContentDateTime(b) - getContentDateTime(a));
+    .sort(compareContentNewestFirst);
   const homeNews = publishedUpdates.filter(item => item.category === 'News' || !item.category).slice(0, 3);
   const homeEvents = publishedUpdates.filter(item => item.category === 'Events').slice(0, 3);
   const homeSportsAchievements = sportsAchievements
     .filter(item => item.published !== false)
-    .sort((a, b) => getContentDateTime(b) - getContentDateTime(a))
+    .sort(compareContentNewestFirst)
     .slice(0, 8);
   const displayLearningFeatures = FALLBACK_FEATURES.map(feature => {
     const saved = learningFeatures.find(item => item.slug === feature.slug && item.published !== false);

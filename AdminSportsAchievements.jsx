@@ -7,6 +7,7 @@ import ImgBbUrlImporter from './ImgBbUrlImporter';
 import { softDeleteRecord } from './adminUndo';
 import { normalizeImageUrl } from './imageUrlUtils';
 import { DEFAULT_SPORTS_PAGE, mergeListWithDefaults } from './contentDefaults';
+import { compareContentNewestFirst } from './dateUtils';
 
 const MAX_SPORTS_ACHIEVEMENT_IMAGES = 30;
 
@@ -36,14 +37,6 @@ function toDateInputValue(value) {
   return `${year}-${month}-${day}`;
 }
 
-function getAchievementTime(item) {
-  const parsedDate = parseFlexibleDate(item.date);
-  if (parsedDate) return parsedDate.getTime();
-  if (item.createdAt?.toMillis) return item.createdAt.toMillis();
-  if (item.createdAt?.seconds) return item.createdAt.seconds * 1000;
-  return Number.MIN_SAFE_INTEGER;
-}
-
 const initialFormState = {
   title: '',
   description: '',
@@ -56,7 +49,7 @@ const initialFormState = {
 export default function AdminSportsAchievements() {
   const [refreshKey, setRefreshKey] = useState(0);
   const { data: items, loading } = useContentCollection('sportsAchievements', null, 'asc', { refreshKey });
-  const dateOrderedItems = [...items].sort((a, b) => getAchievementTime(b) - getAchievementTime(a));
+  const dateOrderedItems = [...items].sort(compareContentNewestFirst);
   const [formData, setFormData] = useState(initialFormState);
   const [editingId, setEditingId] = useState(null);
   const [editingItem, setEditingItem] = useState(null);
@@ -246,8 +239,8 @@ export default function AdminSportsAchievements() {
   };
 
   return (
-    <div className="mx-auto max-w-5xl">
-      <div className="mb-8 rounded-2xl border border-emerald-100 bg-white p-8 shadow-xl">
+    <div className="mx-auto flex max-w-5xl flex-col">
+      <div className="order-3 mt-8 rounded-2xl border border-emerald-100 bg-white p-8 shadow-xl">
         <div className="mb-6">
           <p className="text-xs font-black uppercase tracking-widest text-emerald-600">Sports Page</p>
           <h2 className="mt-1 text-xl font-bold text-slate-800">Sports page content</h2>
@@ -284,7 +277,7 @@ export default function AdminSportsAchievements() {
         </form>
       </div>
 
-      <div className="mb-8 rounded-2xl border border-emerald-100 bg-white p-8 shadow-xl">
+      <div className="order-1 mb-8 rounded-2xl border border-emerald-100 bg-white p-8 shadow-xl">
         <h2 className="mb-6 text-xl font-bold text-slate-800">{editingId ? 'Edit Sports Achievement' : 'Add Sports Achievement'}</h2>
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
@@ -342,7 +335,7 @@ export default function AdminSportsAchievements() {
         </form>
       </div>
 
-      <div className="space-y-4">
+      <div className="order-2 space-y-4">
         <h3 className="mb-4 text-lg font-bold text-slate-800">Current Sports Achievements</h3>
         {loading ? <p className="text-slate-500">Loading sports achievements...</p> : dateOrderedItems.map(item => (
           <div key={item.id} className="flex items-center justify-between rounded-xl border border-slate-100 bg-white p-4 shadow-sm transition-colors hover:border-emerald-200">

@@ -16,6 +16,7 @@ const LEGACY_EXPLORE_LINKS = [
   { title: 'Ansar Family', slug: 'ansar-family' },
   { title: 'Alumni', slug: 'alumni' },
   { title: 'SOP', slug: 'sop' },
+  { title: 'AES School Policies', slug: 'school-policies' },
   { title: 'Mandatory Public Disclosure', slug: 'mandatory-public-disclosure' }
 ];
 

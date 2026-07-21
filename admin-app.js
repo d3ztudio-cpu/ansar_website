@@ -42,7 +42,8 @@ const NAV_ITEMS = [
   { label: 'Achievements', href: 'page.html?slug=achievements', slug: 'achievements', type: 'more', order: 14 },
   { label: 'Gallery', href: 'gallery-page.html', type: 'more', order: 15 },
   { label: 'SOP', href: 'page.html?slug=sop', slug: 'sop', type: 'more', order: 16 },
-  { label: 'Mandatory Public Disclosure', href: 'page.html?slug=mandatory-public-disclosure', slug: 'mandatory-public-disclosure', type: 'more', order: 17 },
+  { label: 'AES School Policies', href: 'page.html?slug=school-policies', slug: 'school-policies', type: 'more', order: 17 },
+  { label: 'Mandatory Public Disclosure', href: 'page.html?slug=mandatory-public-disclosure', slug: 'mandatory-public-disclosure', type: 'more', order: 18 },
   { label: 'Contact Us', href: 'contact-new.html', type: 'primary', order: 18 }
 ];
 

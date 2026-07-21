@@ -20,6 +20,28 @@ export function getDateTime(value, fallback = 0) {
   return parsed ? parsed.getTime() : fallback;
 }
 
+function getRecordTimestamp(item) {
+  const timestamps = [item?.updatedAt, item?.createdAt]
+    .map(value => getDateTime(value, null))
+    .filter(value => value != null);
+  return timestamps.length ? Math.max(...timestamps) : Number.MIN_SAFE_INTEGER;
+}
+
+export function compareContentNewestFirst(a, b) {
+  const aDate = getDateTime(a?.date, null);
+  const bDate = getDateTime(b?.date, null);
+
+  if (aDate != null || bDate != null) {
+    if (aDate == null) return 1;
+    if (bDate == null) return -1;
+    if (aDate !== bDate) return bDate - aDate;
+  }
+
+  const recordDifference = getRecordTimestamp(b) - getRecordTimestamp(a);
+  if (recordDifference) return recordDifference;
+  return String(b?.id || '').localeCompare(String(a?.id || ''));
+}
+
 export function getDisplayYear(value, fallback = 'Undated') {
   const parsed = parseFlexibleDate(value);
   return parsed ? parsed.getFullYear() : fallback;
