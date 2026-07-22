@@ -45,6 +45,7 @@ import LifeAtAnsar from './LifeAtAnsar';
 import AnsarSprouts from './AnsarSprouts';
 import SproutsActivityArticle from './SproutsActivityArticle';
 import FieldTrips from './FieldTrips';
+import AtlPage from './AtlPage';
 import LearningLabsSection from './LearningLabsSection';
 import { SettingsProvider, useSettings } from './SettingsContext';
 import { DEFAULT_SPORTS_PAGE, mergeListWithDefaults } from './contentDefaults';
@@ -1309,7 +1310,7 @@ export default function App() {
         <Route path="/contact" element={<Contact />} />
         <Route path="/gallery" element={<Gallery />} />
         <Route path="/sports-page" element={<SportsPage />} />
-        <Route path="/atl" element={<DynamicPage slug="atl" />} />
+        <Route path="/atl" element={<AtlPage />} />
         <Route path="/ansar-sprouts" element={<AnsarSprouts />} />
         <Route path="/ansar-sprouts/activities/:id" element={<SproutsActivityArticle />} />
         <Route path="/field-trips" element={<FieldTrips />} />
