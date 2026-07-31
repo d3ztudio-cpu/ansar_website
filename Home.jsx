@@ -9,7 +9,6 @@ import { useContentCollection } from './useContentCollection';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Link } from 'react-router-dom';
 import { compareContentNewestFirst, getDisplayYear, isYearOnly } from './dateUtils';
-import ElectionFloatingButton from './ElectionFloatingButton';
 
 const SchoolChatbot = lazy(() => import('./SchoolChatbot'));
 
@@ -323,7 +322,6 @@ export default function Home() {
     <Layout isHome={true}>
       <NoticePopup />
       <DeferredSchoolChatbot />
-      <ElectionFloatingButton />
       <Hero 
         title="Empowering Minds, Enriching Futures" 
         subtitle="At Ansar English School, we nurture curious learners, ethical leaders, and responsible global citizens prepared to thrive in an ever-evolving world."

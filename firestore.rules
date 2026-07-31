@@ -24,10 +24,17 @@ service cloud.firestore {
     // Collection: settings
     // Fields: schoolName, email, phone, address, logoUrl, siteDescription
     //
-    // Collection: electionAdminConfig
-    // Document ID: primary
-    // Fields: analyticsKey (string, required, private), updatedAt (timestamp, required),
-    //         updatedBy (verified admin email string, required)
+    // Collection: librarySettings
+    // Document ID: main
+    // Fields: public, non-sensitive library page configuration and timestamps.
+    //
+    // Collection: libraryPosts
+    // Fields: type, title, summary, body, date, imageUrl, linkUrl, published,
+    //         createdAt, updatedAt. Only published posts are public.
+    //
+    // Collection: atlSettings
+    // Document ID: main
+    // Fields: public, non-sensitive ATL page configuration and timestamps.
     // ===============================================================
 
     // ===============================================================
@@ -111,6 +118,12 @@ service cloud.firestore {
 
     function isOptionalNumber(field) {
       return !(field in request.resource.data) || request.resource.data[field] is number;
+    }
+
+    function isValidEmailValue(field) {
+      return request.resource.data[field] is string &&
+             request.resource.data[field].size() <= 200 &&
+             (request.resource.data[field] == '' || request.resource.data[field].matches('^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}$'));
     }
 
     // Protect immutable fields like createdAt
@@ -201,6 +214,47 @@ service cloud.firestore {
              isOptionalBool('published') &&
              isOptionalTimestamp('createdAt') &&
              isOptionalTimestamp('updatedAt');
+    }
+
+    function isValidLibrarySettings() {
+      return hasOnlyAllowedFields(['title', 'subtitle', 'intro', 'heroImageUrl', 'resourceUrl', 'resourceLabel', 'openingHours', 'contactEmail', 'published', 'createdAt', 'updatedAt']) &&
+             request.resource.data.keys().hasAll(['title', 'subtitle', 'intro', 'heroImageUrl', 'resourceUrl', 'resourceLabel', 'openingHours', 'contactEmail', 'published', 'createdAt', 'updatedAt']) &&
+             isValidStringLength('title', 1, 200) &&
+             isValidStringLength('subtitle', 1, 1000) &&
+             isValidStringLength('intro', 1, 10000) &&
+             isValidUrl('heroImageUrl') &&
+             isValidUrl('resourceUrl') &&
+             isValidStringLength('resourceLabel', 1, 200) &&
+             isValidStringLength('openingHours', 1, 200) &&
+             isValidEmailValue('contactEmail') &&
+             request.resource.data.published is bool &&
+             request.resource.data.createdAt is timestamp &&
+             request.resource.data.updatedAt is timestamp;
+    }
+
+    function isValidLibraryPost() {
+      return hasOnlyAllowedFields(['type', 'title', 'summary', 'body', 'date', 'imageUrl', 'linkUrl', 'published', 'createdAt', 'updatedAt']) &&
+             request.resource.data.keys().hasAll(['type', 'title', 'summary', 'body', 'date', 'imageUrl', 'linkUrl', 'published', 'createdAt', 'updatedAt']) &&
+             request.resource.data.type in ['Event', 'Activity', 'New Arrival', 'Resource', 'Publication', 'Announcement'] &&
+             isValidStringLength('title', 1, 200) &&
+             isValidStringLength('summary', 0, 1500) &&
+             isValidStringLength('body', 0, 50000) &&
+             isValidStringLength('date', 0, 50) &&
+             isValidUrl('imageUrl') &&
+             isValidUrl('linkUrl') &&
+             request.resource.data.published is bool &&
+             request.resource.data.createdAt is timestamp &&
+             request.resource.data.updatedAt is timestamp;
+    }
+
+    function hasValidLibraryCreateTimestamps() {
+      return request.resource.data.createdAt == request.time &&
+             request.resource.data.updatedAt == request.time;
+    }
+
+    function hasValidLibraryUpdateTimestamps() {
+      return request.resource.data.createdAt == resource.data.createdAt &&
+             request.resource.data.updatedAt == request.time;
     }
 
     function isValidLearningLab() {
@@ -392,20 +446,31 @@ service cloud.firestore {
                isOptionalTimestamp('lastLogin');
     }
 
-    function isValidElectionAdminConfig() {
-      return request.resource.data.keys().hasAll(['analyticsKey', 'updatedAt', 'updatedBy']) &&
-             request.resource.data.keys().hasOnly(['analyticsKey', 'updatedAt', 'updatedBy']) &&
-             request.resource.data.analyticsKey is string &&
-             request.resource.data.analyticsKey.size() >= 20 &&
-             request.resource.data.analyticsKey.size() <= 128 &&
-             request.resource.data.analyticsKey.matches('^[a-zA-Z0-9_-]+$') &&
-             request.resource.data.updatedAt is timestamp &&
-             request.resource.data.updatedAt == request.time &&
-             request.resource.data.updatedBy is string &&
-             request.resource.data.updatedBy.size() >= 1 &&
-             request.resource.data.updatedBy.size() <= 200 &&
-             request.auth.token.email != null &&
-             request.resource.data.updatedBy == request.auth.token.email;
+    function isValidAtlSettings() {
+      return hasOnlyAllowedFields(['aimLabel', 'heroTitle', 'heroHighlight', 'heroDescription', 'heroImageUrl', 'inaugurationDate', 'inauguratedBy', 'overviewTitle', 'overviewText', 'published', 'createdAt', 'updatedAt']) &&
+             request.resource.data.keys().hasAll(['aimLabel', 'heroTitle', 'heroHighlight', 'heroDescription', 'heroImageUrl', 'inaugurationDate', 'inauguratedBy', 'overviewTitle', 'overviewText', 'published', 'createdAt', 'updatedAt']) &&
+             isValidStringLength('aimLabel', 1, 200) &&
+             isValidStringLength('heroTitle', 1, 200) &&
+             isValidStringLength('heroHighlight', 1, 100) &&
+             isValidStringLength('heroDescription', 1, 3000) &&
+             isValidUrl('heroImageUrl') &&
+             isValidStringLength('inaugurationDate', 1, 100) &&
+             isValidStringLength('inauguratedBy', 1, 200) &&
+             isValidStringLength('overviewTitle', 1, 200) &&
+             isValidStringLength('overviewText', 1, 10000) &&
+             request.resource.data.published is bool &&
+             request.resource.data.createdAt is timestamp &&
+             request.resource.data.updatedAt is timestamp;
+    }
+
+    function hasValidAtlCreateTimestamps() {
+      return request.resource.data.createdAt == request.time &&
+             request.resource.data.updatedAt == request.time;
+    }
+
+    function hasValidAtlUpdateTimestamps() {
+      return request.resource.data.createdAt == resource.data.createdAt &&
+             request.resource.data.updatedAt == request.time;
     }
 
     // ===============================================================
@@ -424,6 +489,30 @@ service cloud.firestore {
       allow read: if true;
       allow create, update: if isVerifiedAdmin() && isValidPage();
       allow delete: if isAdmin();
+    }
+
+    // Library page configuration contains public, non-sensitive display content only.
+    match /librarySettings/{settingId} {
+      allow read: if true;
+      allow create: if settingId == 'main' && isVerifiedAdmin() && isValidLibrarySettings() && hasValidLibraryCreateTimestamps();
+      allow update: if settingId == 'main' && isVerifiedAdmin() && isValidLibrarySettings() && hasValidLibraryUpdateTimestamps();
+      allow delete: if settingId == 'main' && isVerifiedAdmin();
+    }
+
+    // Only published library posts can be queried by the public website.
+    match /libraryPosts/{postId} {
+      allow get, list: if isAdmin() || resource.data.published == true;
+      allow create: if isVerifiedAdmin() && isValidLibraryPost() && hasValidLibraryCreateTimestamps();
+      allow update: if isVerifiedAdmin() && isValidLibraryPost() && hasValidLibraryUpdateTimestamps();
+      allow delete: if isVerifiedAdmin();
+    }
+
+    // ATL configuration contains only public display content.
+    match /atlSettings/{settingId} {
+      allow read: if true;
+      allow create: if settingId == 'main' && isVerifiedAdmin() && isValidAtlSettings() && hasValidAtlCreateTimestamps();
+      allow update: if settingId == 'main' && isVerifiedAdmin() && isValidAtlSettings() && hasValidAtlUpdateTimestamps();
+      allow delete: if settingId == 'main' && isVerifiedAdmin();
     }
 
     match /learningLabs/{labId} {
@@ -492,14 +581,6 @@ service cloud.firestore {
       allow read: if true;
       allow create, update: if isAdmin();
       allow delete: if false; // Settings documents should not be deleted, only updated
-    }
-
-    // Private election analytics key. Officials never access this document;
-    // admins use it only to generate a keyed, read-only Apps Script report URL.
-    match /electionAdminConfig/{configId} {
-      allow read: if configId == 'primary' && isVerifiedAdmin();
-      allow create, update: if configId == 'primary' && isVerifiedAdmin() && isValidElectionAdminConfig();
-      allow delete: if false;
     }
 
     // Sports Page Content

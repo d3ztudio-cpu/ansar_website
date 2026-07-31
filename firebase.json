@@ -28,11 +28,6 @@
         "type": 301
       },
       {
-        "source": "/library{,/**}",
-        "destination": "/academics",
-        "type": 301
-      },
-      {
         "source": "/index.html",
         "destination": "/",
         "type": 301
@@ -154,32 +149,15 @@
             "value": "noindex, nofollow, noarchive"
           }
         ]
-      },
-      {
-        "source": "/election/live",
-        "headers": [
-          {
-            "key": "X-Robots-Tag",
-            "value": "noindex, nofollow, noarchive"
-          },
-          {
-            "key": "Referrer-Policy",
-            "value": "no-referrer"
-          }
-        ]
       }
     ],
     "rewrites": [
       {
-        "source": "/@(about|academics|admission|news|events|contact|gallery|sports-page|atl|ansar-sprouts|extension-services|life-at-ansar|field-trips|ansar-times|alumni|achievements|ansar-media-production|sop|school-policies|mandatory-public-disclosure|school-election)",
+        "source": "/@(about|academics|admission|news|events|contact|gallery|sports-page|atl|library|ansar-sprouts|extension-services|life-at-ansar|field-trips|ansar-times|alumni|achievements|ansar-media-production|sop|school-policies|mandatory-public-disclosure)",
         "destination": "/index.html"
       },
       {
         "source": "/@(news|events|achievements|sports-achievements|learning)/**",
-        "destination": "/index.html"
-      },
-      {
-        "source": "/election/**",
         "destination": "/index.html"
       },
       {

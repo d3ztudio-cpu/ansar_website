@@ -1,6 +1,20 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
+import { doc, onSnapshot } from 'firebase/firestore';
 import Layout from './Layout';
+import { db } from './firebase-init';
+
+const DEFAULT_ATL_SETTINGS = {
+  aimLabel: 'Established under AIM · NITI Aayog',
+  heroTitle: 'Where ideas become',
+  heroHighlight: 'innovations.',
+  heroDescription: 'The Atal Tinkering Lab at Ansar English School, Perumpilavu is a state-of-the-art STEM learning centre where young minds explore, experiment, and create technology-driven solutions for society.',
+  heroImageUrl: '/atl/atl-cover.jpg',
+  inaugurationDate: 'January 2023',
+  inauguratedBy: 'MLA Ramya Haridas',
+  overviewTitle: 'A space built for curious minds',
+  overviewText: 'Inaugurated in January 2023, the ATL marked a significant milestone in the school’s commitment to innovation and scientific learning. The lab gives students the tools, guidance, and freedom to move beyond textbooks—turning questions into experiments and ideas into working prototypes.'
+};
 
 const technologies = [
   { code: 'RB', title: 'Robotics', text: 'Designing, assembling, and programming machines that respond to the world.' },
@@ -19,12 +33,12 @@ const learningSteps = [
   { number: '04', title: 'Improve', text: 'Test, learn from feedback, and refine the solution for greater impact.' }
 ];
 
-function ImagePlaceholder({ title, note, className = 'aspect-[4/3]', dark = false }) {
+function InnovationPanel({ title, note, className = 'aspect-[4/3]', dark = false }) {
   return (
     <div
       role="img"
-      aria-label={`Placeholder for ${title}`}
-      className={`relative flex ${className} min-h-56 w-full items-center justify-center overflow-hidden rounded-3xl border-2 border-dashed ${dark ? 'border-white/25 bg-white/[0.07]' : 'border-emerald-200 bg-gradient-to-br from-emerald-50 via-white to-amber-50'}`}
+      aria-label={title}
+      className={`relative flex ${className} min-h-56 w-full items-center justify-center overflow-hidden rounded-3xl border ${dark ? 'border-white/15 bg-white/[0.07]' : 'border-emerald-200 bg-gradient-to-br from-emerald-50 via-white to-amber-50'}`}
     >
       <div className={`absolute -right-12 -top-12 h-40 w-40 rounded-full ${dark ? 'bg-amber-400/10' : 'bg-amber-200/30'}`} />
       <div className={`absolute -bottom-14 -left-12 h-44 w-44 rounded-full ${dark ? 'bg-sky-300/10' : 'bg-emerald-200/30'}`} />
@@ -36,11 +50,25 @@ function ImagePlaceholder({ title, note, className = 'aspect-[4/3]', dark = fals
             <path d="m4.5 17 4.2-4.2 3.1 3.1 2.1-2.1 5.6 5.2" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" />
           </svg>
         </div>
-        <p className={`mt-5 text-[11px] font-black uppercase tracking-[0.24em] ${dark ? 'text-amber-300' : 'text-amber-600'}`}>Image placeholder</p>
+        <p className={`mt-5 text-[11px] font-black uppercase tracking-[0.24em] ${dark ? 'text-amber-300' : 'text-amber-600'}`}>ATL innovation space</p>
         <p className={`mt-2 text-lg font-extrabold ${dark ? 'text-white' : 'text-emerald-950'}`}>{title}</p>
         {note && <p className={`mt-2 text-sm leading-relaxed ${dark ? 'text-white/65' : 'text-slate-500'}`}>{note}</p>}
       </div>
     </div>
+  );
+}
+
+function AtlPhoto({ src, alt, className = '', priority = false }) {
+  return (
+    <figure className={`overflow-hidden rounded-3xl bg-emerald-900 shadow-2xl ${className}`}>
+      <img
+        src={src}
+        alt={alt}
+        loading={priority ? 'eager' : 'lazy'}
+        fetchPriority={priority ? 'high' : 'auto'}
+        className="h-full w-full object-cover"
+      />
+    </figure>
   );
 }
 
@@ -55,6 +83,15 @@ function SectionHeading({ eyebrow, title, text, centered = false }) {
 }
 
 export default function AtlPage() {
+  const [settings, setSettings] = useState(DEFAULT_ATL_SETTINGS);
+
+  useEffect(() => {
+    const unsubscribe = onSnapshot(doc(db, 'atlSettings', 'main'), (snapshot) => {
+      if (snapshot.exists()) setSettings({ ...DEFAULT_ATL_SETTINGS, ...snapshot.data() });
+    }, () => setSettings(DEFAULT_ATL_SETTINGS));
+    return unsubscribe;
+  }, []);
+
   return (
     <Layout fullWidth>
       <div className="bg-slate-50">
@@ -65,13 +102,13 @@ export default function AtlPage() {
             <div>
               <div className="inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/10 px-4 py-2 text-xs font-extrabold uppercase tracking-wider text-amber-300 backdrop-blur">
                 <span className="h-2 w-2 rounded-full bg-amber-400" />
-                Established under AIM · NITI Aayog
+                {settings.aimLabel}
               </div>
               <h1 className="mt-7 text-4xl font-extrabold leading-[1.08] sm:text-5xl lg:text-7xl">
-                Where ideas become <span className="text-amber-300">innovations.</span>
+                {settings.heroTitle} <span className="text-amber-300">{settings.heroHighlight}</span>
               </h1>
               <p className="mt-6 max-w-2xl text-lg leading-8 text-slate-200 lg:text-xl">
-                The Atal Tinkering Lab at Ansar English School is a hands-on STEM learning centre where young minds explore, experiment, and create technology-driven solutions for society.
+                {settings.heroDescription}
               </p>
               <div className="mt-9 flex flex-wrap gap-3">
                 <a href="#explore-atl" className="inline-flex items-center justify-center rounded-xl bg-amber-400 px-5 py-3 text-sm font-extrabold text-emerald-950 shadow-lg transition hover:bg-amber-300">
@@ -81,21 +118,21 @@ export default function AtlPage() {
                 <Link to="/contact" className="inline-flex items-center justify-center rounded-xl border border-white/25 bg-white/10 px-5 py-3 text-sm font-extrabold text-white transition hover:bg-white/15">Contact the school</Link>
               </div>
               <div className="mt-10 flex flex-wrap gap-x-8 gap-y-4 border-t border-white/15 pt-7 text-sm text-slate-300">
-                <p><strong className="block text-xl text-white">January 2023</strong>Inaugurated</p>
+                <p><strong className="block text-xl text-white">{settings.inaugurationDate}</strong>Inaugurated</p>
                 <p><strong className="block text-xl text-white">STEM + Design</strong>Learning by doing</p>
                 <p><strong className="block text-xl text-white">Social Impact</strong>Innovation with purpose</p>
               </div>
             </div>
             <div className="relative">
-              <ImagePlaceholder
-                title="ATL students at work"
-                note="Suggested: a wide photograph of students building or testing a prototype in the lab."
+              <AtlPhoto
+                src={settings.heroImageUrl}
+                alt="Students collaborating in the Atal Tinkering Lab at Ansar English School"
                 className="aspect-[4/3] lg:aspect-[5/6]"
-                dark
+                priority
               />
               <div className="absolute -bottom-5 left-4 rounded-2xl bg-white px-5 py-4 text-emerald-950 shadow-2xl sm:left-8">
                 <p className="text-[10px] font-black uppercase tracking-[0.18em] text-amber-600">Inaugurated by</p>
-                <p className="mt-1 font-extrabold">MLA Ramya Haridas</p>
+                <p className="mt-1 font-extrabold">{settings.inauguratedBy}</p>
               </div>
             </div>
           </div>
@@ -103,19 +140,24 @@ export default function AtlPage() {
 
         <section id="explore-atl" className="scroll-mt-24">
           <div className="mx-auto grid max-w-7xl gap-12 px-4 py-20 sm:px-6 lg:grid-cols-[.9fr_1.1fr] lg:items-center lg:px-8 lg:py-28">
-            <ImagePlaceholder
-              title="ATL inauguration · January 2023"
-              note="Suggested: inauguration ceremony or ribbon-cutting photograph with MLA Ramya Haridas."
+            <AtlPhoto
+              src="/atl/atl-learning-space.jpg"
+              alt="Students learning together in the Ansar Atal Tinkering Lab"
               className="aspect-[4/3]"
             />
             <div>
               <SectionHeading
                 eyebrow="A milestone for Ansar"
-                title="A space built for curious minds"
-                text="Inaugurated in January 2023, the ATL marked a significant milestone in the school’s commitment to innovation and scientific learning. The lab gives students the tools, guidance, and freedom to move beyond textbooks—turning questions into experiments and ideas into working prototypes."
+                title={settings.overviewTitle}
+                text={settings.overviewText}
               />
               <div className="mt-8 rounded-2xl border-l-4 border-amber-400 bg-white p-6 shadow-sm">
                 <p className="text-lg font-extrabold leading-8 text-emerald-950">“Think with curiosity. Build with confidence. Innovate with purpose.”</p>
+              </div>
+              <div className="mt-6 grid grid-cols-2 gap-3 sm:grid-cols-4">
+                {['Creativity', 'Critical thinking', 'Collaboration', 'Communication'].map(skill => (
+                  <div key={skill} className="rounded-xl bg-emerald-50 px-3 py-3 text-center text-xs font-extrabold text-emerald-800 ring-1 ring-emerald-100">{skill}</div>
+                ))}
               </div>
             </div>
           </div>
@@ -160,9 +202,9 @@ export default function AtlPage() {
                   ))}
                 </div>
               </div>
-              <ImagePlaceholder
-                title="Prototyping in progress"
-                note="Suggested: close-up of students working with sensors, circuits, robotics, or a 3D printer."
+              <AtlPhoto
+                src="/atl/atl-prototyping.jpg"
+                alt="Students testing electronics and programming ideas in the Atal Tinkering Lab"
                 className="aspect-[4/3]"
               />
             </div>
@@ -176,9 +218,9 @@ export default function AtlPage() {
 
         <section className="overflow-hidden bg-emerald-950 py-20 text-white lg:py-28">
           <div className="mx-auto grid max-w-7xl gap-12 px-4 sm:px-6 lg:grid-cols-2 lg:items-center lg:px-8">
-            <ImagePlaceholder
+            <InnovationPanel
               title="Student-built Electronic Voting Machine"
-              note="Suggested: students demonstrating their EVM during the school election season."
+              note="A signature project that connects technical learning with responsible citizenship."
               className="aspect-[4/3]"
               dark
             />
@@ -218,8 +260,8 @@ export default function AtlPage() {
                 </ul>
               </div>
               <div className="grid gap-5 sm:grid-cols-2">
-                <ImagePlaceholder title="Robotics outreach workshop" note="Suggested: ATL mentors guiding visiting students." className="aspect-[4/5]" />
-                <ImagePlaceholder title="Hands-on STEM discovery" note="Suggested: neighbouring-school students testing a robot." className="aspect-[4/5] sm:mt-10" />
+                <InnovationPanel title="Robotics outreach workshop" note="ATL mentors sharing the excitement of making with young learners." className="aspect-[4/5]" />
+                <InnovationPanel title="Hands-on STEM discovery" note="A welcoming first step into electronics, programming, and innovation." className="aspect-[4/5] sm:mt-10" />
               </div>
             </div>
           </div>

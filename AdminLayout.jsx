@@ -32,7 +32,7 @@ export default function AdminLayout({ children, user, onLogout, sproutsOnly = fa
     if (path.includes('/events')) return 'Events';
     if (path.includes('/updates')) return 'News';
     if (path.includes('/sports-achievements')) return 'Sports';
-    if (path.includes('/election')) return 'School Election';
+    if (path.includes('/atl')) return 'Atal Tinkering Lab';
     if (path.includes('/learning-features')) return 'Student-Centric Learning';
     if (path.includes('/life-at-ansar')) return 'Life at Ansar';
     if (path.includes('/learning-labs')) return 'Experiential Learning Labs';
@@ -40,6 +40,7 @@ export default function AdminLayout({ children, user, onLogout, sproutsOnly = fa
     if (path.includes('/field-trips')) return 'Field Trips';
     if (path.includes('/achievements')) return 'Achievements';
     if (path.includes('/ansar-times')) return 'Ansar Times';
+    if (path.includes('/library')) return 'Library';
     if (path.includes('/leadership')) return 'Leadership';
     if (path.includes('/academics')) return 'Academics & Admissions';
     if (path.includes('/public-disclosure')) return 'Mandatory Disclosure';
@@ -78,13 +79,14 @@ export default function AdminLayout({ children, user, onLogout, sproutsOnly = fa
           <Link to="/admin/events" className={`block px-4 py-3 rounded-lg font-medium transition-colors ${currentModule === 'Events' ? 'bg-emerald-600 text-white' : 'text-slate-300 hover:bg-slate-800 hover:text-white'}`}><span className="mr-3" aria-hidden="true">◫</span>Events</Link>
           <Link to="/admin/achievements" className={`block px-4 py-3 rounded-lg font-medium transition-colors ${currentModule === 'Achievements' ? 'bg-emerald-600 text-white' : 'text-slate-300 hover:bg-slate-800 hover:text-white'}`}><span className="mr-3" aria-hidden="true">★</span>Achievements</Link>
           <Link to="/admin/sports-achievements" className={`block px-4 py-3 rounded-lg font-medium transition-colors ${currentModule === 'Sports' ? 'bg-emerald-600 text-white' : 'text-slate-300 hover:bg-slate-800 hover:text-white'}`}><span className="mr-3" aria-hidden="true">●</span>Sports</Link>
-          <Link to="/admin/election" className={`block px-4 py-3 rounded-lg font-medium transition-colors ${currentModule === 'School Election' ? 'bg-indigo-600 text-white' : 'text-slate-300 hover:bg-slate-800 hover:text-white'}`}><span className="mr-3" aria-hidden="true">✓</span>School Election</Link>
+          <Link to="/admin/atl" className={`block px-4 py-3 rounded-lg font-medium transition-colors ${currentModule === 'Atal Tinkering Lab' ? 'bg-emerald-600 text-white' : 'text-slate-300 hover:bg-slate-800 hover:text-white'}`}><span className="mr-3" aria-hidden="true">⚙</span>ATL</Link>
           <Link to="/admin/learning-features" className={`block px-4 py-3 rounded-lg font-medium transition-colors ${currentModule === 'Student-Centric Learning' ? 'bg-emerald-600 text-white' : 'text-slate-300 hover:bg-slate-800 hover:text-white'}`}><span className="mr-3" aria-hidden="true">◇</span>Student-Centric Learning</Link>
           <Link to="/admin/life-at-ansar" className={`block px-4 py-3 rounded-lg font-medium transition-colors ${currentModule === 'Life at Ansar' ? 'bg-emerald-600 text-white' : 'text-slate-300 hover:bg-slate-800 hover:text-white'}`}><span className="mr-3" aria-hidden="true">♡</span>Life at Ansar</Link>
           <Link to="/admin/learning-labs" className={`block px-4 py-3 rounded-lg font-medium transition-colors ${currentModule === 'Experiential Learning Labs' ? 'bg-emerald-600 text-white' : 'text-slate-300 hover:bg-slate-800 hover:text-white'}`}><span className="mr-3" aria-hidden="true">⚗</span>Learning Labs</Link>
           <Link to="/admin/ansar-sprouts" className={`block px-4 py-3 rounded-lg font-medium transition-colors ${currentModule === 'Ansar Sprouts' ? 'bg-orange-500 text-white' : 'text-slate-300 hover:bg-slate-800 hover:text-white'}`}><span className="mr-3" aria-hidden="true">♧</span>Ansar Sprouts</Link>
           <Link to="/admin/field-trips" className={`block px-4 py-3 rounded-lg font-medium transition-colors ${currentModule === 'Field Trips' ? 'bg-emerald-600 text-white' : 'text-slate-300 hover:bg-slate-800 hover:text-white'}`}><span className="mr-3" aria-hidden="true">➜</span>Field Trips</Link>
           <Link to="/admin/ansar-times" className={`block px-4 py-3 rounded-lg font-medium transition-colors ${currentModule === 'Ansar Times' ? 'bg-emerald-600 text-white' : 'text-slate-300 hover:bg-slate-800 hover:text-white'}`}><span className="mr-3" aria-hidden="true">◷</span>Ansar Times</Link>
+          <Link to="/admin/library" className={`block px-4 py-3 rounded-lg font-medium transition-colors ${currentModule === 'Library' ? 'bg-emerald-600 text-white' : 'text-slate-300 hover:bg-slate-800 hover:text-white'}`}><span className="mr-3" aria-hidden="true">▣</span>Library</Link>
           <Link to="/admin/leadership" className={`block px-4 py-3 rounded-lg font-medium transition-colors ${currentModule === 'Leadership' ? 'bg-emerald-600 text-white' : 'text-slate-300 hover:bg-slate-800 hover:text-white'}`}><span className="mr-3" aria-hidden="true">♙</span>Leadership</Link>
           <Link to="/admin/academics" className={`block px-4 py-3 rounded-lg font-medium transition-colors ${currentModule === 'Academics & Admissions' ? 'bg-emerald-600 text-white' : 'text-slate-300 hover:bg-slate-800 hover:text-white'}`}><span className="mr-3" aria-hidden="true">▥</span>Academics & Admissions</Link>
           <Link to="/admin/public-disclosure" className={`block px-4 py-3 rounded-lg font-medium transition-colors ${currentModule === 'Mandatory Disclosure' ? 'bg-emerald-600 text-white' : 'text-slate-300 hover:bg-slate-800 hover:text-white'}`}><span className="mr-3" aria-hidden="true">▧</span>Mandatory Disclosure</Link>

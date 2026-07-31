@@ -10,6 +10,7 @@ const LEGACY_EXPLORE_LINKS = [
   { title: 'Ansar Media Productions', slug: 'ansar-media-production' },
   { title: 'Sports', slug: 'sports-page' },
   { title: 'ATL', slug: 'atl' },
+  { title: 'Library', slug: 'library' },
   { title: 'Extension Services', slug: 'extension-services' },
   { title: 'Life at Ansar', slug: 'life-at-ansar' },
   { title: 'Ansar Times', slug: 'ansar-times' },

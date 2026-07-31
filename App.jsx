@@ -37,15 +37,15 @@ import AdminSettings from './AdminSettings';
 import AdminPublicDisclosure from './AdminPublicDisclosure';
 import MandatoryDisclosure from './MandatoryDisclosure';
 import SopPage, { SchoolPoliciesPage } from './SopPage';
-import ElectionPage from './ElectionPage';
-import ElectionAnalytics from './ElectionAnalytics';
-import AdminElection from './AdminElection';
 import ContentPageLayout from './ContentPageLayout';
 import LifeAtAnsar from './LifeAtAnsar';
 import AnsarSprouts from './AnsarSprouts';
 import SproutsActivityArticle from './SproutsActivityArticle';
 import FieldTrips from './FieldTrips';
 import AtlPage from './AtlPage';
+import AdminAtl from './AdminAtl';
+import LibraryPage from './LibraryPage';
+import AdminLibrary from './AdminLibrary';
 import LearningLabsSection from './LearningLabsSection';
 import { SettingsProvider, useSettings } from './SettingsContext';
 import { DEFAULT_SPORTS_PAGE, mergeListWithDefaults } from './contentDefaults';
@@ -109,11 +109,6 @@ const ROUTE_SEO = {
     description: 'Explore school events, celebrations, competitions, and activities at Ansar English School, Perumpilavu, Thrissur.',
     keywords: 'Ansar English School events, CBSE school events Thrissur, Perumpilavu school activities'
   },
-  '/school-election': {
-    title: 'School Council Election 2026 | Ansar English School',
-    description: 'Meet the student candidates and participate in the Ansar English School Council Election 2026 campaign popularity poll before the official offline election.',
-    keywords: 'Ansar School election 2026, student council election, school election campaign'
-  },
   '/achievements': {
     title: 'Achievements | Ansar English School Thrissur',
     description: 'Student achievements, academic honours, competitions, and milestones from Ansar English School, Perumpilavu, Thrissur.',
@@ -123,6 +118,11 @@ const ROUTE_SEO = {
     title: 'Atal Tinkering Lab | Ansar English School Thrissur',
     description: 'Explore the Atal Tinkering Lab at Ansar English School, where students develop STEM skills through innovation, prototyping, and hands-on problem solving.',
     keywords: 'Atal Tinkering Lab Thrissur, ATL Ansar English School, student innovation lab Kerala'
+  },
+  '/library': {
+    title: 'Library | Ansar English School, Perumpilavu',
+    description: 'Explore library events, reading activities, new arrivals, publications, and learning resources from Ansar English School, Perumpilavu.',
+    keywords: 'Ansar English School Library, school library Perumpilavu, reading activities Thrissur, new books school library'
   },
   '/sports-page': {
     title: 'Sports and Athletics | Ansar English School Thrissur',
@@ -195,14 +195,6 @@ function getSeoForPath(pathname) {
       ...DEFAULT_SEO,
       title: 'Admin Portal | Ansar English School',
       description: 'Authorized administration portal for Ansar English School.',
-      noIndex: true
-    };
-  }
-  if (pathname === '/election/live') {
-    return {
-      ...DEFAULT_SEO,
-      title: 'Private Election Analytics | Ansar English School',
-      description: 'Private real-time school election analytics.',
       noIndex: true
     };
   }
@@ -1305,12 +1297,11 @@ export default function App() {
         <Route path="/admission" element={<Admission />} />
         <Route path="/news" element={<News />} />
         <Route path="/events" element={<Events />} />
-        <Route path="/school-election" element={<ElectionPage />} />
-        <Route path="/election/live" element={<ElectionAnalytics />} />
         <Route path="/contact" element={<Contact />} />
         <Route path="/gallery" element={<Gallery />} />
         <Route path="/sports-page" element={<SportsPage />} />
         <Route path="/atl" element={<AtlPage />} />
+        <Route path="/library" element={<LibraryPage />} />
         <Route path="/ansar-sprouts" element={<AnsarSprouts />} />
         <Route path="/ansar-sprouts/activities/:id" element={<SproutsActivityArticle />} />
         <Route path="/field-trips" element={<FieldTrips />} />
@@ -1355,13 +1346,14 @@ export default function App() {
                   <Route path="/events" element={<AdminEvents />} />
                   <Route path="/achievements" element={<AdminAchievements />} />
                   <Route path="/sports-achievements" element={<AdminSportsAchievements />} />
-                  <Route path="/election" element={<AdminElection />} />
+                  <Route path="/atl" element={<AdminAtl />} />
                   <Route path="/learning-features" element={<AdminLearningFeatures />} />
                   <Route path="/life-at-ansar" element={<AdminLifeAtAnsar />} />
                   <Route path="/learning-labs" element={<AdminLearningLabs />} />
                   <Route path="/ansar-sprouts" element={<AdminAnsarSprouts />} />
                   <Route path="/field-trips" element={<AdminFieldTrips />} />
                   <Route path="/ansar-times" element={<AdminAnsarTimes />} />
+                  <Route path="/library" element={<AdminLibrary />} />
                   <Route path="/leadership" element={<AdminLeadership />} />
                   <Route path="/academics" element={<AdminAcademics />} />
                   <Route path="/public-disclosure" element={<AdminPublicDisclosure />} />
