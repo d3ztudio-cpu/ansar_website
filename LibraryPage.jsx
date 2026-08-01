@@ -76,6 +76,7 @@ export default function LibraryPage() {
                 <h1 className="max-w-4xl font-serif text-5xl font-bold leading-[1.02] sm:text-6xl lg:text-7xl">{settings.title}</h1>
                 <p className="mt-6 max-w-2xl text-lg leading-8 text-slate-100 sm:text-xl">{settings.subtitle}</p>
                 <div className="mt-9 flex flex-wrap gap-3">
+                  <a href="/library/quiz" className="rounded-full bg-emerald-400 px-5 py-3 text-sm font-extrabold text-slate-950 transition hover:bg-emerald-300">Play Library Quiz 🧠</a>
                   <a href="#library-latest" className="rounded-full bg-amber-300 px-5 py-3 text-sm font-extrabold text-slate-950 transition hover:bg-amber-200">Read the latest</a>
                   {settings.resourceUrl && <a href={settings.resourceUrl} target="_blank" rel="noreferrer" className="rounded-full border border-white/35 bg-white/10 px-5 py-3 text-sm font-extrabold text-white transition hover:bg-white/20">{settings.resourceLabel}</a>}
                 </div>

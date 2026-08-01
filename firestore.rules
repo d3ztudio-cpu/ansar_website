@@ -31,6 +31,8 @@ service cloud.firestore {
     // Collection: libraryPosts
     // Fields: type, title, summary, body, date, imageUrl, linkUrl, published,
     //         createdAt, updatedAt. Only published posts are public.
+    // Collection: quizSessions/{quizId}; questions (no answers), answers (admin-only),
+    // participants keyed by Firebase Auth UID. Participants may update only their own attempt.
     //
     // Collection: atlSettings
     // Document ID: main
@@ -505,6 +507,67 @@ service cloud.firestore {
       allow create: if isVerifiedAdmin() && isValidLibraryPost() && hasValidLibraryCreateTimestamps();
       allow update: if isVerifiedAdmin() && isValidLibraryPost() && hasValidLibraryUpdateTimestamps();
       allow delete: if isVerifiedAdmin();
+    }
+
+    function validQuizSession() {
+      return request.resource.data.keys().hasOnly(['title','className','division','durationMinutes','instructions','sourceUrl','status','questionCount','createdAt','updatedAt','lobbyAt','runningAt','endedAt','completedAt','questionsCleared']) &&
+        request.resource.data.title is string && request.resource.data.title.size() >= 1 && request.resource.data.title.size() <= 120 &&
+        request.resource.data.className is string && request.resource.data.className.size() >= 1 && request.resource.data.className.size() <= 2 &&
+        request.resource.data.division is string && request.resource.data.division.size() <= 5 &&
+        (!('durationMinutes' in request.resource.data) || (request.resource.data.durationMinutes is int && request.resource.data.durationMinutes >= 1 && request.resource.data.durationMinutes <= 180)) &&
+        request.resource.data.instructions is string && request.resource.data.instructions.size() <= 1000 &&
+        request.resource.data.sourceUrl is string && request.resource.data.sourceUrl.size() <= 1000 &&
+        request.resource.data.status in ['draft','lobby','running','ended','completed'] &&
+        request.resource.data.questionCount is int && request.resource.data.questionCount >= 1 && request.resource.data.questionCount <= 200 &&
+        request.resource.data.createdAt is timestamp && request.resource.data.updatedAt is timestamp;
+    }
+
+    function validParticipantCreate(uid) {
+      return request.auth.uid == uid && request.resource.data.keys().hasOnly(['uid','name','className','division','status','progress','shuffleSeed','joinedAt','updatedAt']) &&
+        request.resource.data.uid == uid && request.resource.data.name is string && request.resource.data.name.size() >= 1 && request.resource.data.name.size() <= 80 &&
+        request.resource.data.className is string && request.resource.data.className.size() <= 2 && request.resource.data.division is string && request.resource.data.division.size() <= 5 &&
+        request.resource.data.status == 'waiting' && request.resource.data.progress == 0 && request.resource.data.shuffleSeed is int &&
+        request.resource.data.joinedAt == request.time && request.resource.data.updatedAt == request.time;
+    }
+
+    function validParticipantUpdate(uid, quizId) {
+      return request.auth.uid == uid && request.resource.data.uid == resource.data.uid && request.resource.data.name == resource.data.name &&
+        request.resource.data.className == resource.data.className && request.resource.data.division == resource.data.division &&
+        request.resource.data.shuffleSeed == resource.data.shuffleSeed && request.resource.data.joinedAt == resource.data.joinedAt &&
+        request.resource.data.keys().hasOnly(['uid','name','className','division','status','progress','shuffleSeed','joinedAt','updatedAt','startedAt','answers','questionTimings','timedOut','submittedAt','durationMs','violation','violationAt','score','total','unlockedAt']) &&
+        request.resource.data.status in ['waiting','active','submitted','disqualified'] &&
+        ((resource.data.status == 'waiting' && request.resource.data.status == 'active' && request.resource.data.startedAt == request.time) ||
+         (resource.data.status == 'active' && request.resource.data.status == 'active' && request.resource.data.startedAt == resource.data.startedAt) ||
+         (resource.data.status == 'active' && request.resource.data.status == 'submitted' && request.resource.data.startedAt == resource.data.startedAt && request.resource.data.submittedAt == request.time && request.resource.data.timedOut is bool &&
+           (request.resource.data.timedOut == false || request.time >= resource.data.startedAt + duration.value(get(/databases/$(database)/documents/quizSessions/$(quizId)).data.durationMinutes, 'm'))) ||
+         (resource.data.status == 'active' && request.resource.data.status == 'disqualified' && request.resource.data.startedAt == resource.data.startedAt && request.resource.data.violationAt == request.time)) &&
+        request.resource.data.progress is int && request.resource.data.progress >= 0 && request.resource.data.progress <= 200 &&
+        (!(request.resource.data.status in ['active','submitted']) || request.resource.data.startedAt is timestamp) &&
+        (!('answers' in request.resource.data) || (request.resource.data.answers is map && request.resource.data.answers.size() <= 200)) &&
+        (!('questionTimings' in request.resource.data) || (request.resource.data.questionTimings is map && request.resource.data.questionTimings.size() <= 200)) &&
+        !('durationMs' in request.resource.data) &&
+        request.resource.data.updatedAt == request.time &&
+        !request.resource.data.diff(resource.data).affectedKeys().hasAny(['score','total','unlockedAt']);
+    }
+
+    match /quizSessions/{quizId} {
+      allow get: if isAdmin() || resource.data.status in ['lobby','running','ended'];
+      allow list: if isAdmin() || resource.data.status in ['lobby','running'];
+      allow create: if isVerifiedAdmin() && validQuizSession() && request.resource.data.createdAt == request.time && request.resource.data.updatedAt == request.time;
+      allow update: if isVerifiedAdmin() && validQuizSession() && request.resource.data.createdAt == resource.data.createdAt && request.resource.data.updatedAt == request.time;
+      allow delete: if isVerifiedAdmin();
+
+      match /questions/{questionId} {
+        allow read: if isAdmin() || (isAuthenticated() && get(/databases/$(database)/documents/quizSessions/$(quizId)).data.status == 'running');
+        allow write: if isVerifiedAdmin();
+      }
+      match /answers/{answerId} { allow read, write: if isVerifiedAdmin(); }
+      match /participants/{uid} {
+        allow read: if isAdmin() || (isAuthenticated() && request.auth.uid == uid);
+        allow create: if isAuthenticated() && validParticipantCreate(uid) && get(/databases/$(database)/documents/quizSessions/$(quizId)).data.status in ['lobby','running'];
+        allow update: if isVerifiedAdmin() || (isAuthenticated() && validParticipantUpdate(uid, quizId));
+        allow delete: if isVerifiedAdmin();
+      }
     }
 
     // ATL configuration contains only public display content.

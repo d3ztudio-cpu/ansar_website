@@ -2,10 +2,11 @@ import React, { useEffect, useMemo, useState } from 'react';
 import { clearGoogleSheetsCache, useContentCollection } from './useContentCollection';
 import { saveSheetRecord } from './googleSheetsAdminApi';
 import ImgBbUrlImporter from './ImgBbUrlImporter';
+import { LEARNING_FEATURES_DOCUMENT_CONTENT } from './learningFeaturesDocumentContent';
 
 const MAX_GALLERY_IMAGES = 30;
 
-const DEFAULT_FEATURES = [
+const BASE_DEFAULT_FEATURES = [
   {
     slug: 'cctv-enabled-safety',
     title: 'A Safe & Secure Campus',
@@ -114,6 +115,11 @@ const DEFAULT_FEATURES = [
     points: ['Clean and organized dining areas', 'Supports healthy meal routines', 'Comfortable spaces for student refreshment']
   }
 ];
+
+const DEFAULT_FEATURES = BASE_DEFAULT_FEATURES.map(feature => ({
+  ...feature,
+  ...LEARNING_FEATURES_DOCUMENT_CONTENT[feature.slug]
+}));
 
 function toLines(value) {
   return Array.isArray(value) ? value.join('\n') : String(value || '');

@@ -1,10 +1,10 @@
 const DIRECT_IMAGE_EXTENSIONS = /\.(?:avif|gif|jpe?g|png|svg|webp)(?:[?#].*)?$/i;
 const DIRECT_IMAGE_HOSTS = [
   'i.ibb.co',
+  'images.unsplash.com',
   'i.imgur.com',
   'i.postimg.cc',
   'iili.io',
-  'images.unsplash.com',
   'lh3.googleusercontent.com',
   'blogger.googleusercontent.com',
   'res.cloudinary.com'

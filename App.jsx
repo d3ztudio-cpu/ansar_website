@@ -46,11 +46,14 @@ import AtlPage from './AtlPage';
 import AdminAtl from './AdminAtl';
 import LibraryPage from './LibraryPage';
 import AdminLibrary from './AdminLibrary';
+import AdminQuizCorner from './AdminQuizCorner';
+import QuizCorner from './QuizCorner';
 import LearningLabsSection from './LearningLabsSection';
 import { SettingsProvider, useSettings } from './SettingsContext';
 import { DEFAULT_SPORTS_PAGE, mergeListWithDefaults } from './contentDefaults';
 import { compareContentNewestFirst, formatDisplayDate, getDisplayYear, isYearOnly } from './dateUtils';
 import { applySeoMetadata, createMetaDescription } from './seoUtils';
+import { LEARNING_FEATURES_DOCUMENT_CONTENT } from './learningFeaturesDocumentContent';
 
 // --- AUTHORIZED ADMIN EMAILS ---
 const ADMIN_EMAILS = [
@@ -446,7 +449,7 @@ const MEDIA_SERVICES = [
   }
 ];
 
-const LEARNING_FEATURES = {
+const BASE_LEARNING_FEATURES = {
   'cctv-enabled-safety': {
     title: 'A Safe & Secure Campus',
     kicker: 'Safe campus',
@@ -547,6 +550,11 @@ const LEARNING_FEATURES = {
     points: ['Clean and organized dining areas', 'Supports healthy meal routines', 'Comfortable spaces for student refreshment']
   }
 };
+
+const LEARNING_FEATURES = Object.fromEntries(Object.entries(BASE_LEARNING_FEATURES).map(([slug, feature]) => [slug, {
+  ...feature,
+  ...LEARNING_FEATURES_DOCUMENT_CONTENT[slug]
+}]));
 
 function LearningIcon({ name, className = 'h-8 w-8' }) {
   const shared = { className, fill: 'none', stroke: 'currentColor', viewBox: '0 0 24 24', 'aria-hidden': 'true' };
@@ -1302,6 +1310,7 @@ export default function App() {
         <Route path="/sports-page" element={<SportsPage />} />
         <Route path="/atl" element={<AtlPage />} />
         <Route path="/library" element={<LibraryPage />} />
+        <Route path="/library/quiz" element={<QuizCorner />} />
         <Route path="/ansar-sprouts" element={<AnsarSprouts />} />
         <Route path="/ansar-sprouts/activities/:id" element={<SproutsActivityArticle />} />
         <Route path="/field-trips" element={<FieldTrips />} />
@@ -1354,6 +1363,7 @@ export default function App() {
                   <Route path="/field-trips" element={<AdminFieldTrips />} />
                   <Route path="/ansar-times" element={<AdminAnsarTimes />} />
                   <Route path="/library" element={<AdminLibrary />} />
+                  <Route path="/library/quiz" element={<AdminQuizCorner />} />
                   <Route path="/leadership" element={<AdminLeadership />} />
                   <Route path="/academics" element={<AdminAcademics />} />
                   <Route path="/public-disclosure" element={<AdminPublicDisclosure />} />
