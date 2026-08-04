@@ -7,7 +7,7 @@ const sourceExtensions = new Set(['.js', '.jsx', '.html']);
 const ignoredDirectories = new Set(['.git', '.firebase', 'dist', 'node_modules', 'public', 'scripts']);
 const exactRoutes = new Set([
   '/', '/about', '/academics', '/admission', '/news', '/events', '/contact', '/gallery',
-  '/sports-page', '/atl', '/library', '/ansar-sprouts', '/extension-services', '/life-at-ansar',
+  '/sports-page', '/atl', '/library', '/library/quiz', '/ansar-sprouts', '/extension-services', '/life-at-ansar',
   '/field-trips', '/ansar-family',
   '/ansar-times', '/alumni', '/achievements', '/ansar-media-production', '/sop',
   '/school-policies', '/mandatory-public-disclosure', '/admin', '/admin/dashboard', '/admin/updates', '/admin/news', '/admin/events',
@@ -17,10 +17,11 @@ const exactRoutes = new Set([
   '/admin/ansar-sprouts',
   '/admin/field-trips',
   '/admin/ansar-times', '/admin/leadership', '/admin/academics', '/admin/public-disclosure',
-  '/admin/gallery', '/admin/notices', '/admin/settings', '/admin/library'
+  '/admin/gallery', '/admin/notices', '/admin/settings', '/admin/library', '/admin/library/quiz', '/admin/alumni'
 ]);
 const parameterizedRoutes = [
   /^\/(?:news|events|achievements|sports-achievements)\/[^/]+$/,
+  /^\/alumni\/(?:events|success-stories)\/\d+$/,
   /^\/learning\/[^/]+$/
 ];
 const redirectOnlyRoutes = new Set([

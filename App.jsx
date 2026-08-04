@@ -46,6 +46,9 @@ import AtlPage from './AtlPage';
 import AdminAtl from './AdminAtl';
 import LibraryPage from './LibraryPage';
 import AdminLibrary from './AdminLibrary';
+import Alumni from './Alumni';
+import AdminAlumni from './AdminAlumni';
+import AlumniArticle from './AlumniArticle';
 import AdminQuizCorner from './AdminQuizCorner';
 import QuizCorner from './QuizCorner';
 import LearningLabsSection from './LearningLabsSection';
@@ -1318,7 +1321,8 @@ export default function App() {
         <Route path="/life-at-ansar" element={<LifeAtAnsar />} />
         <Route path="/ansar-times" element={<AnsarTimes />} />
         <Route path="/ansar-family" element={<Staff />} />
-        <Route path="/alumni" element={<DynamicPage slug="alumni" />} />
+        <Route path="/alumni" element={<Alumni />} />
+        <Route path="/alumni/:section/:index" element={<AlumniArticle />} />
         <Route path="/achievements" element={<Achievements />} />
         <Route path="/sports-achievements/:id" element={<ArticleView />} />
         <Route path="/sop" element={<SopPage />} />
@@ -1363,6 +1367,7 @@ export default function App() {
                   <Route path="/field-trips" element={<AdminFieldTrips />} />
                   <Route path="/ansar-times" element={<AdminAnsarTimes />} />
                   <Route path="/library" element={<AdminLibrary />} />
+                  <Route path="/alumni" element={<AdminAlumni />} />
                   <Route path="/library/quiz" element={<AdminQuizCorner />} />
                   <Route path="/leadership" element={<AdminLeadership />} />
                   <Route path="/academics" element={<AdminAcademics />} />

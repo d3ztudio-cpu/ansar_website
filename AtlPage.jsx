@@ -10,6 +10,9 @@ const DEFAULT_ATL_SETTINGS = {
   heroHighlight: 'innovations.',
   heroDescription: 'The Atal Tinkering Lab at Ansar English School, Perumpilavu is a state-of-the-art STEM learning centre where young minds explore, experiment, and create technology-driven solutions for society.',
   heroImageUrl: '/atl/atl-cover.jpg',
+  signatureProjectImageUrl: 'https://i.ibb.co/hFBT52b2/IMG-6340-JPG.jpg',
+  outreachWorkshopImageUrl: '',
+  stemDiscoveryImageUrl: '',
   inaugurationDate: 'January 2023',
   inauguratedBy: 'MLA Ramya Haridas',
   overviewTitle: 'A space built for curious minds',
@@ -218,12 +221,20 @@ export default function AtlPage() {
 
         <section className="overflow-hidden bg-emerald-950 py-20 text-white lg:py-28">
           <div className="mx-auto grid max-w-7xl gap-12 px-4 sm:px-6 lg:grid-cols-2 lg:items-center lg:px-8">
-            <InnovationPanel
-              title="Student-built Electronic Voting Machine"
-              note="A signature project that connects technical learning with responsible citizenship."
-              className="aspect-[4/3]"
-              dark
-            />
+            {settings.signatureProjectImageUrl ? (
+              <AtlPhoto
+                src={settings.signatureProjectImageUrl}
+                alt="Students presenting their electronic voting machine as a signature ATL initiative"
+                className="aspect-[4/3] bg-white/5"
+              />
+            ) : (
+              <InnovationPanel
+                title="Student-built Electronic Voting Machine"
+                note="A signature project that connects technical learning with responsible citizenship."
+                className="aspect-[4/3]"
+                dark
+              />
+            )}
             <div>
               <p className="text-xs font-black uppercase tracking-[0.22em] text-amber-300">Signature ATL initiative</p>
               <h2 className="mt-4 text-3xl font-extrabold leading-tight sm:text-4xl lg:text-5xl">Building democracy, one circuit at a time</h2>
@@ -260,8 +271,16 @@ export default function AtlPage() {
                 </ul>
               </div>
               <div className="grid gap-5 sm:grid-cols-2">
-                <InnovationPanel title="Robotics outreach workshop" note="ATL mentors sharing the excitement of making with young learners." className="aspect-[4/5]" />
-                <InnovationPanel title="Hands-on STEM discovery" note="A welcoming first step into electronics, programming, and innovation." className="aspect-[4/5] sm:mt-10" />
+                {settings.outreachWorkshopImageUrl ? (
+                  <AtlPhoto src={settings.outreachWorkshopImageUrl} alt="ATL robotics outreach workshop with young learners" className="aspect-[4/5]" />
+                ) : (
+                  <InnovationPanel title="Robotics outreach workshop" note="ATL mentors sharing the excitement of making with young learners." className="aspect-[4/5]" />
+                )}
+                {settings.stemDiscoveryImageUrl ? (
+                  <AtlPhoto src={settings.stemDiscoveryImageUrl} alt="Students taking part in hands-on STEM discovery" className="aspect-[4/5] sm:mt-10" />
+                ) : (
+                  <InnovationPanel title="Hands-on STEM discovery" note="A welcoming first step into electronics, programming, and innovation." className="aspect-[4/5] sm:mt-10" />
+                )}
               </div>
             </div>
           </div>

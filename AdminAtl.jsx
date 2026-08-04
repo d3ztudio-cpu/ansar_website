@@ -10,6 +10,9 @@ const DEFAULT_SETTINGS = {
   heroHighlight: 'innovations.',
   heroDescription: 'The Atal Tinkering Lab at Ansar English School, Perumpilavu is a state-of-the-art STEM learning centre where young minds explore, experiment, and create technology-driven solutions for society.',
   heroImageUrl: '/atl/atl-cover.jpg',
+  signatureProjectImageUrl: 'https://i.ibb.co/hFBT52b2/IMG-6340-JPG.jpg',
+  outreachWorkshopImageUrl: '',
+  stemDiscoveryImageUrl: '',
   inaugurationDate: 'January 2023',
   inauguratedBy: 'MLA Ramya Haridas',
   overviewTitle: 'A space built for curious minds',
@@ -45,6 +48,9 @@ export default function AdminAtl() {
         heroHighlight: settings.heroHighlight.trim(),
         heroDescription: settings.heroDescription.trim(),
         heroImageUrl: normalizeImageUrl(settings.heroImageUrl),
+        signatureProjectImageUrl: normalizeImageUrl(settings.signatureProjectImageUrl),
+        outreachWorkshopImageUrl: normalizeImageUrl(settings.outreachWorkshopImageUrl),
+        stemDiscoveryImageUrl: normalizeImageUrl(settings.stemDiscoveryImageUrl),
         inaugurationDate: settings.inaugurationDate.trim(),
         inauguratedBy: settings.inauguratedBy.trim(),
         overviewTitle: settings.overviewTitle.trim(),
@@ -77,6 +83,9 @@ export default function AdminAtl() {
           <label className="text-sm font-bold text-slate-700">Hero highlight<input required value={settings.heroHighlight} onChange={(e) => update('heroHighlight', e.target.value)} className={fieldClass} /></label>
           <label className="text-sm font-bold text-slate-700 md:col-span-2">Hero description<textarea required value={settings.heroDescription} onChange={(e) => update('heroDescription', e.target.value)} className={`${fieldClass} h-28`} /></label>
           <div className="md:col-span-2"><label className="text-sm font-bold text-slate-700">Cover image URL<input required type="text" value={settings.heroImageUrl} onChange={(e) => update('heroImageUrl', e.target.value)} className={fieldClass} /></label><div className="mt-2"><ImgBbUrlImporter onExtracted={(url) => update('heroImageUrl', url)} /></div></div>
+          <div className="md:col-span-2"><label className="text-sm font-bold text-slate-700">Signature ATL initiative image URL<input required type="text" value={settings.signatureProjectImageUrl} onChange={(e) => update('signatureProjectImageUrl', e.target.value)} className={fieldClass} /></label><p className="mt-2 text-xs leading-5 text-slate-500">Displayed beside “Building democracy, one circuit at a time”.</p><div className="mt-2"><ImgBbUrlImporter onExtracted={(url) => update('signatureProjectImageUrl', url)} /></div></div>
+          <div className="md:col-span-2 rounded-xl border border-slate-200 bg-slate-50 p-4"><label className="text-sm font-bold text-slate-700">Robotics outreach workshop image URL<input type="text" value={settings.outreachWorkshopImageUrl} onChange={(e) => update('outreachWorkshopImageUrl', e.target.value)} placeholder="Paste an image URL" className={fieldClass} /></label><p className="mt-2 text-xs leading-5 text-slate-500">Leave blank to keep the existing image placeholder.</p><div className="mt-2"><ImgBbUrlImporter onExtracted={(url) => update('outreachWorkshopImageUrl', url)} /></div></div>
+          <div className="md:col-span-2 rounded-xl border border-slate-200 bg-slate-50 p-4"><label className="text-sm font-bold text-slate-700">Hands-on STEM discovery image URL<input type="text" value={settings.stemDiscoveryImageUrl} onChange={(e) => update('stemDiscoveryImageUrl', e.target.value)} placeholder="Paste an image URL" className={fieldClass} /></label><p className="mt-2 text-xs leading-5 text-slate-500">Leave blank to keep the existing image placeholder.</p><div className="mt-2"><ImgBbUrlImporter onExtracted={(url) => update('stemDiscoveryImageUrl', url)} /></div></div>
           <label className="text-sm font-bold text-slate-700 md:col-span-2">Inaugurated by<input required value={settings.inauguratedBy} onChange={(e) => update('inauguratedBy', e.target.value)} className={fieldClass} /></label>
           <label className="text-sm font-bold text-slate-700 md:col-span-2">Overview title<input required value={settings.overviewTitle} onChange={(e) => update('overviewTitle', e.target.value)} className={fieldClass} /></label>
           <label className="text-sm font-bold text-slate-700 md:col-span-2">Overview text<textarea required value={settings.overviewText} onChange={(e) => update('overviewText', e.target.value)} className={`${fieldClass} h-32`} /></label>

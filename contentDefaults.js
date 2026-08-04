@@ -5,37 +5,37 @@ export const DEFAULT_SPORTS_PAGE = {
     {
       title: 'Football',
       description: 'Team training, match practice, stamina building, and tactical play for students who love the game.',
-      imageUrl: ''
+      imageUrl: '/sports/football-kerala-school.webp'
     },
     {
       title: 'Basketball',
       description: 'Court-based skill development with focus on agility, coordination, passing, shooting, and teamwork.',
-      imageUrl: ''
+      imageUrl: '/sports/basketball-kerala-school.webp'
     },
     {
       title: 'Volleyball',
       description: 'Structured practice for serving, setting, defending, and building quick team communication.',
-      imageUrl: ''
+      imageUrl: '/sports/volleyball-kerala-school.webp'
     },
     {
       title: 'Horse Riding',
       description: 'Confidence-building riding exposure that supports balance, posture, focus, and responsible care.',
-      imageUrl: ''
+      imageUrl: '/sports/horse-riding-kerala-school.webp'
     },
     {
-      title: 'Kabadi',
-      description: 'Strength, agility, teamwork, and quick decision-making through structured kabadi practice.',
-      imageUrl: ''
+      title: 'Kabaddi',
+      description: 'Strength, agility, teamwork, and quick decision-making through structured kabaddi practice.',
+      imageUrl: '/sports/kabaddi-kerala-school.webp'
     },
     {
       title: 'Taekwondo',
       description: 'Martial arts training that develops discipline, flexibility, self-control, confidence, and physical fitness.',
-      imageUrl: ''
+      imageUrl: '/sports/taekwondo-kerala-school.webp'
     },
     {
       title: 'Skating',
       description: 'Balance, coordination, endurance, and confidence building through guided skating sessions.',
-      imageUrl: ''
+      imageUrl: '/sports/skating-kerala-school.webp'
     }
   ]
 };
