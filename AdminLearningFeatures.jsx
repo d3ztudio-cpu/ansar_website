@@ -2,7 +2,7 @@ import React, { useEffect, useMemo, useState } from 'react';
 import { clearGoogleSheetsCache, useContentCollection } from './useContentCollection';
 import { saveSheetRecord } from './googleSheetsAdminApi';
 import ImgBbUrlImporter from './ImgBbUrlImporter';
-import { LEARNING_FEATURES_DOCUMENT_CONTENT } from './learningFeaturesDocumentContent';
+import { LEARNING_FEATURES_DOCUMENT_CONTENT, resolveLearningFeatureImage } from './learningFeaturesDocumentContent';
 
 const MAX_GALLERY_IMAGES = 30;
 
@@ -21,7 +21,7 @@ const BASE_DEFAULT_FEATURES = [
     title: 'Future-Ready Learning Spaces',
     kicker: 'Interactive learning',
     icon: 'screen',
-    imageUrl: 'https://images.unsplash.com/photo-1588072432836-e10032774350?q=90&w=2400&auto=format&fit=crop',
+    imageUrl: '/learning/smart-classroom-kerala.jpg',
     description: 'Roomy classrooms and smart-board support help teachers blend explanation, visual learning, discussion, and practice. The setup keeps lessons clear, engaging, and easier to follow.',
     points: ['Spacious rooms for comfortable learning', 'Smart-board enabled explanations', 'Better visual support for concepts']
   },
@@ -163,7 +163,7 @@ export default function AdminLearningFeatures() {
         ...feature,
         ...saved,
         order: saved?.order ?? index + 1,
-        imageUrl: saved?.imageUrl || saved?.image || feature.imageUrl,
+        imageUrl: resolveLearningFeatureImage(feature.slug, saved?.imageUrl || saved?.image, feature.imageUrl),
         galleryImages: Array.isArray(saved?.galleryImages) && saved.galleryImages.length ? saved.galleryImages : feature.galleryImages,
         outdoorGymImageUrls: Array.isArray(saved?.outdoorGymImageUrls) ? saved.outdoorGymImageUrls : feature.outdoorGymImageUrls,
         points: Array.isArray(saved?.points) && saved.points.length ? saved.points : feature.points

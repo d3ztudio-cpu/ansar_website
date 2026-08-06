@@ -267,8 +267,8 @@ export default function Home() {
   const [lightboxImage, setLightboxImage] = useState(null);
   const sportsAchievementsRef = useRef(null);
   const { data: leadershipData } = useContentCollection('leadership', 'order', 'asc', { firestoreOnly: true });
-  const { data: updates } = useContentCollection('updates', null);
-  const { data: sportsAchievements } = useContentCollection('sportsAchievements', null);
+  const { data: updates } = useContentCollection('updates', null, 'desc', { limit: 18 });
+  const { data: sportsAchievements } = useContentCollection('sportsAchievements', null, 'desc', { limit: 8 });
   const { data: learningFeatures } = useContentCollection('learningFeatures', null, 'asc', { sheetsOnly: true });
 
   const publishedUpdates = updates
@@ -323,8 +323,8 @@ export default function Home() {
       <NoticePopup />
       <DeferredSchoolChatbot />
       <Hero 
-        title="Empowering Minds, Enriching Futures" 
-        subtitle="At Ansar English School, we nurture curious learners, ethical leaders, and responsible global citizens prepared to thrive in an ever-evolving world."
+        title="Ansar English School – CBSE School in Thrissur"
+        subtitle="A NABET-accredited CBSE Senior Secondary School in Perumpilavu, Thrissur, nurturing curious learners, ethical leaders, and responsible global citizens."
         imageUrl="/home-hero-640.webp"
         imageSrcSet="/home-hero-320.webp 320w, /home-hero-640.webp 640w"
         imageAvifSrcSet="/home-hero-320.avif 320w, /home-hero-640.avif 640w"

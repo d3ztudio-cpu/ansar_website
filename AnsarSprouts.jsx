@@ -56,6 +56,7 @@ function SproutsActivityCard({ activity, index }) {
 }
 
 export const DEFAULT_SPROUTS_IMAGES = ['https://i.ibb.co/S4bj8W76/image.png'];
+export const DEFAULT_RADIO_STATION_IMAGE = 'https://i.ibb.co/d0FyMJnz/b261c31c-4d52-4711-b4f5-5929b229681b.jpg';
 
 const activities = [
   { icon: 'art', title: 'Little Artists', text: 'Colours, painting, clay, tearing, pasting, and happy hands at work.', color: 'bg-[#fbad18]/15 text-[#4f1f71]' },
@@ -111,6 +112,15 @@ const sproutsFacilities = [
     accent: 'text-[#4f1f71]',
     description: 'A dedicated creative space gives children freedom to discover their artistic talents through drawing, painting, cutting, and pasting. Every activity develops imagination, fine-motor coordination, patience, and self-expression.',
     highlights: ['Drawing and painting', 'Cutting and pasting', 'Creative expression']
+  },
+  {
+    title: 'SPROUTS FM RADIO STATION',
+    icon: 'music',
+    color: 'from-[#4f1f71]/20 to-[#fbad18]/30',
+    accent: 'text-[#4f1f71]',
+    description: 'Our KG FM Radio Station is a joyful platform where little voices shine! Through fun-filled activities like storytelling, rhymes, and simple announcements, children build confidence, creativity and communication skills. It\'s a delightful space where our tiny broadcasters explore, express, and enjoy the magic of speaking and listening.',
+    highlights: ['Storytelling and rhymes', 'Simple announcements', 'Confident communication'],
+    imageField: 'radioStationImageUrl'
   }
 ];
 
@@ -380,11 +390,11 @@ export default function AnsarSprouts() {
               <p className="mt-5 text-lg font-semibold leading-8 text-slate-600">Every space is thoughtfully planned to help children read, think, create, explore, and become comfortable with the world around them.</p>
             </div>
 
-            <div className="mt-12 grid gap-7 lg:grid-cols-3">
+            <div className="mt-12 grid gap-7 md:grid-cols-2 xl:grid-cols-4">
               {sproutsFacilities.map((facility, index) => (
                 <motion.article key={facility.title} initial={{ opacity: 0, y: 30 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true, amount: 0.2 }} transition={{ delay: index * 0.1 }} whileHover={{ y: -8 }} className="overflow-hidden rounded-[2.2rem] border-4 border-white bg-white shadow-xl">
-                  <div className={`flex min-h-52 items-center justify-center bg-gradient-to-br ${facility.color} p-8`}>
-                    <motion.div animate={{ y: [0, -8, 0], rotate: [-2, 2, -2] }} transition={{ duration: 4, repeat: Infinity, ease: 'easeInOut', delay: index * 0.5 }}><SproutIcon name={facility.icon} className={`h-24 w-24 ${facility.accent}`} /></motion.div>
+                  <div className={`relative flex min-h-52 items-center justify-center overflow-hidden bg-gradient-to-br ${facility.color} p-8`}>
+                    {facility.imageField ? <img src={data?.[facility.imageField] || DEFAULT_RADIO_STATION_IMAGE} alt={`${facility.title} facility`} className="absolute inset-0 h-full w-full object-cover" loading="lazy" /> : <motion.div animate={{ y: [0, -8, 0], rotate: [-2, 2, -2] }} transition={{ duration: 4, repeat: Infinity, ease: 'easeInOut', delay: index * 0.5 }}><SproutIcon name={facility.icon} className={`h-24 w-24 ${facility.accent}`} /></motion.div>}
                   </div>
                   <div className="p-7">
                     <p className={`text-xs font-black uppercase tracking-[0.18em] ${facility.accent}`}>Dedicated Facility</p>

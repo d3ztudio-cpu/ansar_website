@@ -139,7 +139,7 @@ service cloud.firestore {
     // ===============================================================
     
     function isValidPage() {
-      return hasOnlyAllowedFields(['title', 'slug', 'subtitle', 'category', 'heroImageUrl', 'bodyHtml', 'virtualTourUrl', 'virtualTourText', 'order', 'published', 'href', 'metaDescription', 'keywords', 'clubsTitle', 'clubsBody', 'clubsImages', 'nssTitle', 'nssBody', 'nssImages', 'spcTitle', 'spcBody', 'spcImages', 'sproutsImages', 'createdAt', 'updatedAt']) &&
+      return hasOnlyAllowedFields(['title', 'slug', 'subtitle', 'category', 'heroImageUrl', 'bodyHtml', 'virtualTourUrl', 'virtualTourText', 'order', 'published', 'href', 'metaDescription', 'keywords', 'clubsTitle', 'clubsBody', 'clubsImages', 'nssTitle', 'nssBody', 'nssImages', 'spcTitle', 'spcBody', 'spcImages', 'sproutsImages', 'radioStationImageUrl', 'createdAt', 'updatedAt']) &&
              isValidStringLength('title', 1, 200) &&
              isValidStringLength('slug', 1, 200) &&
              isValidOptionalString('subtitle', 0, 1000) &&
@@ -161,6 +161,7 @@ service cloud.firestore {
              isValidOptionalString('spcBody', 0, 50000) &&
              isOptionalUrlList('spcImages', 30) &&
              isOptionalUrlList('sproutsImages', 30) &&
+             isValidUrl('radioStationImageUrl') &&
              isOptionalNumber('order') &&
              isOptionalBool('published') &&
              isOptionalTimestamp('createdAt') &&

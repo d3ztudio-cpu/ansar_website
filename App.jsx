@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useRef } from 'react';
+import React, { lazy, Suspense, useEffect, useState, useRef } from 'react';
 import { BrowserRouter as Router, Routes, Route, useParams, Navigate, useLocation, Link } from 'react-router-dom';
 import { onAuthStateChanged, signInWithEmailAndPassword, signOut, signInWithPopup, GoogleAuthProvider } from 'firebase/auth';
 import { doc, setDoc, serverTimestamp, collection, query, orderBy, onSnapshot } from 'firebase/firestore';
@@ -6,57 +6,65 @@ import { auth, db } from './firebase-init';
 import { useContentCollection } from './useContentCollection';
 
 import Layout from './Layout';
-import AdminLayout from './AdminLayout';
 import Home from './Home';
-import About from './About';
-import Academics from './Academics';
-import Admission from './Admission';
-import News from './News';
-import Events from './Events';
-import Achievements from './Achievements';
-import AnsarTimes from './AnsarTimes';
-import Staff from './Staff';
-import Contact from './Contact';
-import Gallery from './Gallery';
-import AdminUpdates from './AdminUpdates';
-import AdminEvents from './AdminEvents';
-import AdminAchievements from './AdminAchievements';
-import AdminAnsarTimes from './AdminAnsarTimes';
-import AdminGallery from './AdminGallery';
-import AdminSportsAchievements from './AdminSportsAchievements';
-import AdminLearningFeatures from './AdminLearningFeatures';
-import AdminLifeAtAnsar from './AdminLifeAtAnsar';
-import AdminLearningLabs from './AdminLearningLabs';
-import AdminAnsarSprouts from './AdminAnsarSprouts';
-import AdminFieldTrips from './AdminFieldTrips';
-import AdminLeadership from './AdminLeadership';
-import AdminNotices from './AdminNotices';
-import AdminAcademics from './AdminAcademics';
-import ArticleView from './ArticleView';
-import AdminSettings from './AdminSettings';
-import AdminPublicDisclosure from './AdminPublicDisclosure';
-import MandatoryDisclosure from './MandatoryDisclosure';
-import SopPage, { SchoolPoliciesPage } from './SopPage';
 import ContentPageLayout from './ContentPageLayout';
-import LifeAtAnsar from './LifeAtAnsar';
-import AnsarSprouts from './AnsarSprouts';
-import SproutsActivityArticle from './SproutsActivityArticle';
-import FieldTrips from './FieldTrips';
-import AtlPage from './AtlPage';
-import AdminAtl from './AdminAtl';
-import LibraryPage from './LibraryPage';
-import AdminLibrary from './AdminLibrary';
-import Alumni from './Alumni';
-import AdminAlumni from './AdminAlumni';
-import AlumniArticle from './AlumniArticle';
-import AdminQuizCorner from './AdminQuizCorner';
-import QuizCorner from './QuizCorner';
 import LearningLabsSection from './LearningLabsSection';
 import { SettingsProvider, useSettings } from './SettingsContext';
 import { DEFAULT_SPORTS_PAGE, mergeListWithDefaults } from './contentDefaults';
 import { compareContentNewestFirst, formatDisplayDate, getDisplayYear, isYearOnly } from './dateUtils';
 import { applySeoMetadata, createMetaDescription } from './seoUtils';
-import { LEARNING_FEATURES_DOCUMENT_CONTENT } from './learningFeaturesDocumentContent';
+import { LEARNING_FEATURES_DOCUMENT_CONTENT, resolveLearningFeatureImage } from './learningFeaturesDocumentContent';
+
+// Keep the first visit small: secondary pages and all admin modules are fetched only
+// when their route is opened instead of delaying the homepage on mobile networks.
+const About = lazy(() => import('./About'));
+const Academics = lazy(() => import('./Academics'));
+const Admission = lazy(() => import('./Admission'));
+const News = lazy(() => import('./News'));
+const Events = lazy(() => import('./Events'));
+const Achievements = lazy(() => import('./Achievements'));
+const AnsarTimes = lazy(() => import('./AnsarTimes'));
+const Staff = lazy(() => import('./Staff'));
+const Contact = lazy(() => import('./Contact'));
+const Gallery = lazy(() => import('./Gallery'));
+const ArticleView = lazy(() => import('./ArticleView'));
+const MandatoryDisclosure = lazy(() => import('./MandatoryDisclosure'));
+const SopPage = lazy(() => import('./SopPage'));
+const SchoolPoliciesPage = lazy(() => import('./SopPage').then(module => ({ default: module.SchoolPoliciesPage })));
+const LifeAtAnsar = lazy(() => import('./LifeAtAnsar'));
+const AnsarSprouts = lazy(() => import('./AnsarSprouts'));
+const SproutsActivityArticle = lazy(() => import('./SproutsActivityArticle'));
+const FieldTrips = lazy(() => import('./FieldTrips'));
+const AtlPage = lazy(() => import('./AtlPage'));
+const LibraryPage = lazy(() => import('./LibraryPage'));
+const Alumni = lazy(() => import('./Alumni'));
+const AlumniArticle = lazy(() => import('./AlumniArticle'));
+const QuizCorner = lazy(() => import('./QuizCorner'));
+const AdminLayout = lazy(() => import('./AdminLayout'));
+const AdminUpdates = lazy(() => import('./AdminUpdates'));
+const AdminEvents = lazy(() => import('./AdminEvents'));
+const AdminAchievements = lazy(() => import('./AdminAchievements'));
+const AdminAnsarTimes = lazy(() => import('./AdminAnsarTimes'));
+const AdminGallery = lazy(() => import('./AdminGallery'));
+const AdminSportsAchievements = lazy(() => import('./AdminSportsAchievements'));
+const AdminLearningFeatures = lazy(() => import('./AdminLearningFeatures'));
+const AdminLifeAtAnsar = lazy(() => import('./AdminLifeAtAnsar'));
+const AdminLearningLabs = lazy(() => import('./AdminLearningLabs'));
+const AdminAnsarSprouts = lazy(() => import('./AdminAnsarSprouts'));
+const AdminFieldTrips = lazy(() => import('./AdminFieldTrips'));
+const AdminLeadership = lazy(() => import('./AdminLeadership'));
+const AdminNotices = lazy(() => import('./AdminNotices'));
+const AdminAcademics = lazy(() => import('./AdminAcademics'));
+const AdminSettings = lazy(() => import('./AdminSettings'));
+const AdminPublicDisclosure = lazy(() => import('./AdminPublicDisclosure'));
+const AdminAtl = lazy(() => import('./AdminAtl'));
+const AdminLibrary = lazy(() => import('./AdminLibrary'));
+const AdminAlumni = lazy(() => import('./AdminAlumni'));
+const AdminQuizCorner = lazy(() => import('./AdminQuizCorner'));
+
+function RouteFallback() {
+  return <div className="min-h-[45vh] bg-slate-50" role="status" aria-label="Loading page" />;
+}
 
 // --- AUTHORIZED ADMIN EMAILS ---
 const ADMIN_EMAILS = [
@@ -465,7 +473,7 @@ const BASE_LEARNING_FEATURES = {
     title: 'Future-Ready Learning Spaces',
     kicker: 'Interactive learning',
     icon: 'screen',
-    image: 'https://images.unsplash.com/photo-1588072432836-e10032774350?q=90&w=2400&auto=format&fit=crop',
+    image: '/learning/smart-classroom-kerala.jpg',
     description: 'Roomy classrooms and smart-board support help teachers blend explanation, visual learning, discussion, and practice. The setup keeps lessons clear, engaging, and easier to follow.',
     points: ['Spacious rooms for comfortable learning', 'Smart-board enabled explanations', 'Better visual support for concepts']
   },
@@ -754,7 +762,7 @@ function LearningFeaturePage() {
     points: Array.isArray(sheetFeature?.points) && sheetFeature.points.length ? sheetFeature.points : defaultFeature.points,
     galleryImages: Array.isArray(sheetFeature?.galleryImages) && sheetFeature.galleryImages.length ? sheetFeature.galleryImages : defaultFeature.galleryImages,
     outdoorGymImageUrls: Array.isArray(sheetFeature?.outdoorGymImageUrls) ? sheetFeature.outdoorGymImageUrls : defaultFeature.outdoorGymImageUrls,
-    image: sheetFeature?.imageUrl || sheetFeature?.image || defaultFeature.image
+    image: resolveLearningFeatureImage(slug, sheetFeature?.imageUrl || sheetFeature?.image, defaultFeature.image)
   } : null;
 
   useEffect(() => {
@@ -1300,6 +1308,7 @@ export default function App() {
     <Router>
       <SiteSeo />
       <ScrollToTop />
+      <Suspense fallback={<RouteFallback />}>
       <Routes>
         {/* Public Website Routes */}
         <Route path="/" element={<Home />} />
@@ -1397,6 +1406,7 @@ export default function App() {
           )
         } />
       </Routes>
+      </Suspense>
     </Router>
     </SettingsProvider>
   );

@@ -234,7 +234,9 @@ function mergeRows(firestoreRows, sheetRows) {
 async function fetchSheetTab(spreadsheetId, tabName) {
   const params = new URLSearchParams({ tqx: 'out:json' });
   if (tabName) params.set('sheet', tabName);
-  params.set('v', `${sheetCacheVersion}-${Date.now()}`);
+  // Keep one URL stable for the five-minute cache window. A unique URL on every
+  // request prevented the browser/CDN from reusing an otherwise identical sheet.
+  params.set('v', String(sheetCacheVersion));
   const url = `https://docs.google.com/spreadsheets/d/${spreadsheetId}/gviz/tq?${params.toString()}`;
   const response = await fetch(url);
   if (!response.ok) throw new Error(`Google Sheets request failed (${response.status})`);

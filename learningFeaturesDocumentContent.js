@@ -1,3 +1,13 @@
+export const SMART_CLASSROOM_KERALA_IMAGE = '/learning/smart-classroom-kerala.jpg';
+const LEGACY_FOREIGN_CLASSROOM_IMAGE = 'https://images.unsplash.com/photo-1588072432836-e10032774350';
+
+export function resolveLearningFeatureImage(slug, imageUrl, fallback = '') {
+  if (slug === 'smart-classrooms' && (!imageUrl || String(imageUrl).startsWith(LEGACY_FOREIGN_CLASSROOM_IMAGE))) {
+    return SMART_CLASSROOM_KERALA_IMAGE;
+  }
+  return imageUrl || fallback;
+}
+
 export const LEARNING_FEATURES_DOCUMENT_CONTENT = {
   'cctv-enabled-safety': {
     kicker: 'A Sanctuary of Safety, Care, and Well-Being',
@@ -7,9 +17,15 @@ export const LEARNING_FEATURES_DOCUMENT_CONTENT = {
   },
   'smart-classrooms': {
     kicker: 'Transforming Classrooms into Hubs of Innovation',
+    image: SMART_CLASSROOM_KERALA_IMAGE,
+    imageUrl: SMART_CLASSROOM_KERALA_IMAGE,
     description: 'Learning flourishes in environments that inspire imagination and collaboration. Our thoughtfully designed classrooms blend digital innovation with learner-centred pedagogy, encouraging exploration, creativity, critical thinking, and meaningful engagement.',
-    body: ['Every learning space is crafted to equip students with the knowledge, skills, and adaptability required to thrive in a rapidly evolving world.'],
-    points: ['Smart, interactive digital classrooms', 'Technology-integrated teaching and learning', 'High-speed internet connectivity', 'Flexible and collaborative learning environments', 'Digital content and multimedia resources', 'Future-focused ICT-enabled education']
+    body: [
+      'Every learning space is crafted to equip students with the knowledge, skills, and adaptability required to thrive in a rapidly evolving world. Comfortable seating, natural light, good ventilation, and clear sightlines help students remain attentive and participate with confidence throughout the school day.',
+      'Interactive displays, visual resources, demonstrations, and collaborative activities make complex ideas easier to understand. Teachers combine technology with discussion, questioning, writing, practical tasks, and peer learning so that digital tools strengthen—not replace—meaningful human interaction.',
+      'Students are encouraged to ask questions, explain their thinking, work in teams, and connect classroom concepts with everyday life. This learner-centred approach supports different learning needs while building communication, creativity, critical thinking, digital responsibility, and independent study habits.'
+    ],
+    points: ['Smart, interactive digital classrooms', 'Comfortable, well-lit and ventilated learning spaces', 'Technology integrated with discussion and practical work', 'Collaborative activities and peer learning', 'Digital content and multimedia resources', 'Support for different learning needs and paces', 'Future-focused ICT and digital responsibility']
   },
   'qualified-support-staff': {
     kicker: 'Empowering Every Child Through Compassionate Guidance',
