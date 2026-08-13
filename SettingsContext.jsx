@@ -2,6 +2,7 @@ import React, { createContext, useContext, useState, useEffect } from 'react';
 import { doc, onSnapshot } from 'firebase/firestore';
 import { db } from './firebase-init';
 import { DEFAULT_ACADEMICS_PAGE, DEFAULT_ACADEMIC_SECTIONS, DEFAULT_SPORTS_PAGE, mergeListWithDefaults } from './contentDefaults';
+import { DEFAULT_TRUST_MEMBERS } from './trustMembers';
 
 const SettingsContext = createContext();
 
@@ -54,6 +55,7 @@ export const SettingsProvider = ({ children }) => {
       { name: 'Saleena Kader', qualification: '', section: 'Primary Section', imageUrl: '' },
       { name: 'Babitha KN', qualification: '', section: 'Sprouts', imageUrl: '' }
     ],
+    trustMembers: DEFAULT_TRUST_MEMBERS,
     mandatoryDisclosureTitle: 'Mandatory Public Disclosure',
     mandatoryDisclosureSections: [
       'General Information',

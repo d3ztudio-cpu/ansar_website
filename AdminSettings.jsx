@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { doc, getDoc, setDoc, serverTimestamp } from 'firebase/firestore';
 import { db } from './firebase-init';
 import ImgBbUrlImporter from './ImgBbUrlImporter';
+import { DEFAULT_TRUST_MEMBERS } from './trustMembers';
 
 export default function AdminSettings() {
   const [formData, setFormData] = useState({
@@ -28,6 +29,7 @@ export default function AdminSettings() {
     principalImageUrl: '',
     principalMessage: '',
     juniorPrincipals: [{ name: '', qualification: '', section: '', imageUrl: '' }],
+    trustMembers: DEFAULT_TRUST_MEMBERS,
     sustainabilityTitle: '',
     sustainabilityDesc: '',
     sustainabilityLogoUrl: '',
@@ -49,7 +51,10 @@ export default function AdminSettings() {
           ...prev,
           ...savedSettings,
           feeStructureTitle: savedSettings.feeStructureTitle || prev.feeStructureTitle,
-          feeStructurePdfUrl: savedSettings.feeStructurePdfUrl || prev.feeStructurePdfUrl
+          feeStructurePdfUrl: savedSettings.feeStructurePdfUrl || prev.feeStructurePdfUrl,
+          trustMembers: Array.isArray(savedSettings.trustMembers) && savedSettings.trustMembers.length
+            ? DEFAULT_TRUST_MEMBERS.map((member, index) => ({ ...member, ...(savedSettings.trustMembers[index] || {}) }))
+            : prev.trustMembers
         }));
       }
     };
@@ -79,6 +84,15 @@ export default function AdminSettings() {
     const next = [...current];
     next[index] = { ...(next[index] || {}), [field]: value };
     setFormData(prev => ({ ...prev, juniorPrincipals: next }));
+  };
+
+  const handleTrustMemberImageChange = (index, imageUrl) => {
+    setFormData(prev => ({
+      ...prev,
+      trustMembers: prev.trustMembers.map((member, memberIndex) => (
+        memberIndex === index ? { ...member, imageUrl } : member
+      ))
+    }));
   };
 
   const addJuniorPrincipal = () => {
@@ -259,6 +273,34 @@ export default function AdminSettings() {
                 </div>
               ))}
               <button type="button" onClick={addJuniorPrincipal} className="text-sm font-bold text-emerald-600 hover:bg-emerald-50 py-2 px-3 rounded-lg">+ Add Junior Principal</button>
+            </div>
+          </div>
+
+          <div className="space-y-4 p-5 bg-slate-50 border border-slate-100 rounded-xl">
+            <div>
+              <h3 className="font-extrabold text-slate-900">Trust Member Photos</h3>
+              <p className="mt-1 text-sm text-slate-500">Update the photo shown for each trustee on the About page.</p>
+            </div>
+            <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+              {formData.trustMembers.map((member, index) => (
+                <div key={`${member.name}-${index}`} className="flex flex-col gap-4 rounded-xl border border-white bg-white p-4 shadow-sm sm:flex-row">
+                  <div className="h-28 w-24 shrink-0 overflow-hidden rounded-lg border border-slate-200 bg-slate-100">
+                    {member.imageUrl ? (
+                      <img src={member.imageUrl} alt={member.name} className="h-full w-full object-contain" />
+                    ) : (
+                      <div className="flex h-full items-center justify-center px-2 text-center text-xs font-bold text-slate-400">No photo</div>
+                    )}
+                  </div>
+                  <div className="min-w-0 flex-1 space-y-2">
+                    <div>
+                      <p className="font-extrabold text-slate-800">{member.name}</p>
+                      <p className="text-xs font-bold text-emerald-600">{member.role}</p>
+                    </div>
+                    <input type="url" value={member.imageUrl || ''} onChange={(e) => handleTrustMemberImageChange(index, e.target.value)} placeholder="Trust member image URL" className="w-full rounded-lg border border-slate-200 p-2 text-sm outline-none focus:ring-2 focus:ring-emerald-500" />
+                    <ImgBbUrlImporter onExtracted={(url) => handleTrustMemberImageChange(index, url)} />
+                  </div>
+                </div>
+              ))}
             </div>
           </div>
 

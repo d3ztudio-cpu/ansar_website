@@ -3,6 +3,7 @@ import Layout from './Layout';
 import ContentPageLayout from './ContentPageLayout';
 import { useFirestoreCollection } from './useFirestoreCollection';
 import { useSettings } from './SettingsContext';
+import { DEFAULT_TRUST_MEMBERS } from './trustMembers';
 
 const ANSAR_MILESTONES = [
   { year: '1979', title: 'ACT got registered', color: 'bg-red-600', ring: 'ring-red-100' },
@@ -57,32 +58,6 @@ const HISTORY_HIGHLIGHTS = [
 ];
 
 const HISTORY_IMAGE_URL = 'https://i.ibb.co/4nr6rs9n/DJI-20260625171033-0002-D.jpg';
-
-const ACT_TRUSTEES = [
-  { name: 'MAMMUNNI K K', role: 'Chairman', imageUrl: '/trustees/act-member-01.png' },
-  { name: 'V T ABDULLAH KOYA THANGAL', role: 'Acting Chairman', imageUrl: '/trustees/act-member-02.png' },
-  { name: 'MOHAMMED K V', role: 'Vice Chairman', imageUrl: '/trustees/act-member-03.png' },
-  { name: 'E A KUNJAHAMMU', role: 'Secretary', imageUrl: '/trustees/act-member-04.png' },
-  { name: 'SHAJU MOHAMEDUNNI', role: 'Asst. Secretary', imageUrl: '/trustees/act-member-05.png' },
-  { name: 'NAJEEB P', role: 'Managing Committee Member', imageUrl: '/trustees/act-member-06.png' },
-  { name: 'MOHAMMED AMEEN E M', role: 'Managing Committee Member', imageUrl: '/trustees/act-member-07.png' },
-  { name: 'MOOSA V', role: 'Managing Committee Member', imageUrl: '/trustees/act-member-08.png' },
-  { name: 'NOOR MOHAMMED KAMALUDHEEN', role: 'Managing Committee Member', imageUrl: '/trustees/act-member-09.png' },
-  { name: 'MUHAMMED SHEREEF E V', role: 'Managing Committee Member', imageUrl: '/trustees/act-member-10.png' },
-  { name: 'ABDUL HAMEED', role: 'Managing Committee Member', imageUrl: '/trustees/act-member-11.png' },
-  { name: 'K K SHANAVAS', role: 'Managing Committee Member', imageUrl: '/trustees/act-member-12.png' },
-  { name: 'MOHAMED KUTTY KAYINGIL', role: 'Managing Committee Member', imageUrl: '/trustees/act-member-13.png' },
-  { name: 'ISMAIL KASIM', role: 'Member', imageUrl: '/trustees/act-member-14.png' },
-  { name: 'SHOUKATH ALI KOROTH', role: 'Member', imageUrl: '/trustees/act-member-15.png' },
-  { name: 'T A MOIDEEN ALIAS MOIDUTTY', role: 'Member', imageUrl: '/trustees/act-member-16.png' },
-  { name: 'M I ABDUL AZEEZ', role: 'Member', imageUrl: '/trustees/act-member-17.png' },
-  { name: 'A USMAN', role: 'Member', imageUrl: '/trustees/act-member-18.png' },
-  { name: 'ANWAR ABDUL MAJEED', role: 'Member', imageUrl: '/trustees/act-member-19.png' },
-  { name: 'MUJEEB RAHMAN P', role: 'Member', imageUrl: '/trustees/act-member-20.png' },
-  { name: 'Dr. MOHAMED BADEEUZZAMAN', role: 'Member', imageUrl: '/trustees/act-member-21.png' },
-  { name: 'Dr. MOHAMMED ALI MAMPPILLY (KOOTTIL)', role: 'Member', imageUrl: '/trustees/act-member-22.png' },
-  { name: 'P I NOUSHAD', role: 'Member', imageUrl: '/trustees/act-member-23.png' }
-];
 
 function AnimatedSection({ children, className = '' }) {
   const [isVisible, setIsVisible] = useState(false);
@@ -320,7 +295,7 @@ function AboutInstitutionSections() {
     <>
       <ValuesAndFaculty />
       <AnsarTimeline />
-      <HistoryAndTrustees historyText={settings?.ansarHistoryText} trustees={ACT_TRUSTEES} />
+      <HistoryAndTrustees historyText={settings?.ansarHistoryText} trustees={settings?.trustMembers || DEFAULT_TRUST_MEMBERS} />
     </>
   );
 }
