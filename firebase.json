@@ -133,11 +133,11 @@
         ]
       },
       {
-        "source": "/@(home-hero-320.avif|home-hero-640.avif|home-hero-320.webp|home-hero-640.webp|favicon-48.png|apple-touch-icon-180.png|icon-192.png|icon-512.png)",
+        "source": "**/*.@(avif|webp|png|jpg|jpeg|gif|svg)",
         "headers": [
           {
             "key": "Cache-Control",
-            "value": "public, max-age=31536000, immutable"
+            "value": "public, max-age=2592000, stale-while-revalidate=86400"
           }
         ]
       },
@@ -153,7 +153,7 @@
     ],
     "rewrites": [
       {
-        "source": "/@(about|academics|admission|news|events|contact|gallery|sports-page|atl|library|ansar-sprouts|extension-services|life-at-ansar|field-trips|ansar-times|alumni|achievements|ansar-media-production|sop|school-policies|mandatory-public-disclosure){,/**}",
+        "source": "/@(about|academics|admission|news|events|contact|gallery|sports-page|atl|library|ansar-sprouts|extension-services|life-at-ansar|field-trips|ansar-times|ansar-family|alumni|achievements|ansar-media-production|sop|school-policies|mandatory-public-disclosure){,/**}",
         "destination": "/index.html"
       },
       {

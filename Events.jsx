@@ -13,10 +13,10 @@ function getDateTime(item) {
 }
 
 export default function Events() {
-  const { data: updates, loading, error } = useContentCollection('updates', null);
+  const { data: eventItems, loading, error } = useContentCollection('events', null);
   const navigate = useNavigate();
-  const events = updates
-    .filter(item => item.published !== false && item.category === 'Events')
+  const events = eventItems
+    .filter(item => item.published !== false && (!item.category || item.category === 'Events'))
     .sort((a, b) => getDateTime(b) - getDateTime(a));
 
   return (

@@ -18,15 +18,22 @@ export default function FloatingSocials() {
   const [showBackToTop, setShowBackToTop] = useState(false);
 
   useEffect(() => {
+    let frameId = null;
     const handleScroll = () => {
-      const scrollY = window.scrollY;
-      // Show back to top after 400px
-      setShowBackToTop(scrollY > 400);
-      // Hide floating socials on mobile after scrolling past hero/vision blocks (approx 700px)
-      setIsScrolledPast(scrollY > 700);
+      if (frameId !== null) return;
+      frameId = window.requestAnimationFrame(() => {
+        const scrollY = window.scrollY;
+        setShowBackToTop(scrollY > 400);
+        setIsScrolledPast(scrollY > 700);
+        frameId = null;
+      });
     };
     window.addEventListener('scroll', handleScroll, { passive: true });
-    return () => window.removeEventListener('scroll', handleScroll);
+    handleScroll();
+    return () => {
+      window.removeEventListener('scroll', handleScroll);
+      if (frameId !== null) window.cancelAnimationFrame(frameId);
+    };
   }, []);
 
   const scrollToTop = () => {
@@ -38,7 +45,7 @@ export default function FloatingSocials() {
       <div className={`fixed left-1/2 bottom-4 z-40 -translate-x-1/2 transition-all duration-500 ease-in-out md:left-auto md:bottom-auto md:right-0 md:top-1/2 md:-translate-y-1/2 md:translate-x-0 ${isScrolledPast ? 'md:opacity-0 md:translate-x-full md:pointer-events-none' : 'opacity-100 md:translate-x-0'}`}>
         {/* Prevent inner rendering until settings are fully loaded to eliminate icon layout glitching & FOUC */}
         {settings?._isLoaded && (
-          <div className="floating-panel-container flex flex-row md:flex-col items-center justify-center gap-2 md:gap-3 p-2 md:p-3 bg-white/90 backdrop-blur-md shadow-[0_10px_40px_-15px_rgba(0,0,0,0.3)] rounded-2xl md:rounded-l-2xl md:rounded-r-none border border-emerald-100 md:border-r-0">
+          <div className="floating-panel-container flex flex-row md:flex-col items-center justify-center gap-2 md:gap-3 p-2 md:p-3 bg-white shadow-[0_10px_40px_-15px_rgba(0,0,0,0.3)] rounded-2xl md:rounded-l-2xl md:rounded-r-none border border-emerald-100 md:border-r-0">
       {settings?.whatsappChannelUrl && (
         <a href={settings.whatsappChannelUrl} target="_blank" rel="noopener noreferrer" className="group relative flex items-center justify-center p-2.5 text-slate-400 hover:text-white bg-white hover:bg-[#25D366] rounded-xl transition-all duration-300 shadow-sm hover:shadow-lg">
           <span className="floating-icon-aura absolute inset-0 rounded-xl bg-[#25D366]"></span>

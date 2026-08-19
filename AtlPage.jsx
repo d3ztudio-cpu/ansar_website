@@ -16,7 +16,11 @@ const DEFAULT_ATL_SETTINGS = {
   inaugurationDate: 'January 2023',
   inauguratedBy: 'MLA Ramya Haridas',
   overviewTitle: 'A space built for curious minds',
-  overviewText: 'Inaugurated in January 2023, the ATL marked a significant milestone in the school’s commitment to innovation and scientific learning. The lab gives students the tools, guidance, and freedom to move beyond textbooks—turning questions into experiments and ideas into working prototypes.'
+  overviewText: 'Inaugurated in January 2023, the ATL marked a significant milestone in the school’s commitment to innovation and scientific learning. The lab gives students the tools, guidance, and freedom to move beyond textbooks—turning questions into experiments and ideas into working prototypes.',
+  eventTiles: [
+    { id: 'cbse-skill-expo-2026', title: 'CBSE Skill Expo and Guidance Festival 2026–27', images: ['/atl/events/skill-expo-01.jpg', '/atl/events/skill-expo-02.jpg', '/atl/events/skill-expo-03.jpg', '/atl/events/skill-expo-04.jpg'] },
+    { id: 'navora-ideathon-2026', title: 'NAVORA Ideathon', images: Array.from({ length: 12 }, (_, index) => `/atl/events/navora-${String(index + 1).padStart(2, '0')}.jpg`) }
+  ]
 };
 
 const technologies = [
@@ -282,6 +286,30 @@ export default function AtlPage() {
                   <InnovationPanel title="Hands-on STEM discovery" note="A welcoming first step into electronics, programming, and innovation." className="aspect-[4/5] sm:mt-10" />
                 )}
               </div>
+            </div>
+          </div>
+        </section>
+
+        <section className="bg-emerald-950 py-20 text-white lg:py-28">
+          <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+            <div className="mx-auto max-w-3xl text-center">
+              <p className="text-xs font-black uppercase tracking-[0.22em] text-amber-300">Events attended and organised</p>
+              <h2 className="mt-4 text-3xl font-extrabold leading-tight sm:text-4xl lg:text-5xl">ATL in action</h2>
+              <p className="mt-5 text-base leading-8 text-slate-300 sm:text-lg">A photo journal of events where Ansar’s young innovators learn, present, collaborate, and compete.</p>
+            </div>
+            <div className="mt-12 space-y-10">
+              {(settings.eventTiles || []).map(event => (
+                <article key={event.id || event.title} className="overflow-hidden rounded-3xl border border-white/10 bg-white/[0.06] p-5 shadow-2xl sm:p-7">
+                  <h3 className="text-2xl font-extrabold text-white">{event.title}</h3>
+                  <div className="mt-6 grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
+                    {(event.images || []).map((imageUrl, imageIndex) => (
+                      <figure key={`${event.id || event.title}-${imageIndex}`} className={`overflow-hidden rounded-2xl bg-white/5 ${imageIndex === 0 ? 'col-span-2 row-span-2' : ''}`}>
+                        <img src={imageUrl} alt={`${event.title} photo ${imageIndex + 1}`} loading="lazy" decoding="async" className="aspect-square h-full w-full object-cover transition duration-500 hover:scale-105" />
+                      </figure>
+                    ))}
+                  </div>
+                </article>
+              ))}
             </div>
           </div>
         </section>

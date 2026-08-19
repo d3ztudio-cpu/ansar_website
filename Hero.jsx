@@ -1,7 +1,7 @@
 import React from 'react';
 import { useSettings } from './SettingsContext';
 
-export default function Hero({ imageUrl, imageSrcSet, imageAvifSrcSet, title, subtitle }) {
+export default function Hero({ imageUrl, imageSrcSet, imageAvifSrcSet, title, titleLine2, subtitle }) {
   const settings = useSettings();
   const graphicUrl = imageUrl || settings?.logoUrl || 'https://i.ibb.co/7d4mTQVT/image.png';
   const displayTitle = title || settings?.heroTitle || "Welcome to Ansar English School";
@@ -20,8 +20,9 @@ export default function Hero({ imageUrl, imageSrcSet, imageAvifSrcSet, title, su
           <span className="inline-block py-1.5 px-5 rounded-full bg-gradient-to-r from-amber-400/20 to-amber-500/10 text-amber-400 text-sm font-bold tracking-[0.2em] uppercase mb-6 border border-amber-400/20 shadow-[0_0_20px_rgba(251,191,36,0.1)]">
             Ansar English School
           </span>
-          <h1 className="text-5xl sm:text-6xl lg:text-7xl font-extrabold text-white mb-8 leading-[1.1] tracking-tight">
-            {displayTitle}
+          <h1 className="text-4xl sm:text-5xl lg:text-5xl xl:text-6xl font-extrabold text-white mb-8 leading-[1.1] tracking-tight">
+            <span className="block lg:whitespace-nowrap">{displayTitle}</span>
+            {titleLine2 && <span className="mt-2 block text-2xl font-bold leading-tight text-emerald-50/90 sm:text-3xl lg:text-4xl">{titleLine2}</span>}
           </h1>
           <p className="text-lg sm:text-xl text-emerald-50/80 max-w-2xl font-light leading-relaxed mb-10">
             {subtitle || "Nurturing creative and value-driven citizens in a rapidly changing world."}

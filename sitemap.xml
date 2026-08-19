@@ -105,6 +105,18 @@
     <priority>0.65</priority>
   </url>
   <url>
+    <loc>https://ansarschool.in/library</loc>
+    <lastmod>2026-08-17</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.65</priority>
+  </url>
+  <url>
+    <loc>https://ansarschool.in/ansar-family</loc>
+    <lastmod>2026-08-17</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.65</priority>
+  </url>
+  <url>
     <loc>https://ansarschool.in/alumni</loc>
     <lastmod>2026-07-07</lastmod>
     <changefreq>monthly</changefreq>

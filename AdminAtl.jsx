@@ -17,6 +17,10 @@ const DEFAULT_SETTINGS = {
   inauguratedBy: 'MLA Ramya Haridas',
   overviewTitle: 'A space built for curious minds',
   overviewText: 'Inaugurated in January 2023, the ATL marked a significant milestone in the school’s commitment to innovation and scientific learning. The lab gives students the tools, guidance, and freedom to move beyond textbooks—turning questions into experiments and ideas into working prototypes.',
+  eventTiles: [
+    { id: 'cbse-skill-expo-2026', title: 'CBSE Skill Expo and Guidance Festival 2026–27', images: ['/atl/events/skill-expo-01.jpg', '/atl/events/skill-expo-02.jpg', '/atl/events/skill-expo-03.jpg', '/atl/events/skill-expo-04.jpg'] },
+    { id: 'navora-ideathon-2026', title: 'NAVORA Ideathon', images: Array.from({ length: 12 }, (_, index) => `/atl/events/navora-${String(index + 1).padStart(2, '0')}.jpg`) }
+  ],
   published: true
 };
 
@@ -36,6 +40,12 @@ export default function AdminAtl() {
   }, []);
 
   const update = (key, value) => setSettings(current => ({ ...current, [key]: value }));
+  const updateEvent = (eventIndex, key, value) => update('eventTiles', settings.eventTiles.map((item, index) => index === eventIndex ? { ...item, [key]: value } : item));
+  const updateEventImage = (eventIndex, imageIndex, value) => updateEvent(eventIndex, 'images', settings.eventTiles[eventIndex].images.map((image, index) => index === imageIndex ? value : image));
+  const addEvent = () => update('eventTiles', [...settings.eventTiles, { id: `atl-event-${Date.now()}`, title: '', images: [''] }]);
+  const removeEvent = (eventIndex) => update('eventTiles', settings.eventTiles.filter((_, index) => index !== eventIndex));
+  const addEventImage = (eventIndex) => updateEvent(eventIndex, 'images', [...settings.eventTiles[eventIndex].images, '']);
+  const removeEventImage = (eventIndex, imageIndex) => updateEvent(eventIndex, 'images', settings.eventTiles[eventIndex].images.filter((_, index) => index !== imageIndex));
   const fieldClass = 'mt-1 w-full rounded-lg border border-slate-200 bg-white p-3 outline-none focus:ring-2 focus:ring-emerald-500';
 
   const save = async (event) => {
@@ -55,6 +65,13 @@ export default function AdminAtl() {
         inauguratedBy: settings.inauguratedBy.trim(),
         overviewTitle: settings.overviewTitle.trim(),
         overviewText: settings.overviewText.trim(),
+        eventTiles: settings.eventTiles
+          .map((item, index) => ({
+            id: item.id || `atl-event-${index + 1}`,
+            title: item.title.trim(),
+            images: item.images.map(normalizeImageUrl).filter(Boolean)
+          }))
+          .filter(item => item.title && item.images.length),
         published: !!settings.published,
         createdAt: existing?.createdAt || serverTimestamp(),
         updatedAt: serverTimestamp()
@@ -89,6 +106,31 @@ export default function AdminAtl() {
           <label className="text-sm font-bold text-slate-700 md:col-span-2">Inaugurated by<input required value={settings.inauguratedBy} onChange={(e) => update('inauguratedBy', e.target.value)} className={fieldClass} /></label>
           <label className="text-sm font-bold text-slate-700 md:col-span-2">Overview title<input required value={settings.overviewTitle} onChange={(e) => update('overviewTitle', e.target.value)} className={fieldClass} /></label>
           <label className="text-sm font-bold text-slate-700 md:col-span-2">Overview text<textarea required value={settings.overviewText} onChange={(e) => update('overviewText', e.target.value)} className={`${fieldClass} h-32`} /></label>
+        </div>
+        <div className="mt-8 border-t border-slate-100 pt-8">
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <div><h3 className="text-lg font-extrabold text-slate-900">ATL event photo tiles</h3><p className="mt-1 text-sm text-slate-500">Add an event and any number of photos. Only tiles with a title and at least one photo are published.</p></div>
+            <button type="button" onClick={addEvent} className="rounded-lg bg-emerald-50 px-4 py-2 text-sm font-bold text-emerald-700 hover:bg-emerald-100">+ Add event tile</button>
+          </div>
+          <div className="mt-5 space-y-5">
+            {settings.eventTiles.map((item, eventIndex) => (
+              <div key={item.id || eventIndex} className="rounded-xl border border-slate-200 bg-slate-50 p-4">
+                <div className="flex items-start gap-3">
+                  <label className="flex-1 text-sm font-bold text-slate-700">Event title<input value={item.title} onChange={(e) => updateEvent(eventIndex, 'title', e.target.value)} placeholder="Event title" className={fieldClass} /></label>
+                  <button type="button" onClick={() => removeEvent(eventIndex)} className="mt-6 rounded-lg border border-red-100 bg-white px-3 py-2 text-sm font-bold text-red-600 hover:bg-red-50">Remove tile</button>
+                </div>
+                <div className="mt-4 space-y-3">
+                  {item.images.map((imageUrl, imageIndex) => (
+                    <div key={`${item.id}-${imageIndex}`} className="rounded-lg border border-slate-200 bg-white p-3">
+                      <div className="flex gap-2"><input value={imageUrl} onChange={(e) => updateEventImage(eventIndex, imageIndex, e.target.value)} placeholder="Photo URL" className="min-w-0 flex-1 rounded-lg border border-slate-200 p-3 outline-none focus:ring-2 focus:ring-emerald-500" /><button type="button" onClick={() => removeEventImage(eventIndex, imageIndex)} className="rounded-lg px-3 text-sm font-bold text-red-600 hover:bg-red-50">Remove</button></div>
+                      <div className="mt-2"><ImgBbUrlImporter onExtracted={(url) => updateEventImage(eventIndex, imageIndex, url)} /></div>
+                    </div>
+                  ))}
+                </div>
+                <button type="button" onClick={() => addEventImage(eventIndex)} className="mt-3 rounded-lg border border-emerald-100 bg-white px-3 py-2 text-sm font-bold text-emerald-700 hover:bg-emerald-50">+ Add photo</button>
+              </div>
+            ))}
+          </div>
         </div>
         <div className="mt-6 flex justify-end border-t border-slate-100 pt-5"><button disabled={saving} className="rounded-lg bg-emerald-600 px-5 py-3 text-sm font-extrabold text-white hover:bg-emerald-700 disabled:opacity-50">{saving ? 'Saving…' : 'Save ATL settings'}</button></div>
       </form>

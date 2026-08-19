@@ -24,6 +24,7 @@ Ansar English School, Perumpilavu`;
 
 const DEFAULT_FEE_STRUCTURE_URL = 'https://drive.google.com/file/d/1BlRQIlD4U4RjRGvVIq2Kah4xYxNjChoa/view?usp=drive_link';
 const DEFAULT_PODCAST_URL = 'https://www.youtube.com/channel/UCINzivjyBDxX2O8vzGpUOCg/';
+const DEFAULT_EVENT_COUNTDOWNS = [{ id: 'vision-2030-launch', title: 'Official Launch & Inauguration of VISION 2030!', dateTime: '2026-08-29T09:30', enabled: true }];
 
 export const SettingsProvider = ({ children }) => {
   const [settings, setSettings] = useState({
@@ -50,7 +51,7 @@ export const SettingsProvider = ({ children }) => {
     principalImageUrl: '',
     principalMessage: DEFAULT_PRINCIPAL_MESSAGE,
     juniorPrincipals: [
-      { name: 'Fareeda E Mohammed', qualification: '', section: 'Middle Section', imageUrl: '' },
+      { name: 'Fareeda E Mohammed', qualification: 'MA, B.Ed', role: 'Vice Principal Junior Section', section: '', imageUrl: '' },
       { name: 'Ravya K R', qualification: '', section: 'Secondary Section', imageUrl: '' },
       { name: 'Saleena Kader', qualification: '', section: 'Primary Section', imageUrl: '' },
       { name: 'Babitha KN', qualification: '', section: 'Sprouts', imageUrl: '' }
@@ -70,6 +71,7 @@ export const SettingsProvider = ({ children }) => {
     feeStructurePdfUrl: DEFAULT_FEE_STRUCTURE_URL,
     sustainabilityDesc: 'At our school, the Year of Sustainability is dedicated to nurturing environmentally responsible and socially conscious learners. Through awareness, action, and innovation, we encourage students to embrace sustainable practices and become active contributors to a greener future.',
     sustainabilityLogoUrl: '',
+    eventCountdowns: DEFAULT_EVENT_COUNTDOWNS,
     sportsPageTitle: DEFAULT_SPORTS_PAGE.title,
     sportsPageDescription: DEFAULT_SPORTS_PAGE.description,
     sportsItems: DEFAULT_SPORTS_PAGE.items,

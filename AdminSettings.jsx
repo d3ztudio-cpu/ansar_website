@@ -4,6 +4,8 @@ import { db } from './firebase-init';
 import ImgBbUrlImporter from './ImgBbUrlImporter';
 import { DEFAULT_TRUST_MEMBERS } from './trustMembers';
 
+const DEFAULT_EVENT_COUNTDOWNS = [{ id: 'vision-2030-launch', title: 'Official Launch & Inauguration of VISION 2030!', dateTime: '2026-08-29T09:30', enabled: true }];
+
 export default function AdminSettings() {
   const [formData, setFormData] = useState({
     heroTitle: '',
@@ -28,11 +30,12 @@ export default function AdminSettings() {
     principalRole: 'Principal',
     principalImageUrl: '',
     principalMessage: '',
-    juniorPrincipals: [{ name: '', qualification: '', section: '', imageUrl: '' }],
+    juniorPrincipals: [{ name: '', qualification: '', role: '', section: '', imageUrl: '' }],
     trustMembers: DEFAULT_TRUST_MEMBERS,
     sustainabilityTitle: '',
     sustainabilityDesc: '',
     sustainabilityLogoUrl: '',
+    eventCountdowns: DEFAULT_EVENT_COUNTDOWNS,
     feeStructureTitle: 'Fee Structure 2026 - 2027',
     feeStructurePdfUrl: 'https://drive.google.com/file/d/1BlRQIlD4U4RjRGvVIq2Kah4xYxNjChoa/view?usp=drive_link'
   });
@@ -40,7 +43,7 @@ export default function AdminSettings() {
   const [message, setMessage] = useState('');
   const juniorPrincipalItems = Array.isArray(formData.juniorPrincipals)
     ? formData.juniorPrincipals
-    : [{ name: '', qualification: '', section: '', imageUrl: '' }];
+    : [{ name: '', qualification: '', role: '', section: '', imageUrl: '' }];
 
   useEffect(() => {
     const fetchSettings = async () => {
@@ -95,10 +98,23 @@ export default function AdminSettings() {
     }));
   };
 
+  const updateCountdown = (index, field, value) => {
+    setFormData(prev => ({ ...prev, eventCountdowns: (prev.eventCountdowns || []).map((event, eventIndex) => eventIndex === index ? { ...event, [field]: value } : event) }));
+  };
+
+  const addCountdown = () => {
+    const id = globalThis.crypto?.randomUUID?.() || `event-${Date.now()}`;
+    setFormData(prev => ({ ...prev, eventCountdowns: [...(prev.eventCountdowns || []), { id, title: '', dateTime: '', enabled: true }] }));
+  };
+
+  const removeCountdown = (index) => {
+    setFormData(prev => ({ ...prev, eventCountdowns: (prev.eventCountdowns || []).filter((_, eventIndex) => eventIndex !== index) }));
+  };
+
   const addJuniorPrincipal = () => {
     setFormData(prev => ({
       ...prev,
-      juniorPrincipals: [...(Array.isArray(prev.juniorPrincipals) ? prev.juniorPrincipals : []), { name: '', qualification: '', section: '', imageUrl: '' }]
+      juniorPrincipals: [...(Array.isArray(prev.juniorPrincipals) ? prev.juniorPrincipals : []), { name: '', qualification: '', role: '', section: '', imageUrl: '' }]
     }));
   };
 
@@ -143,6 +159,7 @@ export default function AdminSettings() {
     try {
       await setDoc(doc(db, 'settings', 'global'), {
         ...formData,
+        eventCountdowns: (formData.eventCountdowns || []).filter(event => event.title?.trim() && event.dateTime).map(event => ({ id: event.id, title: event.title.trim(), dateTime: event.dateTime, enabled: event.enabled !== false })),
         juniorPrincipals: normalizeJuniorPrincipals(formData.juniorPrincipals),
         updatedAt: serverTimestamp()
       }, { merge: true });
@@ -167,6 +184,22 @@ export default function AdminSettings() {
         )}
 
         <form onSubmit={handleSubmit} className="space-y-6">
+          <div className="space-y-4 rounded-xl border border-amber-200 bg-amber-50/60 p-5">
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+              <div><h3 className="font-extrabold text-slate-900">Event Countdown Timers</h3><p className="mt-1 text-sm text-slate-600">Times use India Standard Time. Expired timers disappear automatically.</p></div>
+              <button type="button" onClick={addCountdown} className="rounded-lg bg-emerald-700 px-4 py-2.5 text-sm font-bold text-white hover:bg-emerald-800">+ Add Countdown</button>
+            </div>
+            {(formData.eventCountdowns || []).length ? (formData.eventCountdowns || []).map((event, index) => (
+              <div key={event.id || index} className="grid grid-cols-1 gap-4 rounded-xl border border-amber-100 bg-white p-4 shadow-sm lg:grid-cols-[minmax(0,1fr)_15rem_auto] lg:items-end">
+                <div><label className="mb-2 block text-sm font-bold text-slate-700">Event title</label><input value={event.title || ''} onChange={(e) => updateCountdown(index, 'title', e.target.value)} placeholder="Event name" className="w-full rounded-lg border border-slate-200 p-3 outline-none focus:ring-2 focus:ring-emerald-500" /></div>
+                <div><label className="mb-2 block text-sm font-bold text-slate-700">Date and time (IST)</label><input type="datetime-local" value={event.dateTime || ''} onChange={(e) => updateCountdown(index, 'dateTime', e.target.value)} className="w-full rounded-lg border border-slate-200 p-3 outline-none focus:ring-2 focus:ring-emerald-500" /></div>
+                <div className="flex flex-wrap items-center gap-3 lg:pb-1">
+                  <label className="inline-flex cursor-pointer items-center gap-2 text-sm font-bold text-slate-700"><input type="checkbox" checked={event.enabled !== false} onChange={(e) => updateCountdown(index, 'enabled', e.target.checked)} className="h-5 w-5 accent-emerald-600" /> Visible</label>
+                  <button type="button" onClick={() => removeCountdown(index)} className="rounded-lg border border-red-100 px-3 py-2 text-sm font-bold text-red-600 hover:bg-red-50">Remove</button>
+                </div>
+              </div>
+            )) : <p className="rounded-lg bg-white p-4 text-sm text-slate-500">No countdown timers configured.</p>}
+          </div>
           <div className="space-y-4 p-5 bg-slate-50 border border-slate-100 rounded-xl">
             <h3 className="font-extrabold text-slate-900 mb-2">Core Branding</h3>
             <div>
@@ -175,7 +208,7 @@ export default function AdminSettings() {
             </div>
             <div>
               <label className="block text-sm font-bold text-slate-700 mb-2">Main School Logo (Image URL)</label>
-              <input name="logoUrl" type="url" value={formData.logoUrl} onChange={handleChange} className="w-full p-3 border border-slate-200 rounded-lg focus:ring-2 focus:ring-emerald-500 outline-none" />
+              <input name="logoUrl" type="text" value={formData.logoUrl} onChange={handleChange} className="w-full p-3 border border-slate-200 rounded-lg focus:ring-2 focus:ring-emerald-500 outline-none" />
               <div className="mt-2">
                 <ImgBbUrlImporter onExtracted={(url) => setFormData(prev => ({ ...prev, logoUrl: url }))} />
               </div>
@@ -198,7 +231,7 @@ export default function AdminSettings() {
                   <label className="block text-sm font-bold text-slate-700 mb-2">School Premises Vertical Carousel</label>
                   {(formData.premisesImages || ['']).map((url, index) => (
                     <div key={`prem-${index}`} className="flex items-center gap-2 mb-2">
-                      <input type="url" value={url} onChange={(e) => handleArrayChange('premisesImages', index, e.target.value)} placeholder="Image URL..." className="w-full p-2 border border-slate-200 rounded-lg outline-none" />
+                      <input type="text" value={url} onChange={(e) => handleArrayChange('premisesImages', index, e.target.value)} placeholder="Image URL..." className="w-full p-2 border border-slate-200 rounded-lg outline-none" />
                       <button type="button" onClick={() => removeArrayItem('premisesImages', index)} disabled={formData.premisesImages.length <= 1} className="p-2 text-red-500 hover:bg-red-50 rounded-full disabled:opacity-50">✕</button>
                     </div>
                   ))}
@@ -211,7 +244,7 @@ export default function AdminSettings() {
                   <label className="block text-sm font-bold text-slate-700 mb-2">KG Section Vertical Carousel</label>
                   {(formData.kgImages || ['']).map((url, index) => (
                     <div key={`kg-${index}`} className="flex items-center gap-2 mb-2">
-                      <input type="url" value={url} onChange={(e) => handleArrayChange('kgImages', index, e.target.value)} placeholder="Image URL..." className="w-full p-2 border border-slate-200 rounded-lg outline-none" />
+                      <input type="text" value={url} onChange={(e) => handleArrayChange('kgImages', index, e.target.value)} placeholder="Image URL..." className="w-full p-2 border border-slate-200 rounded-lg outline-none" />
                       <button type="button" onClick={() => removeArrayItem('kgImages', index)} disabled={formData.kgImages.length <= 1} className="p-2 text-red-500 hover:bg-red-50 rounded-full disabled:opacity-50">✕</button>
                     </div>
                   ))}
@@ -232,7 +265,7 @@ export default function AdminSettings() {
                 <input name="directorName" value={formData.directorName} onChange={handleChange} placeholder="Director name" className="w-full p-3 border border-slate-200 rounded-lg outline-none focus:ring-2 focus:ring-emerald-500" />
                 <input name="directorQualifications" value={formData.directorQualifications} onChange={handleChange} placeholder="Qualifications" className="w-full p-3 border border-slate-200 rounded-lg outline-none focus:ring-2 focus:ring-emerald-500" />
                 <input name="directorRole" value={formData.directorRole} onChange={handleChange} placeholder="Role" className="w-full p-3 border border-slate-200 rounded-lg outline-none focus:ring-2 focus:ring-emerald-500" />
-                <input name="directorImageUrl" type="url" value={formData.directorImageUrl} onChange={handleChange} placeholder="Director image URL" className="w-full p-3 border border-slate-200 rounded-lg outline-none focus:ring-2 focus:ring-emerald-500" />
+                <input name="directorImageUrl" type="text" value={formData.directorImageUrl} onChange={handleChange} placeholder="Director image URL" className="w-full p-3 border border-slate-200 rounded-lg outline-none focus:ring-2 focus:ring-emerald-500" />
                 <ImgBbUrlImporter onExtracted={(url) => setFormData(prev => ({ ...prev, directorImageUrl: url }))} />
                 <textarea name="directorMessage" value={formData.directorMessage} onChange={handleChange} placeholder="Director message" className="h-28 w-full p-3 border border-slate-200 rounded-lg outline-none focus:ring-2 focus:ring-emerald-500" />
               </div>
@@ -241,7 +274,7 @@ export default function AdminSettings() {
                 <input name="principalName" value={formData.principalName} onChange={handleChange} placeholder="Principal name" className="w-full p-3 border border-slate-200 rounded-lg outline-none focus:ring-2 focus:ring-emerald-500" />
                 <input name="principalQualifications" value={formData.principalQualifications} onChange={handleChange} placeholder="Qualifications" className="w-full p-3 border border-slate-200 rounded-lg outline-none focus:ring-2 focus:ring-emerald-500" />
                 <input name="principalRole" value={formData.principalRole} onChange={handleChange} placeholder="Role" className="w-full p-3 border border-slate-200 rounded-lg outline-none focus:ring-2 focus:ring-emerald-500" />
-                <input name="principalImageUrl" type="url" value={formData.principalImageUrl} onChange={handleChange} placeholder="Principal image URL" className="w-full p-3 border border-slate-200 rounded-lg outline-none focus:ring-2 focus:ring-emerald-500" />
+                <input name="principalImageUrl" type="text" value={formData.principalImageUrl} onChange={handleChange} placeholder="Principal image URL" className="w-full p-3 border border-slate-200 rounded-lg outline-none focus:ring-2 focus:ring-emerald-500" />
                 <ImgBbUrlImporter onExtracted={(url) => setFormData(prev => ({ ...prev, principalImageUrl: url }))} />
                 <textarea name="principalMessage" value={formData.principalMessage} onChange={handleChange} placeholder="Principal message" className="h-28 w-full p-3 border border-slate-200 rounded-lg outline-none focus:ring-2 focus:ring-emerald-500" />
               </div>
@@ -263,9 +296,10 @@ export default function AdminSettings() {
                       <button type="button" onClick={() => removeJuniorPrincipal(index)} disabled={juniorPrincipalItems.length <= 1} className="rounded-lg border border-red-100 px-3 py-2 text-sm font-bold text-red-600 transition-colors hover:bg-red-50 disabled:cursor-not-allowed disabled:opacity-50">Remove</button>
                     </div>
                   </div>
-                  <div className="grid grid-cols-1 gap-3 lg:grid-cols-2 xl:grid-cols-4">
+                  <div className="grid grid-cols-1 gap-3 lg:grid-cols-2 xl:grid-cols-5">
                     <input value={leader.name || ''} onChange={(e) => handleJuniorPrincipalChange(index, 'name', e.target.value)} placeholder="Name" className="min-w-0 rounded-lg border border-slate-200 p-3 outline-none focus:ring-2 focus:ring-emerald-500" />
                     <input value={leader.qualification || leader.qualifications || ''} onChange={(e) => handleJuniorPrincipalChange(index, 'qualification', e.target.value)} placeholder="Qualifications" className="min-w-0 rounded-lg border border-slate-200 p-3 outline-none focus:ring-2 focus:ring-emerald-500" />
+                    <input value={leader.role || ''} onChange={(e) => handleJuniorPrincipalChange(index, 'role', e.target.value)} placeholder="Role (optional)" className="min-w-0 rounded-lg border border-slate-200 p-3 outline-none focus:ring-2 focus:ring-emerald-500" />
                     <input value={leader.section || ''} onChange={(e) => handleJuniorPrincipalChange(index, 'section', e.target.value)} placeholder="Section" className="min-w-0 rounded-lg border border-slate-200 p-3 outline-none focus:ring-2 focus:ring-emerald-500" />
                     <input value={leader.imageUrl || ''} onChange={(e) => handleJuniorPrincipalChange(index, 'imageUrl', e.target.value)} placeholder="Image URL" className="min-w-0 rounded-lg border border-slate-200 p-3 outline-none focus:ring-2 focus:ring-emerald-500" />
                   </div>
@@ -296,7 +330,7 @@ export default function AdminSettings() {
                       <p className="font-extrabold text-slate-800">{member.name}</p>
                       <p className="text-xs font-bold text-emerald-600">{member.role}</p>
                     </div>
-                    <input type="url" value={member.imageUrl || ''} onChange={(e) => handleTrustMemberImageChange(index, e.target.value)} placeholder="Trust member image URL" className="w-full rounded-lg border border-slate-200 p-2 text-sm outline-none focus:ring-2 focus:ring-emerald-500" />
+                    <input type="text" value={member.imageUrl || ''} onChange={(e) => handleTrustMemberImageChange(index, e.target.value)} placeholder="Trust member image URL" className="w-full rounded-lg border border-slate-200 p-2 text-sm outline-none focus:ring-2 focus:ring-emerald-500" />
                     <ImgBbUrlImporter onExtracted={(url) => handleTrustMemberImageChange(index, url)} />
                   </div>
                 </div>
@@ -313,7 +347,7 @@ export default function AdminSettings() {
               </div>
               <div>
                 <label className="block text-sm font-bold text-slate-700 mb-2">Fee Structure PDF / Drive URL</label>
-                <input name="feeStructurePdfUrl" type="url" value={formData.feeStructurePdfUrl || ''} onChange={handleChange} placeholder="https://drive.google.com/file/d/..." className="w-full p-3 border border-slate-200 rounded-lg focus:ring-2 focus:ring-emerald-500 outline-none" />
+                <input name="feeStructurePdfUrl" type="text" value={formData.feeStructurePdfUrl || ''} onChange={handleChange} placeholder="https://drive.google.com/file/d/..." className="w-full p-3 border border-slate-200 rounded-lg focus:ring-2 focus:ring-emerald-500 outline-none" />
               </div>
             </div>
             {formData.feeStructurePdfUrl && (
@@ -332,7 +366,7 @@ export default function AdminSettings() {
               </div>
               <div>
                 <label className="block text-sm font-bold text-slate-700 mb-2">Logo PNG URL</label>
-                <input name="sustainabilityLogoUrl" type="url" value={formData.sustainabilityLogoUrl} onChange={handleChange} className="w-full p-3 border border-slate-200 rounded-lg focus:ring-2 focus:ring-emerald-500 outline-none" />
+                <input name="sustainabilityLogoUrl" type="text" value={formData.sustainabilityLogoUrl} onChange={handleChange} className="w-full p-3 border border-slate-200 rounded-lg focus:ring-2 focus:ring-emerald-500 outline-none" />
                 <div className="mt-2">
                   <ImgBbUrlImporter onExtracted={(url) => setFormData(prev => ({ ...prev, sustainabilityLogoUrl: url }))} />
                 </div>
@@ -350,7 +384,7 @@ export default function AdminSettings() {
               {['facebookUrl', 'instagramUrl', 'youtubeUrl', 'twitterUrl', 'whatsappChannelUrl', 'podcastUrl'].map(network => (
                 <div key={network}>
                   <label className="block text-sm font-bold text-slate-700 mb-2 capitalize">{network.replace('Url', '')}</label>
-                  <input name={network} type="url" value={formData[network]} onChange={handleChange} className="w-full p-3 border border-slate-200 rounded-lg focus:ring-2 focus:ring-emerald-500 outline-none" />
+                  <input name={network} type="text" value={formData[network]} onChange={handleChange} className="w-full p-3 border border-slate-200 rounded-lg focus:ring-2 focus:ring-emerald-500 outline-none" />
                 </div>
               ))}
             </div>

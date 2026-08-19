@@ -38,7 +38,7 @@ export default function Navbar() {
   ];
 
   return (
-    <header className="relative sticky top-0 z-50 border-b border-white/10 bg-emerald-950/95 shadow-lg shadow-emerald-950/20 backdrop-blur-md transition-all duration-300">
+    <header className="relative sticky top-0 z-50 border-b border-white/10 bg-emerald-950 shadow-lg shadow-emerald-950/20">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-24">
           {/* Premium Logo Layout */}

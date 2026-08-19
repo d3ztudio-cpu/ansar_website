@@ -9,6 +9,7 @@ import { useContentCollection } from './useContentCollection';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Link } from 'react-router-dom';
 import { compareContentNewestFirst, getDisplayYear, isYearOnly } from './dateUtils';
+import EventCountdown from './EventCountdown';
 
 const SchoolChatbot = lazy(() => import('./SchoolChatbot'));
 
@@ -43,7 +44,7 @@ const FALLBACK_FEATURES = [
 const FALLBACK_LEADERS = [
   { name: 'Dr. Najeeb Mohamad', role: 'Director', detail: 'MSc, MA, B.Ed, CIDTT, SET' },
   { name: 'Sajidha Razack', role: 'Principal in Charge', detail: 'Senior Secondary Section' },
-  { name: 'Fareeda E Mohammed', role: 'Junior Principal', detail: 'Middle Section' },
+  { name: 'Fareeda E Mohammed', role: 'Vice Principal Junior Section', qualification: 'MA, B.Ed', detail: '' },
   { name: 'Ravya K R', role: 'Junior Principal', detail: 'Secondary Section' },
   { name: 'Saleena Kader', role: 'Junior Principal', detail: 'Primary Section' },
   { name: 'Babitha KN', role: 'Junior Principal', detail: 'Sprouts' }
@@ -59,13 +60,13 @@ function AnimatedSection({ children, className = "", ...props }) {
         setIsVisible(true);
         observer.unobserve(entry.target);
       }
-    }, { threshold: 0.12 });
+    }, { threshold: 0.08, rootMargin: '0px 0px -6% 0px' });
     if (ref.current) observer.observe(ref.current);
     return () => observer.disconnect();
   }, []);
 
   return (
-    <div ref={ref} className={`transition-all duration-1000 ease-out transform ${isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-12'} ${className}`} {...props}>
+    <div ref={ref} className={`transform-gpu transition-[opacity,transform] duration-700 ease-out motion-reduce:transform-none motion-reduce:transition-none ${isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'} ${className}`} {...props}>
       {children}
     </div>
   );
@@ -122,8 +123,8 @@ function VerticalCarousel({ images, onImageClick }) {
           initial={{ opacity: 0, y: 50 }}
           animate={{ opacity: 1, y: 0 }}
           exit={{ opacity: 0, y: -50 }}
-          transition={{ duration: 0.8, ease: "easeInOut" }}
-          className="absolute inset-0 w-full h-full object-cover cursor-pointer opacity-80 group-hover:opacity-100 transition-opacity"
+          transition={{ duration: 0.55, ease: "easeOut" }}
+          className="absolute inset-0 w-full h-full object-cover cursor-pointer opacity-80 group-hover:opacity-100 transition-opacity motion-reduce:transition-none"
           loading="lazy"
           decoding="async"
           onClick={() => onImageClick(validImages[index])}
@@ -207,9 +208,11 @@ function LeadershipProfile({ profile, reverse = false }) {
 }
 
 function JuniorPrincipalTile({ leader, index }) {
-  const qualification = leader.qualification || leader.qualifications || '';
-  const role = leader.role || 'Junior Principal';
-  const section = leader.section || leader.detail || '';
+  const isFareeda = (leader.name || '').toLowerCase().includes('fareeda');
+  const qualification = leader.qualification || leader.qualifications || (isFareeda ? 'MA, B.Ed' : '');
+  const savedRole = leader.role || leader.designation || '';
+  const role = isFareeda ? 'Vice Principal Junior Section' : (/junior principal/i.test(savedRole) ? '' : savedRole);
+  const section = isFareeda ? '' : (leader.section || leader.detail || '');
   const frameShape = {
     clipPath: 'polygon(0 0, calc(100% - 1.35rem) 0, 100% 1.35rem, 100% 100%, 1.35rem 100%, 0 calc(100% - 1.35rem))'
   };
@@ -234,9 +237,9 @@ function JuniorPrincipalTile({ leader, index }) {
           )}
         </div>
         <div className="flex flex-1 flex-col justify-center p-5 sm:p-6">
-          <p className="font-sans text-sm font-semibold normal-case leading-snug tracking-normal text-emerald-700">{role}</p>
-          <h4 className="mt-2 text-xl font-extrabold leading-tight text-emerald-950">{leader.name}</h4>
+          <h4 className="text-xl font-extrabold leading-tight text-emerald-950">{leader.name}</h4>
           {qualification && <p className="mt-2 text-sm font-bold leading-snug text-amber-600">{qualification}</p>}
+          {role && <p className="mt-2 font-sans text-sm font-semibold normal-case leading-snug tracking-normal text-emerald-700">{role}</p>}
           {section && <p className="mt-2 text-sm font-bold text-slate-600">{section}</p>}
         </div>
       </div>
@@ -268,6 +271,7 @@ export default function Home() {
   const sportsAchievementsRef = useRef(null);
   const { data: leadershipData } = useContentCollection('leadership', 'order', 'asc', { firestoreOnly: true });
   const { data: updates } = useContentCollection('updates', null, 'desc', { limit: 18 });
+  const { data: eventItems } = useContentCollection('events', null, 'desc');
   const { data: sportsAchievements } = useContentCollection('sportsAchievements', null, 'desc', { limit: 8 });
   const { data: learningFeatures } = useContentCollection('learningFeatures', null, 'asc', { sheetsOnly: true });
 
@@ -275,7 +279,10 @@ export default function Home() {
     .filter(item => item.published !== false)
     .sort(compareContentNewestFirst);
   const homeNews = publishedUpdates.filter(item => item.category === 'News' || !item.category).slice(0, 3);
-  const homeEvents = publishedUpdates.filter(item => item.category === 'Events').slice(0, 3);
+  const homeEvents = eventItems
+    .filter(item => item.published !== false && (!item.category || item.category === 'Events'))
+    .sort(compareContentNewestFirst)
+    .slice(0, 3);
   const homeSportsAchievements = sportsAchievements
     .filter(item => item.published !== false)
     .sort(compareContentNewestFirst)
@@ -305,7 +312,7 @@ export default function Home() {
     ? settings.juniorPrincipals.filter(leader => leader.name || leader.imageUrl || leader.section || leader.qualification || leader.qualifications)
     : activeLeaders
         .filter(leader => (leader.role || '').toLowerCase().includes('junior'))
-        .map(leader => ({ name: leader.name, qualification: leader.qualification || '', section: leader.detail || leader.role, imageUrl: leader.imageUrl }));
+        .map(leader => ({ name: leader.name, qualification: leader.qualification || '', section: leader.detail || '', role: leader.name === 'Fareeda E Mohammed' ? 'Vice Principal Junior Section' : '', imageUrl: leader.imageUrl }));
   const canScrollSportsAchievements = homeSportsAchievements.length > 1;
 
   const scrollSportsAchievements = (direction) => {
@@ -323,7 +330,8 @@ export default function Home() {
       <NoticePopup />
       <DeferredSchoolChatbot />
       <Hero 
-        title="Ansar English School – CBSE School in Thrissur"
+        title="Ansar English School"
+        titleLine2="CBSE School in Thrissur"
         subtitle="A NABET-accredited CBSE Senior Secondary School in Perumpilavu, Thrissur, nurturing curious learners, ethical leaders, and responsible global citizens."
         imageUrl="/home-hero-640.webp"
         imageSrcSet="/home-hero-320.webp 320w, /home-hero-640.webp 640w"
@@ -344,6 +352,8 @@ export default function Home() {
           <span className="text-slate-500 font-bold tracking-widest uppercase text-xs">Students Enrolled</span>
         </div>
       </AnimatedSection>
+
+      <EventCountdown events={settings?.eventCountdowns || []} />
 
       <AnimatedSection className="mt-32 grid grid-cols-1 lg:grid-cols-2 gap-16 items-stretch">
         <div className="flex flex-col justify-center">

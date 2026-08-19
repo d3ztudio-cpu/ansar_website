@@ -7,7 +7,7 @@ export const STAFF_DIRECTORY = [
   },
   {
     "name": "FAREEDA MOHAMED E",
-    "designation": "Vice Principal - Junior section",
+    "designation": "Vice Principal Junior Section",
     "subject": "HEADS",
     "section": "UPPER PRIMARY"
   },
