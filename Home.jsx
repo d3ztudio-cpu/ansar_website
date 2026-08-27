@@ -44,7 +44,8 @@ const FALLBACK_FEATURES = [
 const FALLBACK_LEADERS = [
   { name: 'Dr. Najeeb Mohamad', role: 'Director', detail: 'MSc, MA, B.Ed, CIDTT, SET' },
   { name: 'Sajidha Razack', role: 'Principal in Charge', detail: 'Senior Secondary Section' },
-  { name: 'Fareeda E Mohammed', role: 'Vice Principal Junior Section', qualification: 'MA, B.Ed', detail: '' },
+  { name: 'Fareeda E Mohammed',
+     detail: 'Middle Section' },
   { name: 'Ravya K R', role: 'Junior Principal', detail: 'Secondary Section' },
   { name: 'Saleena Kader', role: 'Junior Principal', detail: 'Primary Section' },
   { name: 'Babitha KN', role: 'Junior Principal', detail: 'Sprouts' }
@@ -208,11 +209,9 @@ function LeadershipProfile({ profile, reverse = false }) {
 }
 
 function JuniorPrincipalTile({ leader, index }) {
-  const isFareeda = (leader.name || '').toLowerCase().includes('fareeda');
-  const qualification = leader.qualification || leader.qualifications || (isFareeda ? 'MA, B.Ed' : '');
-  const savedRole = leader.role || leader.designation || '';
-  const role = isFareeda ? 'Vice Principal Junior Section' : (/junior principal/i.test(savedRole) ? '' : savedRole);
-  const section = isFareeda ? '' : (leader.section || leader.detail || '');
+  const qualification = leader.qualification || leader.qualifications || '';
+  const role = leader.role || 'Junior Principal';
+  const section = leader.section || leader.detail || '';
   const frameShape = {
     clipPath: 'polygon(0 0, calc(100% - 1.35rem) 0, 100% 1.35rem, 100% 100%, 1.35rem 100%, 0 calc(100% - 1.35rem))'
   };
@@ -237,9 +236,9 @@ function JuniorPrincipalTile({ leader, index }) {
           )}
         </div>
         <div className="flex flex-1 flex-col justify-center p-5 sm:p-6">
-          <h4 className="text-xl font-extrabold leading-tight text-emerald-950">{leader.name}</h4>
+          <p className="font-sans text-sm font-semibold normal-case leading-snug tracking-normal text-emerald-700">{role}</p>
+          <h4 className="mt-2 text-xl font-extrabold leading-tight text-emerald-950">{leader.name}</h4>
           {qualification && <p className="mt-2 text-sm font-bold leading-snug text-amber-600">{qualification}</p>}
-          {role && <p className="mt-2 font-sans text-sm font-semibold normal-case leading-snug tracking-normal text-emerald-700">{role}</p>}
           {section && <p className="mt-2 text-sm font-bold text-slate-600">{section}</p>}
         </div>
       </div>
@@ -312,7 +311,7 @@ export default function Home() {
     ? settings.juniorPrincipals.filter(leader => leader.name || leader.imageUrl || leader.section || leader.qualification || leader.qualifications)
     : activeLeaders
         .filter(leader => (leader.role || '').toLowerCase().includes('junior'))
-        .map(leader => ({ name: leader.name, qualification: leader.qualification || '', section: leader.detail || '', role: leader.name === 'Fareeda E Mohammed' ? 'Vice Principal Junior Section' : '', imageUrl: leader.imageUrl }));
+        .map(leader => ({ name: leader.name, qualification: leader.qualification || '', section: leader.detail || leader.role, imageUrl: leader.imageUrl }));
   const canScrollSportsAchievements = homeSportsAchievements.length > 1;
 
   const scrollSportsAchievements = (direction) => {
@@ -330,8 +329,7 @@ export default function Home() {
       <NoticePopup />
       <DeferredSchoolChatbot />
       <Hero 
-        title="Ansar English School"
-        titleLine2="CBSE School in Thrissur"
+        title="Ansar English School – CBSE School in Thrissur"
         subtitle="A NABET-accredited CBSE Senior Secondary School in Perumpilavu, Thrissur, nurturing curious learners, ethical leaders, and responsible global citizens."
         imageUrl="/home-hero-640.webp"
         imageSrcSet="/home-hero-320.webp 320w, /home-hero-640.webp 640w"

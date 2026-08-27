@@ -42,7 +42,7 @@ export default function FloatingSocials() {
 
   return (
     <>
-      <div className={`fixed left-1/2 bottom-4 z-40 -translate-x-1/2 transition-all duration-500 ease-in-out md:left-auto md:bottom-auto md:right-0 md:top-1/2 md:-translate-y-1/2 md:translate-x-0 ${isScrolledPast ? 'md:opacity-0 md:translate-x-full md:pointer-events-none' : 'opacity-100 md:translate-x-0'}`}>
+      <div className={`fixed right-3 bottom-3 z-40 transition-all duration-500 ease-in-out md:left-auto md:bottom-auto md:right-0 md:top-1/2 md:-translate-y-1/2 md:translate-x-0 ${isScrolledPast ? 'md:opacity-0 md:translate-x-full md:pointer-events-none' : 'opacity-100 md:translate-x-0'}`}>
         {/* Prevent inner rendering until settings are fully loaded to eliminate icon layout glitching & FOUC */}
         {settings?._isLoaded && (
           <div className="floating-panel-container flex flex-row md:flex-col items-center justify-center gap-2 md:gap-3 p-2 md:p-3 bg-white shadow-[0_10px_40px_-15px_rgba(0,0,0,0.3)] rounded-2xl md:rounded-l-2xl md:rounded-r-none border border-emerald-100 md:border-r-0">

@@ -1,4 +1,4 @@
-import React, { useMemo, useRef, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { getGenerativeModel } from 'firebase/ai';
 import { Link } from 'react-router-dom';
 import { ai } from './firebase-ai-init';
@@ -104,7 +104,22 @@ function getContentDateTime(item) {
   return Number.MIN_SAFE_INTEGER;
 }
 
-function buildSiteContext({ settings, updates, achievements, disclosures, ansarTimes, pages, leadership, learningLabs }) {
+function summarizeCollection(items, label) {
+  const summary = [...items]
+    .filter(item => item && item.published !== false)
+    .sort((a, b) => getContentDateTime(b) - getContentDateTime(a))
+    .slice(0, 8)
+    .map(item => {
+      const heading = item.title || item.name || item.destination || item.category || item.slug;
+      const details = trimText(item.description || item.content || item.bodyHtml || item.caption || item.summary, 260);
+      return [item.date, heading, details].filter(Boolean).join(' - ');
+    })
+    .filter(Boolean)
+    .join('\n');
+  return `${label}:\n${summary || `No published ${label.toLowerCase()} currently loaded.`}`;
+}
+
+function buildSiteContext({ settings, updates, achievements, disclosures, ansarTimes, pages, leadership, learningLabs, sportsAchievements, fieldTrips, sproutsActivities, gallery, learningFeatures }) {
   const news = updates
     .filter(item => item.published !== false && (item.category === 'News' || !item.category))
     .sort((a, b) => getContentDateTime(b) - getContentDateTime(a));
@@ -152,6 +167,11 @@ function buildSiteContext({ settings, updates, achievements, disclosures, ansarT
     `News by date:\n${formatItems(news, ['date', 'title', 'description']) || 'No published news currently loaded.'}`,
     `Events by date:\n${formatItems(events, ['date', 'title', 'description']) || 'No published events currently loaded.'}`,
     `Achievements:\n${formatItems(dateOrderedAchievements, ['date', 'title', 'studentName', 'description']) || 'No published achievements currently loaded.'}`,
+    summarizeCollection(sportsAchievements, 'Sports achievements'),
+    summarizeCollection(fieldTrips, 'Field trips'),
+    summarizeCollection(sproutsActivities, 'Ansar Sprouts activities'),
+    summarizeCollection(gallery, 'Gallery updates'),
+    summarizeCollection(learningFeatures, 'Student-centric learning features'),
     `Public disclosure documents:\n${formatItems(disclosures, ['section', 'title']) || 'No public disclosure documents currently loaded.'}`,
     `Ansar Times:\n${formatItems(ansarTimes, ['year', 'month']) || 'No magazine issues currently loaded.'}`,
     `Admin-managed pages:\n${pageSummaries || 'No extra admin pages currently loaded.'}`,
@@ -298,17 +318,38 @@ export default function SchoolChatbot() {
   ]);
   const conversationRef = useRef([]);
 
-  const { data: updates } = useContentCollection('updates', null);
-  const { data: achievements } = useContentCollection('achievements', null);
-  const { data: disclosures } = useContentCollection('publicDisclosure', 'order', 'asc', { limit: 12 });
-  const { data: ansarTimes } = useContentCollection('ansarTimes', 'year', 'desc', { limit: 8 });
+  // Firestore collections update instantly. This key also rechecks sheet-backed
+  // content every five minutes and whenever a visitor returns to the tab.
+  const [contentRefreshKey, setContentRefreshKey] = useState(0);
+  useEffect(() => {
+    const refresh = () => setContentRefreshKey(value => value + 1);
+    const intervalId = window.setInterval(refresh, 5 * 60 * 1000);
+    const handleVisibility = () => {
+      if (document.visibilityState === 'visible') refresh();
+    };
+    document.addEventListener('visibilitychange', handleVisibility);
+    return () => {
+      window.clearInterval(intervalId);
+      document.removeEventListener('visibilitychange', handleVisibility);
+    };
+  }, []);
+
+  const { data: updates } = useContentCollection('updates', null, 'desc', { refreshKey: contentRefreshKey });
+  const { data: achievements } = useContentCollection('achievements', null, 'desc', { refreshKey: contentRefreshKey });
+  const { data: disclosures } = useContentCollection('publicDisclosure', 'order', 'asc', { limit: 20, refreshKey: contentRefreshKey });
+  const { data: ansarTimes } = useContentCollection('ansarTimes', 'year', 'desc', { limit: 12, refreshKey: contentRefreshKey });
   const { data: leadership } = useContentCollection('leadership', 'order', 'asc', { firestoreOnly: true });
   const { data: learningLabs } = useContentCollection('learningLabs', 'order', 'asc', { firestoreOnly: true });
   const { data: pages } = useFirestoreCollection('pages', 'createdAt', 'desc');
+  const { data: sportsAchievements } = useContentCollection('sportsAchievements', null, 'desc', { refreshKey: contentRefreshKey });
+  const { data: fieldTrips } = useContentCollection('fieldTrips', null, 'desc', { firestoreOnly: true });
+  const { data: sproutsActivities } = useContentCollection('sproutsActivities', 'date', 'desc', { sheetsOnly: true, refreshKey: contentRefreshKey });
+  const { data: gallery } = useContentCollection('gallery', null, 'desc', { firestoreOnly: true });
+  const { data: learningFeatures } = useContentCollection('learningFeatures', null, 'asc', { sheetsOnly: true, refreshKey: contentRefreshKey });
 
   const siteContext = useMemo(
-    () => buildSiteContext({ settings, updates, achievements, disclosures, ansarTimes, pages, leadership, learningLabs }),
-    [settings, updates, achievements, disclosures, ansarTimes, pages, leadership, learningLabs]
+    () => buildSiteContext({ settings, updates, achievements, disclosures, ansarTimes, pages, leadership, learningLabs, sportsAchievements, fieldTrips, sproutsActivities, gallery, learningFeatures }),
+    [settings, updates, achievements, disclosures, ansarTimes, pages, leadership, learningLabs, sportsAchievements, fieldTrips, sproutsActivities, gallery, learningFeatures]
   );
 
   const suggestedLinks = useMemo(() => {
@@ -367,7 +408,7 @@ export default function SchoolChatbot() {
   };
 
   return (
-    <div className="fixed bottom-5 left-5 z-[9998]">
+    <div className="fixed bottom-24 left-4 z-[9998] sm:bottom-5 sm:left-5">
       {isOpen && (
         <section className="mb-4 flex h-[min(76vh,38rem)] w-[calc(100vw-2.5rem)] max-w-sm flex-col overflow-hidden rounded-2xl border border-emerald-100 bg-white shadow-2xl">
           <header className="flex items-center justify-between bg-emerald-950 px-4 py-3 text-white">
