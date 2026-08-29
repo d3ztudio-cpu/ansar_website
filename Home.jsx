@@ -336,16 +336,16 @@ export default function Home() {
         imageAvifSrcSet="/home-hero-320.avif 320w, /home-hero-640.avif 640w"
       />
 
-      <AnimatedSection className="grid grid-cols-1 md:grid-cols-3 gap-6 relative z-20 max-w-6xl mx-auto -mt-12 px-4 sm:px-0">
-        <div className="p-10 text-center bg-white rounded-3xl shadow-[0_10px_40px_-15px_rgba(0,0,0,0.1)] border border-slate-100 border-b-4 border-b-amber-400 transform hover:-translate-y-2 transition-transform duration-500">
+      <AnimatedSection className="relative z-20 mx-auto -mt-8 grid max-w-6xl grid-cols-1 gap-4 px-3 sm:-mt-10 sm:grid-cols-3 sm:gap-5 sm:px-4 lg:-mt-12 lg:gap-6 lg:px-0">
+        <div className="rounded-3xl border border-b-4 border-slate-100 border-b-amber-400 bg-white p-7 text-center shadow-[0_10px_40px_-15px_rgba(0,0,0,0.1)] transition-transform duration-300 motion-safe:hover:-translate-y-2 lg:p-10">
           <strong className="block text-5xl font-extrabold text-emerald-950 mb-2"><AnimatedCounter target={270} suffix="+" /></strong>
           <span className="text-slate-500 font-bold tracking-widest uppercase text-xs">Experienced Staff</span>
         </div>
-        <div className="p-10 text-center bg-white rounded-3xl shadow-[0_10px_40px_-15px_rgba(0,0,0,0.1)] border border-slate-100 border-b-4 border-b-amber-400 transform hover:-translate-y-2 transition-transform duration-500 delay-100">
+        <div className="rounded-3xl border border-b-4 border-slate-100 border-b-amber-400 bg-white p-7 text-center shadow-[0_10px_40px_-15px_rgba(0,0,0,0.1)] transition-transform duration-300 motion-safe:hover:-translate-y-2 lg:p-10">
           <strong className="block text-5xl font-extrabold text-emerald-950 mb-2"><AnimatedCounter target={42} /></strong>
           <span className="text-slate-500 font-bold tracking-widest uppercase text-xs">Successful Years</span>
         </div>
-        <div className="p-10 text-center bg-white rounded-3xl shadow-[0_10px_40px_-15px_rgba(0,0,0,0.1)] border border-slate-100 border-b-4 border-b-amber-400 transform hover:-translate-y-2 transition-transform duration-500 delay-200">
+        <div className="rounded-3xl border border-b-4 border-slate-100 border-b-amber-400 bg-white p-7 text-center shadow-[0_10px_40px_-15px_rgba(0,0,0,0.1)] transition-transform duration-300 motion-safe:hover:-translate-y-2 lg:p-10">
           <strong className="block text-5xl font-extrabold text-emerald-950 mb-2"><AnimatedCounter target={5000} suffix="+" /></strong>
           <span className="text-slate-500 font-bold tracking-widest uppercase text-xs">Students Enrolled</span>
         </div>
