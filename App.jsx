@@ -212,10 +212,13 @@ function getSeoForPath(pathname) {
       noIndex: true
     };
   }
-  if (pathname.startsWith('/news/')) return { ...ROUTE_SEO['/news'], noIndex: true };
-  if (pathname.startsWith('/events/')) return { ...ROUTE_SEO['/events'], noIndex: true };
-  if (pathname.startsWith('/achievements/')) return { ...ROUTE_SEO['/achievements'], noIndex: true };
-  if (pathname.startsWith('/sports-achievements/')) return { ...ROUTE_SEO['/sports-page'], noIndex: true };
+  // Detail pages receive article-specific metadata after their content loads.
+  // Keep the initial render indexable so crawlers do not observe a transient
+  // noindex directive while the public article is being fetched.
+  if (pathname.startsWith('/news/')) return ROUTE_SEO['/news'];
+  if (pathname.startsWith('/events/')) return ROUTE_SEO['/events'];
+  if (pathname.startsWith('/achievements/')) return ROUTE_SEO['/achievements'];
+  if (pathname.startsWith('/sports-achievements/')) return ROUTE_SEO['/sports-page'];
   if (pathname.startsWith('/learning/')) {
     return {
       title: 'Learning Facilities | Ansar English School Thrissur',

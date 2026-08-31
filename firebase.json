@@ -13,6 +13,21 @@
     "trailingSlash": false,
     "redirects": [
       {
+        "source": "/science-labs{,/**}",
+        "destination": "/learning/advanced-labs",
+        "type": 301
+      },
+      {
+        "source": "/learning/wi-fi-learning-environment{,/**}",
+        "destination": "/learning/smart-classrooms",
+        "type": 301
+      },
+      {
+        "source": "/events/6",
+        "destination": "/events",
+        "type": 301
+      },
+      {
         "source": "/staff{,/**}",
         "destination": "/about",
         "type": 301
@@ -138,6 +153,15 @@
           {
             "key": "Cache-Control",
             "value": "public, max-age=2592000, stale-while-revalidate=86400"
+          }
+        ]
+      },
+      {
+        "source": "**/*.@(pdf|xlsx|xls)",
+        "headers": [
+          {
+            "key": "X-Robots-Tag",
+            "value": "noindex, follow, noarchive"
           }
         ]
       },
