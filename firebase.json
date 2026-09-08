@@ -177,17 +177,55 @@
     ],
     "rewrites": [
       {
-        "source": "/@(about|academics|admission|news|events|contact|gallery|sports-page|atl|library|ansar-sprouts|extension-services|life-at-ansar|field-trips|ansar-times|ansar-family|alumni|achievements|ansar-media-production|sop|school-policies|mandatory-public-disclosure){,/**}",
-        "destination": "/index.html"
-      },
-      {
-        "source": "/@(news|events|achievements|sports-achievements|learning)/**",
-        "destination": "/index.html"
-      },
-      {
         "source": "/admin{,/**}",
         "destination": "/index.html"
-      }
+      },
+      { "source": "/learning/cctv-enabled-safety", "destination": "/seo/learning/cctv-enabled-safety.html" },
+      { "source": "/learning/smart-classrooms", "destination": "/seo/learning/smart-classrooms.html" },
+      { "source": "/learning/qualified-support-staff", "destination": "/seo/learning/qualified-support-staff.html" },
+      { "source": "/learning/special-play-area", "destination": "/seo/learning/special-play-area.html" },
+      { "source": "/learning/advanced-labs", "destination": "/seo/learning/advanced-labs.html" },
+      { "source": "/learning/multi-sports-play-area", "destination": "/seo/learning/multi-sports-play-area.html" },
+      { "source": "/learning/safe-school-transport", "destination": "/seo/learning/safe-school-transport.html" },
+      { "source": "/learning/healthy-dining-spaces", "destination": "/seo/learning/healthy-dining-spaces.html" },
+      {
+        "source": "/@(news|events|achievements|sports-achievements)/**",
+        "destination": "/index.html"
+      },
+      {
+        "source": "/library/quiz",
+        "destination": "/index.html"
+      },
+      {
+        "source": "/ansar-sprouts/activities/:id",
+        "destination": "/index.html"
+      },
+      {
+        "source": "/alumni/:section/:index",
+        "destination": "/index.html"
+      },
+      { "source": "/about", "destination": "/seo/about.html" },
+      { "source": "/academics", "destination": "/seo/academics.html" },
+      { "source": "/admission", "destination": "/seo/admission.html" },
+      { "source": "/news", "destination": "/seo/news.html" },
+      { "source": "/events", "destination": "/seo/events.html" },
+      { "source": "/contact", "destination": "/seo/contact.html" },
+      { "source": "/gallery", "destination": "/seo/gallery.html" },
+      { "source": "/sports-page", "destination": "/seo/sports-page.html" },
+      { "source": "/atl", "destination": "/seo/atl.html" },
+      { "source": "/library", "destination": "/seo/library.html" },
+      { "source": "/ansar-sprouts", "destination": "/seo/ansar-sprouts.html" },
+      { "source": "/field-trips", "destination": "/seo/field-trips.html" },
+      { "source": "/extension-services", "destination": "/seo/extension-services.html" },
+      { "source": "/life-at-ansar", "destination": "/seo/life-at-ansar.html" },
+      { "source": "/ansar-times", "destination": "/seo/ansar-times.html" },
+      { "source": "/ansar-family", "destination": "/seo/ansar-family.html" },
+      { "source": "/alumni", "destination": "/seo/alumni.html" },
+      { "source": "/achievements", "destination": "/seo/achievements.html" },
+      { "source": "/ansar-media-production", "destination": "/seo/ansar-media-production.html" },
+      { "source": "/sop", "destination": "/seo/sop.html" },
+      { "source": "/school-policies", "destination": "/seo/school-policies.html" },
+      { "source": "/mandatory-public-disclosure", "destination": "/seo/mandatory-public-disclosure.html" }
     ]
   }
 }

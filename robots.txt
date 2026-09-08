@@ -6,8 +6,6 @@ Allow: /
 Disallow: /admin
 Disallow: /admin/
 Disallow: /admin.html
-Disallow: /GOOGLE_SHEETS_APPS_SCRIPT.gs
-Disallow: /firebase-init.js
 Disallow: /*?*
 
 Sitemap: https://ansarschool.in/sitemap.xml

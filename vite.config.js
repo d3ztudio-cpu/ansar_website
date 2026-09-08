@@ -26,7 +26,10 @@ export default defineConfig({
       output: {
         manualChunks: {
           vendor: ['react', 'react-dom', 'react-router-dom'],
-          firebase: ['firebase/app', 'firebase/auth', 'firebase/firestore']
+          // Firestore powers public content. Authentication is imported only
+          // by the private admin/quiz paths and is intentionally left out of
+          // this initial public chunk.
+          firebase: ['firebase/app', 'firebase/firestore']
         }
       }
     }

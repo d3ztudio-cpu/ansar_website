@@ -1,7 +1,8 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { collection, doc, getDocs, onSnapshot, query, serverTimestamp, setDoc, updateDoc, where } from 'firebase/firestore';
 import { onAuthStateChanged, signInAnonymously } from 'firebase/auth';
-import { auth, db } from './firebase-init';
+import { db } from './firebase-init';
+import { auth } from './firebase-auth';
 import { formatDuration, shuffle } from './quizUtils';
 import QuizQuestionPlayer from './QuizQuestionPlayer';
 import QuizWaitingResult from './QuizWaitingResult';

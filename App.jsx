@@ -1,8 +1,7 @@
 import React, { lazy, Suspense, useEffect, useState, useRef } from 'react';
 import { BrowserRouter as Router, Routes, Route, useParams, Navigate, useLocation, Link } from 'react-router-dom';
-import { onAuthStateChanged, signInWithEmailAndPassword, signOut, signInWithPopup, GoogleAuthProvider } from 'firebase/auth';
 import { doc, setDoc, serverTimestamp, collection, query, orderBy, onSnapshot } from 'firebase/firestore';
-import { auth, db } from './firebase-init';
+import { db } from './firebase-init';
 import { useContentCollection } from './useContentCollection';
 
 import Layout from './Layout';
@@ -74,6 +73,7 @@ const ADMIN_EMAILS = [
   'ansarschooloffice@gmail.com'
 ];
 const SPROUTS_ADMIN_EMAIL = 'sprouts@ansar.in';
+let authServices = null;
 
 const DEFAULT_SEO = {
   title: 'Best CBSE School in Thrissur, Kerala | Ansar English School',
@@ -1122,7 +1122,7 @@ function AdminLogin() {
     setLoading(true);
     setError('');
     try {
-      await signInWithEmailAndPassword(auth, e.target.email.value, e.target.password.value);
+      await authServices.signInWithEmailAndPassword(authServices.auth, e.target.email.value, e.target.password.value);
     } catch (err) {
       setError(err.message || "Authentication failed. Please try again.");
     }
@@ -1133,8 +1133,8 @@ function AdminLogin() {
     setLoading(true);
     setError('');
     try {
-      const provider = new GoogleAuthProvider();
-      await signInWithPopup(auth, provider);
+      const provider = new authServices.GoogleAuthProvider();
+      await authServices.signInWithPopup(authServices.auth, provider);
     } catch (err) {
       setError(err.message || "Google sign-in failed.");
     }
@@ -1287,8 +1287,21 @@ export default function App() {
   const isSproutsAdmin = String(user?.email || '').toLowerCase() === SPROUTS_ADMIN_EMAIL;
 
   useEffect(() => {
-    // Instantly sync Firebase Auth session state with the React application
-    const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
+    // Public routes do not use authentication. Avoid an Auth round trip and a
+    // user-document write during their critical rendering path; the listener
+    // still starts immediately whenever an administrator opens /admin.
+    if (!window.location.pathname.startsWith('/admin')) {
+      setAuthLoading(false);
+      return undefined;
+    }
+
+    // Sync Firebase Auth only for the private administration application.
+    let unsubscribe = () => {};
+    let active = true;
+    import('./firebase-auth').then((services) => {
+      if (!active) return;
+      authServices = services;
+      unsubscribe = services.onAuthStateChanged(services.auth, async (currentUser) => {
       setUser(currentUser);
       if (currentUser) {
         try {
@@ -1302,8 +1315,12 @@ export default function App() {
         }
       }
       setAuthLoading(false);
+      });
+    }).catch((error) => {
+      console.error('Firebase Auth failed to initialize:', error);
+      if (active) setAuthLoading(false);
     });
-    return () => unsubscribe();
+    return () => { active = false; unsubscribe(); };
   }, []);
 
   return (
@@ -1356,7 +1373,7 @@ export default function App() {
             </div>
           ) : user ? (
             (ADMIN_EMAILS.includes(user.email) || isSproutsAdmin) ? (
-              <AdminLayout user={user} onLogout={() => signOut(auth)} sproutsOnly={isSproutsAdmin}>
+              <AdminLayout user={user} onLogout={() => authServices.signOut(authServices.auth)} sproutsOnly={isSproutsAdmin}>
                 <Routes>
                   {isSproutsAdmin ? <>
                     <Route path="/" element={<Navigate to="/admin/ansar-sprouts" replace />} />
@@ -1398,7 +1415,7 @@ export default function App() {
                   <p className="text-slate-600 mb-6">
                     The account <strong className="text-slate-900">{user.email}</strong> is not authorized to access the admin portal.
                   </p>
-                  <button onClick={() => signOut(auth)} className="w-full bg-slate-900 text-white font-bold py-3.5 rounded-lg hover:bg-slate-800 transition-colors">
+                  <button onClick={() => authServices.signOut(authServices.auth)} className="w-full bg-slate-900 text-white font-bold py-3.5 rounded-lg hover:bg-slate-800 transition-colors">
                     Sign Out
                   </button>
                 </div>

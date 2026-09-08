@@ -2,7 +2,8 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "vite build",
+    "build": "vite build && node scripts/prerender-seo-shell.mjs",
+    "check:seo": "node scripts/check-seo-output.mjs",
     "check:links": "node scripts/check-internal-links.mjs",
     "preview": "vite preview"
   },

@@ -256,7 +256,7 @@ export default function AtlPage() {
 
         <section className="bg-white py-20 lg:py-28">
           <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-            <div className="grid gap-12 lg:grid-cols-[.9fr_1.1fr] lg:items-center">
+            <div>
               <div>
                 <SectionHeading
                   eyebrow="Beyond our campus"
@@ -273,18 +273,6 @@ export default function AtlPage() {
                     </li>
                   ))}
                 </ul>
-              </div>
-              <div className="grid gap-5 sm:grid-cols-2">
-                {settings.outreachWorkshopImageUrl ? (
-                  <AtlPhoto src={settings.outreachWorkshopImageUrl} alt="ATL robotics outreach workshop with young learners" className="aspect-[4/5]" />
-                ) : (
-                  <InnovationPanel title="Robotics outreach workshop" note="ATL mentors sharing the excitement of making with young learners." className="aspect-[4/5]" />
-                )}
-                {settings.stemDiscoveryImageUrl ? (
-                  <AtlPhoto src={settings.stemDiscoveryImageUrl} alt="Students taking part in hands-on STEM discovery" className="aspect-[4/5] sm:mt-10" />
-                ) : (
-                  <InnovationPanel title="Hands-on STEM discovery" note="A welcoming first step into electronics, programming, and innovation." className="aspect-[4/5] sm:mt-10" />
-                )}
               </div>
             </div>
           </div>
