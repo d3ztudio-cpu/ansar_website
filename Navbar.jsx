@@ -4,6 +4,9 @@ import { useSettings } from './SettingsContext';
 import { useFirestoreCollection } from './useFirestoreCollection';
 import NotificationsBell from './NotificationsBell';
 
+// NOTE: The Ansar Awards external link is intentionally removed for now —
+// that project is still incomplete and will be re-added once it is live.
+
 const LEGACY_EXPLORE_LINKS = [
   { title: 'Gallery', slug: 'gallery' },
   { title: 'Achievements', slug: 'achievements' },

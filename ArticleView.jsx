@@ -8,6 +8,8 @@ import { useContentDocument } from './useContentCollection';
 import { imageCandidates } from './imageUrlUtils';
 import { formatDisplayDate, isYearOnly } from './dateUtils';
 import { applySeoMetadata, createMetaDescription } from './seoUtils';
+import ReportButton from './ReportButton';
+import { normalizeItemForReport, getSchoolLogoDataUrl, generateEventReport } from './reportUtils';
 
 const variants = {
   enter: (direction) => ({
@@ -50,6 +52,13 @@ export default function ArticleView() {
   const allImageCandidates = imageCandidates(article?.coverImageUrl, article?.imageUrl, article?.eventImages, article?.imageUrls);
   const validImages = allImageCandidates
     .filter((url) => !brokenImages.includes(url));
+
+  const isEventArticle = location.pathname.startsWith('/events/');
+  const handleReport = async (onProgress) => {
+    const reportItem = normalizeItemForReport(article, 'events');
+    const logo = await getSchoolLogoDataUrl();
+    return generateEventReport(reportItem, logo, { onProgress });
+  };
   const exhaustedImages = allImageCandidates.length > 0 && validImages.length === 0;
   const displayDate = formatDisplayDate(article?.date);
   const displayStudentName = isSportsAchievement && isYearOnly(article?.studentName) ? '' : article?.studentName;
@@ -136,6 +145,14 @@ export default function ArticleView() {
             text={article.description}
             className="bg-slate-900 px-5 py-2.5 text-sm text-white hover:bg-slate-800"
           />
+          {isEventArticle && (
+            <ReportButton
+              item={article}
+              onGenerate={handleReport}
+              kindLabel="Event"
+              className="border border-emerald-600 bg-emerald-600 px-5 py-2.5 text-sm text-white hover:bg-emerald-700"
+            />
+          )}
         </div>
 
         {displayStudentName && (

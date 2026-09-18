@@ -391,6 +391,7 @@ export default function Home() {
         <div className="text-center mb-12">
           <p className="text-emerald-600 font-black uppercase tracking-widest text-sm mb-3">Campus Infrastructure</p>
           <h2 className="text-4xl lg:text-5xl font-extrabold text-emerald-950">Student-Centric Learning</h2>
+          <p className="mx-auto mt-4 max-w-2xl text-lg leading-relaxed text-slate-600">Eight signature facilities that keep every school day safe, engaging, and comfortable for every learner.</p>
         </div>
         <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-6 auto-rows-[160px]">
           {displayLearningFeatures.map((feature, i) => (
@@ -471,9 +472,15 @@ export default function Home() {
       )}
 
       <AnimatedSection className="mt-32">
-        <div className="text-center mb-12">
-          <p className="text-emerald-600 font-black uppercase tracking-widest text-sm mb-3">Updates</p>
-          <h2 className="text-4xl lg:text-5xl font-extrabold text-emerald-950">Latest News</h2>
+        <div className="mb-12 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+          <div>
+            <p className="text-emerald-600 font-black uppercase tracking-widest text-sm mb-3">Updates</p>
+            <h2 className="text-4xl lg:text-5xl font-extrabold text-emerald-950">Latest News</h2>
+          </div>
+          <Link to="/news" className="group inline-flex items-center gap-2 self-start rounded-full border border-emerald-200 bg-white px-5 py-2.5 text-sm font-bold text-emerald-700 shadow-sm transition-all hover:border-emerald-600 hover:bg-emerald-600 hover:text-white">
+            View all news
+            <svg className="h-4 w-4 transition-transform duration-300 group-hover:translate-x-1" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 7l5 5-5 5M5 12h13" /></svg>
+          </Link>
         </div>
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
           {homeNews.length ? homeNews.map((item, index) => (
@@ -483,9 +490,15 @@ export default function Home() {
       </AnimatedSection>
 
       <AnimatedSection className="mt-20">
-        <div className="text-center mb-12">
-          <p className="text-emerald-600 font-black uppercase tracking-widest text-sm mb-3">Calendar</p>
-          <h2 className="text-4xl lg:text-5xl font-extrabold text-emerald-950">Events</h2>
+        <div className="mb-12 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+          <div>
+            <p className="text-emerald-600 font-black uppercase tracking-widest text-sm mb-3">Calendar</p>
+            <h2 className="text-4xl lg:text-5xl font-extrabold text-emerald-950">Events</h2>
+          </div>
+          <Link to="/events" className="group inline-flex items-center gap-2 self-start rounded-full border border-emerald-200 bg-white px-5 py-2.5 text-sm font-bold text-emerald-700 shadow-sm transition-all hover:border-emerald-600 hover:bg-emerald-600 hover:text-white">
+            View all events
+            <svg className="h-4 w-4 transition-transform duration-300 group-hover:translate-x-1" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 7l5 5-5 5M5 12h13" /></svg>
+          </Link>
         </div>
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
           {homeEvents.length ? homeEvents.map((item, index) => (
@@ -495,9 +508,15 @@ export default function Home() {
       </AnimatedSection>
 
       <AnimatedSection className="mt-32">
-        <div className="text-center mb-12">
-          <p className="text-emerald-600 font-bold uppercase tracking-wider text-sm mb-2">Location</p>
-          <h2 className="text-3xl lg:text-4xl font-extrabold text-slate-900">Explore Our Campus</h2>
+        <div className="mb-12 flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
+          <div>
+            <p className="text-emerald-600 font-bold uppercase tracking-wider text-sm mb-2">Location</p>
+            <h2 className="text-3xl lg:text-4xl font-extrabold text-slate-900">Explore Our Campus</h2>
+          </div>
+          <a href="https://www.google.com/maps/search/?api=1&query=Ansar+English+School+Perumpilavu" target="_blank" rel="noopener noreferrer" className="group inline-flex items-center gap-2 self-start rounded-full border border-slate-200 bg-white px-5 py-2.5 text-sm font-bold text-slate-700 shadow-sm transition-all hover:border-emerald-600 hover:bg-emerald-600 hover:text-white">
+            Get directions
+            <svg className="h-4 w-4 transition-transform duration-300 group-hover:translate-x-1" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 7l5 5-5 5M5 12h13" /></svg>
+          </a>
         </div>
         <div className="w-full h-[400px] lg:h-[500px] rounded-2xl overflow-hidden shadow-xl border border-slate-100 bg-slate-200">
           <iframe

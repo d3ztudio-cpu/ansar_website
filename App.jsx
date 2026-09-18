@@ -61,7 +61,21 @@ const AdminLibrary = lazy(() => import('./AdminLibrary'));
 const AdminAlumni = lazy(() => import('./AdminAlumni'));
 const AdminQuizCorner = lazy(() => import('./AdminQuizCorner'));
 
+const BOOT_SPLASH_ID = 'boot-splash';
+let bootSplashHidden = false;
+
+/** Fade out the static boot splash once the app shell is actually ready. */
+function hideBootSplash() {
+  if (bootSplashHidden) return;
+  bootSplashHidden = true;
+  const splash = document.getElementById(BOOT_SPLASH_ID);
+  if (!splash) return;
+  splash.classList.add('is-hidden');
+  window.setTimeout(() => splash.remove(), 400);
+}
+
 function RouteFallback() {
+  hideBootSplash();
   return <div className="min-h-[45vh] bg-slate-50" role="status" aria-label="Loading page" />;
 }
 
@@ -74,6 +88,60 @@ const ADMIN_EMAILS = [
 ];
 const SPROUTS_ADMIN_EMAIL = 'sprouts@ansar.in';
 let authServices = null;
+let authServicesPromise = null;
+
+/**
+ * Load the Firebase Auth module, retrying after failures (e.g. a stale cached
+ * page referencing a deleted chunk, or a flaky mobile connection). The module
+ * is fetched at most once concurrently; callers await the same result.
+ */
+function ensureAuthServices() {
+  if (authServices) return Promise.resolve(authServices);
+  if (!authServicesPromise) {
+    authServicesPromise = import('./firebase-auth').then((services) => {
+      authServices = services;
+      return services;
+    }).catch((error) => {
+      authServicesPromise = null; // allow a retry on the next call
+      throw error;
+    });
+  }
+  return authServicesPromise;
+}
+
+/** Translate low-level Firebase auth errors into visitor-friendly messages. */
+function describeAuthError(error) {
+  const code = String(error?.code || '');
+  if (code.includes('invalid-credential') || code.includes('wrong-password') || code.includes('user-not-found')) {
+    return 'Incorrect email or password. Please try again.';
+  }
+  if (code.includes('too-many-requests')) {
+    return 'Too many attempts. Please wait a moment and try again.';
+  }
+  if (code.includes('network-request-failed')) {
+    return 'Network problem while contacting the sign-in service. Check your connection and try again.';
+  }
+  if (code.includes('popup-blocked') || code.includes('popup-closed-by-user')) {
+    return 'The Google sign-in window was closed or blocked. Please allow popups and try again.';
+  }
+  if (code.includes('unauthorized-domain')) {
+    return 'This domain is not authorized for sign-in. Please contact the website administrator.';
+  }
+  if (code.includes('operation-not-allowed') || code.includes('configuration-not-found')) {
+    return 'Sign-in is temporarily unavailable. Please try again shortly.';
+  }
+  return 'Authentication failed. Please try again.';
+}
+
+/** Sign out defensively so a missing auth module can never crash the UI. */
+async function handleSignOut() {
+  try {
+    const services = await ensureAuthServices();
+    await services.signOut(services.auth);
+  } catch (error) {
+    console.error('Sign out failed:', error);
+  }
+}
 
 const DEFAULT_SEO = {
   title: 'Best CBSE School in Thrissur, Kerala | Ansar English School',
@@ -1113,18 +1181,29 @@ function SportsPage() {
 }
 
 // --- SECURE ADMIN LOGIN COMPONENT ---
-function AdminLogin() {
+function AdminLogin({ onDenied }) {
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+
+  const isAuthorizedAdmin = (email) => (
+    ADMIN_EMAILS.includes(String(email || '').toLowerCase())
+    || String(email || '').toLowerCase() === SPROUTS_ADMIN_EMAIL
+  );
 
   const handleEmailAuth = async (e) => {
     e.preventDefault();
     setLoading(true);
     setError('');
     try {
-      await authServices.signInWithEmailAndPassword(authServices.auth, e.target.email.value, e.target.password.value);
+      const services = await ensureAuthServices();
+      const credential = await services.signInWithEmailAndPassword(services.auth, e.target.email.value, e.target.password.value);
+      if (!isAuthorizedAdmin(credential?.user?.email)) {
+        await handleSignOut();
+        onDenied(credential?.user?.email);
+      }
     } catch (err) {
-      setError(err.message || "Authentication failed. Please try again.");
+      console.error('Email sign-in failed:', err);
+      setError(describeAuthError(err));
     }
     setLoading(false);
   };
@@ -1133,10 +1212,19 @@ function AdminLogin() {
     setLoading(true);
     setError('');
     try {
-      const provider = new authServices.GoogleAuthProvider();
-      await authServices.signInWithPopup(authServices.auth, provider);
+      const services = await ensureAuthServices();
+      const credential = await services.signInWithPopup(services.auth, new services.GoogleAuthProvider());
+      const email = credential?.user?.email;
+      if (!isAuthorizedAdmin(email)) {
+        // Not an admin: end the session immediately and show the popup.
+        await handleSignOut();
+        onDenied(email);
+      }
+      // Authorized admins need no extra step — onAuthStateChanged flips the
+      // view to the dashboard the moment the session is established.
     } catch (err) {
-      setError(err.message || "Google sign-in failed.");
+      console.error('Google sign-in failed:', err);
+      setError(describeAuthError(err));
     }
     setLoading(false);
   };
@@ -1284,7 +1372,17 @@ function AdminDashboard() {
 export default function App() {
   const [user, setUser] = useState(null);
   const [authLoading, setAuthLoading] = useState(true);
+  const [deniedEmail, setDeniedEmail] = useState(null);
   const isSproutsAdmin = String(user?.email || '').toLowerCase() === SPROUTS_ADMIN_EMAIL;
+
+  const handleDenied = (email) => setDeniedEmail(email || 'your account');
+
+  // The boot splash must never outlive a failed or skipped auth init.
+  useEffect(() => {
+    if (authLoading) return;
+    const timer = window.setTimeout(hideBootSplash, 120);
+    return () => window.clearTimeout(timer);
+  }, [authLoading]);
 
   useEffect(() => {
     // Public routes do not use authentication. Avoid an Auth round trip and a
@@ -1298,23 +1396,20 @@ export default function App() {
     // Sync Firebase Auth only for the private administration application.
     let unsubscribe = () => {};
     let active = true;
-    import('./firebase-auth').then((services) => {
+    ensureAuthServices().then((services) => {
       if (!active) return;
-      authServices = services;
       unsubscribe = services.onAuthStateChanged(services.auth, async (currentUser) => {
       setUser(currentUser);
-      if (currentUser) {
-        try {
-          await setDoc(doc(db, 'users', currentUser.uid), {
-            email: currentUser.email,
-            createdAt: currentUser.metadata.creationTime,
-            lastLogin: serverTimestamp()
-          }, { merge: true });
-        } catch (error) {
-          console.error("Error updating user tracking:", error);
-        }
-      }
+      // Release the UI immediately — never wait on the Firestore write so a
+      // slow/failed write can never hang the admin panel on a spinner.
       setAuthLoading(false);
+      if (currentUser) {
+        setDoc(doc(db, 'users', currentUser.uid), {
+          email: currentUser.email,
+          createdAt: currentUser.metadata.creationTime,
+          lastLogin: serverTimestamp()
+        }, { merge: true }).catch((error) => console.error("Error updating user tracking:", error));
+      }
       });
     }).catch((error) => {
       console.error('Firebase Auth failed to initialize:', error);
@@ -1373,7 +1468,7 @@ export default function App() {
             </div>
           ) : user ? (
             (ADMIN_EMAILS.includes(user.email) || isSproutsAdmin) ? (
-              <AdminLayout user={user} onLogout={() => authServices.signOut(authServices.auth)} sproutsOnly={isSproutsAdmin}>
+              <AdminLayout user={user} onLogout={handleSignOut} sproutsOnly={isSproutsAdmin}>
                 <Routes>
                   {isSproutsAdmin ? <>
                     <Route path="/" element={<Navigate to="/admin/ansar-sprouts" replace />} />
@@ -1415,18 +1510,37 @@ export default function App() {
                   <p className="text-slate-600 mb-6">
                     The account <strong className="text-slate-900">{user.email}</strong> is not authorized to access the admin portal.
                   </p>
-                  <button onClick={() => authServices.signOut(authServices.auth)} className="w-full bg-slate-900 text-white font-bold py-3.5 rounded-lg hover:bg-slate-800 transition-colors">
+                  <button onClick={handleSignOut} className="w-full bg-slate-900 text-white font-bold py-3.5 rounded-lg hover:bg-slate-800 transition-colors">
                     Sign Out
                   </button>
                 </div>
               </div>
             )
           ) : (
-            <AdminLogin />
+            <AdminLogin onDenied={handleDenied} />
           )
         } />
       </Routes>
       </Suspense>
+
+      {/* "Admins only" popup: shown when a signed-in account is not authorized. */}
+      {deniedEmail && (
+        <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4" role="alertdialog" aria-modal="true" aria-label="Admins only">
+          <div className="absolute inset-0 bg-slate-950/70 backdrop-blur-sm" onClick={() => setDeniedEmail(null)} />
+          <div className="relative bg-white p-8 rounded-2xl shadow-2xl w-full max-w-sm border-t-4 border-red-500 text-center">
+            <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-red-50">
+              <svg className="h-7 w-7 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" /></svg>
+            </div>
+            <h2 className="text-xl font-extrabold text-slate-900 mb-2">Admins Only</h2>
+            <p className="text-sm text-slate-600 mb-6">
+              The account <strong className="text-slate-900">{deniedEmail}</strong> is not authorized to access the admin portal. This area is restricted to school administrators.
+            </p>
+            <button onClick={() => setDeniedEmail(null)} className="w-full bg-slate-900 text-white font-bold py-3 rounded-lg hover:bg-slate-800 transition-colors">
+              Okay
+            </button>
+          </div>
+        </div>
+      )}
     </Router>
     </SettingsProvider>
   );

@@ -123,6 +123,76 @@
         "type": 301
       },
       {
+        "source": "/gallery.html",
+        "destination": "/gallery",
+        "type": 301
+      },
+      {
+        "source": "/achievements.html",
+        "destination": "/achievements",
+        "type": 301
+      },
+      {
+        "source": "/library.html",
+        "destination": "/library",
+        "type": 301
+      },
+      {
+        "source": "/library/quiz.html",
+        "destination": "/library/quiz",
+        "type": 301
+      },
+      {
+        "source": "/atl.html",
+        "destination": "/atl",
+        "type": 301
+      },
+      {
+        "source": "/alumni.html",
+        "destination": "/alumni",
+        "type": 301
+      },
+      {
+        "source": "/ansar-times.html",
+        "destination": "/ansar-times",
+        "type": 301
+      },
+      {
+        "source": "/ansar-sprouts.html",
+        "destination": "/ansar-sprouts",
+        "type": 301
+      },
+      {
+        "source": "/sports",
+        "destination": "/sports-page",
+        "type": 301
+      },
+      {
+        "source": "/sports.html",
+        "destination": "/sports-page",
+        "type": 301
+      },
+      {
+        "source": "/staff.html",
+        "destination": "/about",
+        "type": 301
+      },
+      {
+        "source": "/leadership.html",
+        "destination": "/#leadership",
+        "type": 301
+      },
+      {
+        "source": "/more.html",
+        "destination": "/about",
+        "type": 301
+      },
+      {
+        "source": "/page.html",
+        "destination": "/",
+        "type": 301
+      },
+      {
         "source": "/:path*/",
         "destination": "/:path",
         "type": 301
@@ -130,7 +200,79 @@
     ],
     "headers": [
       {
-        "source": "/@(index.html|sw.js|version.json)",
+        "source": "/@(index.html|404.html|sw.js|version.json|manifest.json)",
+        "headers": [
+          {
+            "key": "Cache-Control",
+            "value": "no-cache, no-store, must-revalidate"
+          }
+        ]
+      },
+      {
+        "source": "/",
+        "headers": [
+          {
+            "key": "Cache-Control",
+            "value": "no-cache, no-store, must-revalidate"
+          }
+        ]
+      },
+      {
+        "source": "/learning/**",
+        "headers": [
+          {
+            "key": "Cache-Control",
+            "value": "no-cache, no-store, must-revalidate"
+          }
+        ]
+      },
+      {
+        "source": "/ansar-sprouts/activities/**",
+        "headers": [
+          {
+            "key": "Cache-Control",
+            "value": "no-cache, no-store, must-revalidate"
+          }
+        ]
+      },
+      {
+        "source": "/alumni/**",
+        "headers": [
+          {
+            "key": "Cache-Control",
+            "value": "no-cache, no-store, must-revalidate"
+          }
+        ]
+      },
+      {
+        "source": "/library/quiz",
+        "headers": [
+          {
+            "key": "Cache-Control",
+            "value": "no-cache, no-store, must-revalidate"
+          }
+        ]
+      },
+      {
+        "source": "/@(news|events|achievements|sports-achievements)/**",
+        "headers": [
+          {
+            "key": "Cache-Control",
+            "value": "no-cache, no-store, must-revalidate"
+          }
+        ]
+      },
+      {
+        "source": "/@(about|academics|admission|contact|gallery|news|events|achievements|sports-page|atl|library|ansar-sprouts|field-trips|extension-services|life-at-ansar|ansar-times|ansar-family|alumni|ansar-media-production|sop|school-policies|mandatory-public-disclosure)",
+        "headers": [
+          {
+            "key": "Cache-Control",
+            "value": "no-cache, no-store, must-revalidate"
+          }
+        ]
+      },
+      {
+        "source": "/seo/**/*.html",
         "headers": [
           {
             "key": "Cache-Control",
@@ -148,7 +290,7 @@
         ]
       },
       {
-        "source": "**/*.@(avif|webp|png|jpg|jpeg|gif|svg)",
+        "source": "**/*.@(avif|webp|png|jpg|jpeg|gif|svg|ico)",
         "headers": [
           {
             "key": "Cache-Control",
@@ -168,6 +310,10 @@
       {
         "source": "/admin{,/**}",
         "headers": [
+          {
+            "key": "Cache-Control",
+            "value": "no-cache, no-store, must-revalidate"
+          },
           {
             "key": "X-Robots-Tag",
             "value": "noindex, nofollow, noarchive"

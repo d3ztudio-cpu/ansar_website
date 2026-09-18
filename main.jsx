@@ -32,6 +32,14 @@ if (!viewportMeta) {
 }
 viewportMeta.content = "width=device-width, initial-scale=1.0";
 
+// When a deploy renames hashed chunks, any open tab may request a lazy chunk
+// that no longer exists. Vite dispatches this event on such failures; one
+// reload picks up the fresh HTML and recovers automatically.
+window.addEventListener('vite:preloadError', (event) => {
+  event.preventDefault();
+  reloadForAppUpdate();
+});
+
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
     const hadActiveController = Boolean(navigator.serviceWorker.controller);

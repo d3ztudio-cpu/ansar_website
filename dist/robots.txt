@@ -1,10 +1,11 @@
 # Robots.txt for Ansar English School
-# Public pages are crawlable. Private and missing routes use noindex response headers or metadata.
+# Public pages are crawlable; admin and private utility paths should stay out of search results.
 
 User-agent: *
 Allow: /
-Disallow: /admin/
 Disallow: /admin
+Disallow: /admin/
+Disallow: /admin.html
 Disallow: /*?
 
 Sitemap: https://ansarschool.in/sitemap.xml

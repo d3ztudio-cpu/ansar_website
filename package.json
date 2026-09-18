@@ -2,6 +2,8 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
+    "generate:icons": "node scripts/generate-favicons.mjs",
+    "prebuild": "npm run generate:icons",
     "build": "vite build && node scripts/prerender-seo-shell.mjs",
     "check:seo": "node scripts/check-seo-output.mjs",
     "check:links": "node scripts/check-internal-links.mjs",
@@ -12,12 +14,16 @@
     "autoprefixer": "^10.5.0",
     "firebase": "^12.14.0",
     "firebase-tools": "^15.20.0",
+    "png-to-ico": "^3.0.2",
     "postcss": "^8.5.15",
+    "puppeteer-core": "^25.11.0",
+    "sharp": "^0.35.4",
     "tailwindcss": "^3.4.19",
     "vite": "^5.4.21"
   },
   "dependencies": {
     "framer-motion": "^12.40.0",
+    "jspdf": "^4.2.1",
     "react": "^19.2.7",
     "react-dom": "^19.2.7",
     "react-router-dom": "^7.18.0"

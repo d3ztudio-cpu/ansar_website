@@ -6,6 +6,8 @@ Allow: /
 Disallow: /admin
 Disallow: /admin/
 Disallow: /admin.html
-Disallow: /*?*
+Disallow: /seo/
+Disallow: /seo
+Disallow: /*?
 
 Sitemap: https://ansarschool.in/sitemap.xml
