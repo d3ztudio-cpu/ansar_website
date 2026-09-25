@@ -29,7 +29,11 @@ export default defineConfig({
           // Firestore powers public content. Authentication is imported only
           // by the private admin/quiz paths and is intentionally left out of
           // this initial public chunk.
-          firebase: ['firebase/app', 'firebase/firestore']
+          firebase: ['firebase/app', 'firebase/firestore'],
+          // Animation library is shared by several lazy routes; keeping it in
+          // its own immutable chunk lets repeat visits reuse it from cache
+          // without re-downloading it alongside route code.
+          motion: ['framer-motion']
         }
       }
     }

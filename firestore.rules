@@ -661,6 +661,15 @@ service cloud.firestore {
       allow delete: if isAdmin();
     }
 
+    // School Magazines (yearly PDFs). Read-only mirrors of the Google Sheets
+    // records, written by admins so the notification bell can announce new
+    // issues without exposing any sensitive data.
+    match /schoolMagazines/{magazineId} {
+      allow read: if true;
+      allow create, update: if isAdmin();
+      allow delete: if isAdmin();
+    }
+
     // Achievements
     match /achievements/{achievementId} {
       allow read: if true;

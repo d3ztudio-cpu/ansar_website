@@ -12,6 +12,7 @@ export const GOOGLE_SHEETS_DATABASE = {
     learningFeatures: ['learningFeatures', 'LearningFeatures', 'Learning Features'],
     sproutsActivities: ['sproutsActivities', 'SproutsActivities', 'Sprouts Activities'],
     contactSubmissions: ['contactSubmissions', 'ContactSubmissions', 'Contact Submissions'],
-    ansarTimes: ['ansarTimes', 'AnsarTimes', 'Ansar Times']
+    ansarTimes: ['ansarTimes', 'AnsarTimes', 'Ansar Times'],
+    schoolMagazines: ['schoolMagazines', 'SchoolMagazines', 'School Magazines']
   }
 };

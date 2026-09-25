@@ -23,15 +23,32 @@ const schoolSchema = {
   '@type': ['School', 'EducationalOrganization'],
   '@id': `${siteUrl}/#school`,
   name: 'Ansar English School',
+  alternateName: 'Ansar English School Perumpilavu',
   url: `${siteUrl}/`,
-  logo: `${siteUrl}/ansar-logo.png`,
+  logo: `${siteUrl}/brand-logo-512.png`,
+  image: [`${siteUrl}/brand-logo-512.png`, `${siteUrl}/og-image.jpg`],
   telephone: '+918129808051',
   email: 'hr@ansar.in',
+  foundingDate: '1982',
+  numberOfStudents: '5000',
+  slogan: 'Empowering Minds, Enriching Futures',
   address: {
     '@type': 'PostalAddress', streetAddress: 'Perumpilavu, Karikkad P.O',
     addressLocality: 'Perumpilavu', addressRegion: 'Kerala', postalCode: '680519', addressCountry: 'IN'
   },
-  geo: { '@type': 'GeoCoordinates', latitude: 10.69946, longitude: 76.08981 }
+  geo: { '@type': 'GeoCoordinates', latitude: 10.69946, longitude: 76.08981 },
+  hasMap: 'https://www.google.com/maps/search/?api=1&query=Ansar+English+School+Perumpilavu',
+  areaServed: ['Thrissur', 'Perumpilavu', 'Kunnamkulam', 'Wadakkanchery', 'Pattambi', 'Kerala'],
+  contactPoint: [
+    {
+      '@type': 'ContactPoint', contactType: 'admissions', telephone: '+91-81298-08051',
+      email: 'hr@ansar.in', areaServed: 'IN', availableLanguage: ['English', 'Malayalam']
+    }
+  ],
+  sameAs: [
+    'https://www.facebook.com/ansarenglishschool.perumbillavu/',
+    'https://www.youtube.com/c/ansarenglishschoolperumpilavu'
+  ]
 };
 
 const pages = {
@@ -132,7 +149,7 @@ function buildHead(route, title, description) {
   const cssLink = stylesheet ? `<link rel="stylesheet" href="${stylesheet}">` : '';
   return {
     canonical,
-    head: `${cleanedHead}<title>${esc(title)}</title><meta name="description" content="${esc(description)}"><meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1"><link rel="canonical" href="${canonical}">${cssLink}<meta property="og:type" content="website"><meta property="og:site_name" content="Ansar English School"><meta property="og:title" content="${esc(title)}"><meta property="og:description" content="${esc(description)}"><meta property="og:url" content="${canonical}"><meta property="og:image" content="${siteUrl}/ansar-logo.png"><meta property="og:image:alt" content="Ansar English School logo"><meta name="twitter:card" content="summary_large_image"><meta name="twitter:title" content="${esc(title)}"><meta name="twitter:description" content="${esc(description)}"><meta name="twitter:image" content="${siteUrl}/ansar-logo.png"><meta name="twitter:image:alt" content="Ansar English School logo"><script type="application/ld+json">${JSON.stringify([schoolSchema, websiteSchema, pageSchema])}</script>`
+    head: `${cleanedHead}<title>${esc(title)}</title><meta name="description" content="${esc(description)}"><meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1"><link rel="canonical" href="${canonical}">${cssLink}<meta property="og:type" content="website"><meta property="og:site_name" content="Ansar English School"><meta property="og:title" content="${esc(title)}"><meta property="og:description" content="${esc(description)}"><meta property="og:url" content="${canonical}"><meta property="og:image" content="${siteUrl}/og-image.jpg"><meta property="og:image:type" content="image/jpeg"><meta property="og:image:width" content="1200"><meta property="og:image:height" content="630"><meta property="og:image:alt" content="Ansar English School, Perumpilavu — NABET Accredited CBSE School in Thrissur, Kerala"><meta name="twitter:card" content="summary_large_image"><meta name="twitter:title" content="${esc(title)}"><meta name="twitter:description" content="${esc(description)}"><meta name="twitter:image" content="${siteUrl}/og-image.jpg"><meta name="twitter:image:alt" content="Ansar English School, Perumpilavu — CBSE School in Thrissur"><script type="application/ld+json">${JSON.stringify([schoolSchema, websiteSchema, pageSchema])}</script>`
   };
 }
 
@@ -154,9 +171,9 @@ for (const [route, [title, description, h1, body]] of Object.entries(pages)) {
 const sitemapEntries = Object.keys(pages).map((route) => {
   const priority = route === '/' ? '1.0' : route === '/admission' ? '0.95' : route.startsWith('/learning/') ? '0.7' : '0.8';
   const changefreq = route === '/' ? 'weekly' : route === '/news' ? 'daily' : route === '/admission' ? 'weekly' : 'monthly';
-  return `  <url>\n    <loc>${siteUrl}${route}</loc>\n    <lastmod>${today}</lastmod>\n    <changefreq>${changefreq}</changefreq>\n    <priority>${priority}</priority>\n  </url>`;
+  return `  <url>\n    <loc>${siteUrl}${route}</loc>\n    <lastmod>${today}</lastmod>\n    <changefreq>${changefreq}</changefreq>\n    <priority>${priority}</priority>\n    <image:image>\n      <image:loc>${siteUrl}/og-image.jpg</image:loc>\n      <image:title>Ansar English School</image:title>\n    </image:image>\n  </url>`;
 });
-const sitemap = `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n${sitemapEntries.join('\n')}\n</urlset>\n`;
+const sitemap = `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9" xmlns:image="http://www.google.com/schemas/sitemap-image/1.1">\n${sitemapEntries.join('\n')}\n</urlset>\n`;
 await writeFile(path.join(dist, 'sitemap.xml'), sitemap);
 
 console.log(`Prerendered ${Object.keys(pages).length} SEO shells and regenerated dist/sitemap.xml (lastmod ${today}).`);

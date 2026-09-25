@@ -59,9 +59,9 @@ export default function Footer() {
           <nav className="flex flex-col space-y-2 text-sm">
             <Link to="/about" className="text-slate-400 hover:text-emerald-400 transition-colors">Who we are</Link>
             <Link to="/about" className="text-slate-400 hover:text-emerald-400 transition-colors">Vision & Mission</Link>
-            <Link to="/#leadership" className="text-slate-400 hover:text-emerald-400 transition-colors">Leadership</Link>
+            <Link to="/leadership" className="text-slate-400 hover:text-emerald-400 transition-colors">Leadership</Link>
             <Link to="/ansar-family" className="text-slate-400 hover:text-emerald-400 transition-colors">Faculty</Link>
-            <Link to="/mandatory-public-disclosure" className="text-slate-400 hover:text-emerald-400 transition-colors">Mandatory Disclosure</Link>
+            <Link to="/sop" className="text-slate-400 hover:text-emerald-400 transition-colors">SOP</Link>
           </nav>
         </div>
 
@@ -79,11 +79,13 @@ export default function Footer() {
         <div>
           <h3 className="text-white text-sm font-bold mb-4 uppercase tracking-wider">Media / Documentation</h3>
           <nav className="flex flex-col space-y-2 text-sm">
-            <Link to="/academics" className="text-slate-400 hover:text-emerald-400 transition-colors">Academics</Link>
-            <Link to="/alumni" className="text-slate-400 hover:text-emerald-400 transition-colors">Alumni</Link>
             <Link to="/gallery" className="text-slate-400 hover:text-emerald-400 transition-colors">Gallery</Link>
-            <Link to="/news" className="text-slate-400 hover:text-emerald-400 transition-colors">News & Events</Link>
-            <Link to="/ansar-times" className="text-slate-400 hover:text-emerald-400 transition-colors">Magazine</Link>
+            <Link to="/news" className="text-slate-400 hover:text-emerald-400 transition-colors">News</Link>
+            <Link to="/events" className="text-slate-400 hover:text-emerald-400 transition-colors">Events</Link>
+            <Link to="/ansar-times" className="text-slate-400 hover:text-emerald-400 transition-colors">Ansar Times</Link>
+            <Link to="/library" className="text-slate-400 hover:text-emerald-400 transition-colors">Library</Link>
+            <Link to="/mandatory-public-disclosure" className="text-slate-400 hover:text-emerald-400 transition-colors">Mandatory Disclosure</Link>
+            <Link to="/school-policies" className="text-slate-400 hover:text-emerald-400 transition-colors">School Policies</Link>
           </nav>
         </div>
 
@@ -91,10 +93,12 @@ export default function Footer() {
           <h3 className="text-white text-sm font-bold mb-4 uppercase tracking-wider">Campus Life</h3>
           <nav className="flex flex-col space-y-2 text-sm">
             <Link to="/sports-page" className="text-slate-400 hover:text-emerald-400 transition-colors">Sports & Athletics</Link>
-            <Link to="/life-at-ansar" className="text-slate-400 hover:text-emerald-400 transition-colors">Clubs & NIOS</Link>
-            <Link to="/life-at-ansar" className="text-slate-400 hover:text-emerald-400 transition-colors">Student Police Cadet</Link>
-            <Link to="/life-at-ansar" className="text-slate-400 hover:text-emerald-400 transition-colors">National Service Scheme</Link>
-            <Link to="/academics" className="text-slate-400 hover:text-emerald-400 transition-colors">Coaching & Exams</Link>
+            <Link to="/achievements" className="text-slate-400 hover:text-emerald-400 transition-colors">Achievements</Link>
+            <Link to="/life-at-ansar" className="text-slate-400 hover:text-emerald-400 transition-colors">Life at Ansar</Link>
+            <Link to="/field-trips" className="text-slate-400 hover:text-emerald-400 transition-colors">Field Trips</Link>
+            <Link to="/learning-labs" className="text-slate-400 hover:text-emerald-400 transition-colors">Learning Labs</Link>
+            <Link to="/extension-services" className="text-slate-400 hover:text-emerald-400 transition-colors">Extension Services</Link>
+            <Link to="/ansar-media-production" className="text-slate-400 hover:text-emerald-400 transition-colors">Ansar Media Productions</Link>
           </nav>
         </div>
       </div>

@@ -104,6 +104,17 @@ const SHEET_COLUMNS = {
     'pdfUrl',
     'published'
   ],
+  schoolMagazines: [
+    'id',
+    'year',
+    'title',
+    'kind',
+    'description',
+    'coverImageUrl',
+    'pdfUrl',
+    'order',
+    'published'
+  ],
   electionSettings: [
     'key',
     'value'

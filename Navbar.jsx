@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { useSettings } from './SettingsContext';
 import { useFirestoreCollection } from './useFirestoreCollection';
 import NotificationsBell from './NotificationsBell';
+import SmartImage from './SmartImage';
 
 // NOTE: The Ansar Awards external link is intentionally removed for now —
 // that project is still incomplete and will be re-added once it is live.
@@ -32,6 +33,10 @@ export default function Navbar() {
   // Fetch all custom pages to dynamically build the navigation menu
   const { data: pages } = useFirestoreCollection('pages', 'order', 'asc');
   const mainNavSlugs = ['about', 'academics', 'admission'];
+  // Admins can override the logo from Settings; only wide wordmark images
+  // (uploaded specifically for the navbar) are used there, otherwise the
+  // bundled tightly-cropped logo is shown so it always renders large enough.
+  const customLogoUrl = '';
   const dynamicExplorePages = pages
     .filter(p => p.published !== false && !mainNavSlugs.includes(p.slug))
     .map(page => ({ title: page.title, slug: page.slug, id: page.id }));
@@ -42,32 +47,33 @@ export default function Navbar() {
 
   return (
     <header className="relative sticky top-0 z-50 border-b border-white/10 bg-emerald-950 shadow-lg shadow-emerald-950/20">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex items-center justify-between h-24">
+      <div className="w-full px-4 sm:px-6 lg:px-8">
+        <div className="flex items-center justify-between h-24 gap-6 xl:gap-10">
           {/* Premium Logo Layout */}
-          <Link to="/" className="flex items-center gap-3">
-            <span className="flex h-16 items-center rounded-2xl bg-white px-3 shadow-md shadow-slate-950/20 ring-1 ring-white/60">
-              <img
-                src={settings?.logoUrl || "/icon-192.png"}
+          <Link to="/" className="flex shrink-0 items-center gap-3">
+            <span className="flex items-center rounded-2xl bg-white px-3 py-2 shadow-md shadow-slate-950/20 ring-1 ring-white/60">
+              <SmartImage
+                src={customLogoUrl || "/school-logo.webp"}
+                fallbacks={[customLogoUrl, "/school-logo.png", "/icon-192.png"].filter(Boolean)}
                 alt="Ansar English School Logo"
-                width="48"
-                height="48"
+                width="208"
+                height="44"
                 decoding="async"
-                className="h-12 w-auto object-contain contrast-125 brightness-105 transition-all duration-300 hover:scale-[1.03]"
+                className="h-11 w-auto object-contain object-left contrast-125 brightness-105 transition-all duration-300 hover:scale-[1.03]"
                 style={{ imageRendering: '-webkit-optimize-contrast', transform: 'translateZ(0)', backfaceVisibility: 'hidden' }}
               />
             </span>
-            <div className="hidden sm:flex flex-col border-l-2 border-white/25 pl-3 ml-1">
-              <span className="block text-lg font-extrabold uppercase leading-tight tracking-wide text-white">ANSAR ENGLISH SCHOOL</span>
+            <div className="hidden xl:flex flex-col border-l-2 border-white/25 pl-3 ml-1">
+              <span className="block whitespace-nowrap text-base font-extrabold uppercase leading-tight tracking-wide text-white">ANSAR ENGLISH SCHOOL</span>
               <div className="flex items-center gap-2 mt-0.5">
-                <span className="block font-sans text-sm font-semibold normal-case tracking-normal text-emerald-50">Perumpilavu</span>
-                <span className="block rounded bg-amber-100 px-2 py-0.5 text-[11px] font-black uppercase leading-none tracking-wide text-amber-900 shadow-sm">NABET Accredited</span>
+                <span className="block whitespace-nowrap font-sans text-sm font-semibold normal-case tracking-normal text-emerald-50">Perumpilavu</span>
+                <span className="block whitespace-nowrap rounded bg-amber-100 px-2 py-0.5 text-[11px] font-black uppercase leading-none tracking-wide text-amber-900 shadow-sm">NABET Accredited</span>
               </div>
             </div>
           </Link>
           
           {/* Fluid Desktop Navigation */}
-          <nav className="hidden md:flex items-center gap-5">
+          <nav className="hidden lg:flex shrink-0 items-center gap-4 xl:gap-5">
             {[
               { title: 'Home', path: '/' },
               { title: 'About', path: '/about' },
@@ -78,7 +84,7 @@ export default function Navbar() {
               { title: 'Events', path: '/events' },
               { title: 'Contact', path: '/contact' }
             ].map((item) => (
-              <Link key={item.path} to={item.path} className="relative text-sm font-bold text-white/90 hover:text-amber-300 transition-colors py-2 group">
+              <Link key={item.path} to={item.path} className="relative whitespace-nowrap text-[13px] font-bold text-white/90 hover:text-amber-300 transition-colors py-2 group lg:text-sm">
                 {item.title}
                 <span className="absolute bottom-0 left-0 w-0 h-0.5 bg-amber-300 transition-all duration-300 ease-out group-hover:w-full rounded-full"></span>
               </Link>
@@ -88,7 +94,7 @@ export default function Navbar() {
             <div className="relative">
               <button 
                 onClick={() => setIsMoreOpen(!isMoreOpen)}
-                className="flex items-center gap-1 text-sm font-bold text-white/90 hover:text-amber-300 transition-colors py-2"
+                className="flex items-center gap-1 whitespace-nowrap text-[13px] font-bold text-white/90 hover:text-amber-300 transition-colors py-2 lg:text-sm"
               >
                 Explore
                 <svg className={`w-4 h-4 transition-transform duration-300 ${isMoreOpen ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7"></path></svg>
@@ -107,7 +113,7 @@ export default function Navbar() {
             <NotificationsBell />
           </nav>
 
-          <div className="flex items-center gap-2 md:hidden">
+          <div className="flex items-center gap-2 lg:hidden">
             <NotificationsBell />
             <button 
               className="p-2 text-white hover:text-amber-300 focus:outline-none transition-colors"
@@ -125,8 +131,8 @@ export default function Navbar() {
       
       {/* Mobile Navigation Dropdown */}
       {isOpen && (
-        <div className="absolute left-0 right-0 top-full z-50 max-h-[calc(100vh-6rem)] overflow-y-auto border-t border-white/10 bg-emerald-950 shadow-xl md:hidden">
-          <div className="mx-auto grid w-full max-w-7xl gap-1 px-4 py-4">
+        <div className="absolute left-0 right-0 top-full z-50 max-h-[calc(100vh-6rem)] overflow-y-auto border-t border-white/10 bg-emerald-950 shadow-xl lg:hidden">
+          <div className="grid w-full gap-1 px-4 py-4">
             <Link to="/" onClick={() => setIsOpen(false)} className="block rounded-lg px-4 py-3 text-base text-white font-bold hover:bg-white/10 hover:text-amber-300">Home</Link>
             <Link to="/about" onClick={() => setIsOpen(false)} className="block rounded-lg px-4 py-3 text-base text-white font-bold hover:bg-white/10 hover:text-amber-300">About Us</Link>
             <Link to="/admission" onClick={() => setIsOpen(false)} className="block rounded-lg px-4 py-3 text-base text-white font-bold hover:bg-white/10 hover:text-amber-300">Admissions</Link>

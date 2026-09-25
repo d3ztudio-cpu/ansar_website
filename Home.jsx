@@ -2,7 +2,6 @@ import React, { lazy, Suspense, useState, useEffect, useRef } from 'react';
 import Layout from './Layout';
 import Hero from './Hero';
 import NewsCard from './NewsCard';
-import NoticePopup from './NoticePopup';
 import AchievementsTicker from './AchievementsTicker';
 import { useSettings } from './SettingsContext';
 import { useContentCollection } from './useContentCollection';
@@ -11,6 +10,7 @@ import { Link } from 'react-router-dom';
 import { compareContentNewestFirst, getDisplayYear, isYearOnly } from './dateUtils';
 import EventCountdown from './EventCountdown';
 
+const NoticePopup = lazy(() => import('./NoticePopup'));
 const SchoolChatbot = lazy(() => import('./SchoolChatbot'));
 
 function DeferredSchoolChatbot() {
@@ -326,7 +326,7 @@ export default function Home() {
 
   return (
     <Layout isHome={true}>
-      <NoticePopup />
+      <Suspense fallback={null}><NoticePopup /></Suspense>
       <DeferredSchoolChatbot />
       <Hero 
         title="Ansar English School – CBSE School in Thrissur"

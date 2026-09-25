@@ -46,10 +46,14 @@ export default function NotificationsBell() {
   });
   const [updates, setUpdates] = useState([]);
   const [achievements, setAchievements] = useState([]);
+  const [magazines, setMagazines] = useState([]);
+  const [ansarTimesEditions, setAnsarTimesEditions] = useState([]);
 
   useEffect(() => {
     const updatesQuery = collection(db, 'updates');
     const achievementsQuery = collection(db, 'achievements');
+    const magazinesQuery = collection(db, 'schoolMagazines');
+    const ansarTimesQuery = collection(db, 'ansarTimes');
 
     const unsubscribeUpdates = onSnapshot(updatesQuery, (snapshot) => {
       setUpdates(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })));
@@ -59,9 +63,19 @@ export default function NotificationsBell() {
       setAchievements(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })));
     }, (error) => console.error('Unable to load achievement notifications:', error));
 
+    const unsubscribeMagazines = onSnapshot(magazinesQuery, (snapshot) => {
+      setMagazines(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })));
+    }, (error) => console.error('Unable to load magazine notifications:', error));
+
+    const unsubscribeAnsarTimes = onSnapshot(ansarTimesQuery, (snapshot) => {
+      setAnsarTimesEditions(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })));
+    }, (error) => console.error('Unable to load Ansar Times notifications:', error));
+
     return () => {
       unsubscribeUpdates();
       unsubscribeAchievements();
+      unsubscribeMagazines();
+      unsubscribeAnsarTimes();
     };
   }, []);
 
@@ -86,10 +100,32 @@ export default function NotificationsBell() {
         millis: getMillis(item)
       }));
 
-    return [...updateItems, ...achievementItems]
+    // School Magazines and monthly Ansar Times editions are announced with
+    // their own type instead of being lumped in as "News".
+    const magazineItems = magazines
+      .filter(item => item.published !== false)
+      .map(item => ({
+        id: item.id,
+        title: item.title || `School Magazine ${item.year || ''}`.trim(),
+        type: 'Magazine',
+        href: '/ansar-times#school-magazines',
+        millis: getMillis(item)
+      }));
+
+    const ansarTimesItems = ansarTimesEditions
+      .filter(item => item.published !== false)
+      .map(item => ({
+        id: item.id,
+        title: `Ansar Times - ${item.month || ''} ${item.year || ''}`.trim(),
+        type: 'Ansar Times',
+        href: '/ansar-times',
+        millis: getMillis(item)
+      }));
+
+    return [...updateItems, ...achievementItems, ...magazineItems, ...ansarTimesItems]
       .sort((a, b) => b.millis - a.millis)
       .slice(0, 12);
-  }, [updates, achievements]);
+  }, [updates, achievements, magazines, ansarTimesEditions]);
 
   const newestMillis = notifications[0]?.millis || 0;
   const hasUnread = newestMillis > lastSeenMillis;
