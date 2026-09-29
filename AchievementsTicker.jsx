@@ -2,12 +2,20 @@ import React, { useMemo, useRef } from 'react';
 import { Link } from 'react-router-dom';
 import { useContentCollection } from './useContentCollection';
 
-function getAchievementTime(item) {
-  const dateTime = Date.parse(item.date);
-  if (!Number.isNaN(dateTime)) return dateTime;
+// Achievements display in upload order (FIFO): newest uploads first.
+function getUploadTime(item) {
   if (item.createdAt?.toMillis) return item.createdAt.toMillis();
   if (item.createdAt?.seconds) return item.createdAt.seconds * 1000;
-  return Number.MIN_SAFE_INTEGER;
+  return null;
+}
+
+function compareByUploadOrder(a, b) {
+  const aTime = getUploadTime(a);
+  const bTime = getUploadTime(b);
+  if (aTime == null && bTime == null) return 0;
+  if (aTime == null) return 1;
+  if (bTime == null) return -1;
+  return bTime - aTime;
 }
 
 export default function AchievementsTicker() {
@@ -16,7 +24,7 @@ export default function AchievementsTicker() {
   const publishedAchievements = useMemo(() => {
     return [...achievements]
       .filter(item => item.published !== false)
-      .sort((a, b) => getAchievementTime(b) - getAchievementTime(a));
+      .sort(compareByUploadOrder);
   }, [achievements]);
 
   const canScroll = publishedAchievements.length > 1;

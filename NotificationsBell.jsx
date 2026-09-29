@@ -3,6 +3,24 @@ import { collection, onSnapshot } from 'firebase/firestore';
 import { Link } from 'react-router-dom';
 import { db } from './firebase-init';
 
+// Starts Firestore subscriptions only once the page has settled (idle) so the
+// bell's four listeners never compete with the page's own content for the
+// network and main thread during first paint.
+function useIdleReady(fallbackDelay = 3500) {
+  const [ready, setReady] = useState(false);
+
+  useEffect(() => {
+    if ('requestIdleCallback' in window) {
+      const idleId = window.requestIdleCallback(() => setReady(true), { timeout: fallbackDelay });
+      return () => window.cancelIdleCallback(idleId);
+    }
+    const timer = window.setTimeout(() => setReady(true), fallbackDelay);
+    return () => window.clearTimeout(timer);
+  }, [fallbackDelay]);
+
+  return ready;
+}
+
 function getMillis(item) {
   if (item.createdAt?.toMillis) return item.createdAt.toMillis();
   if (item.updatedAt?.toMillis) return item.updatedAt.toMillis();
@@ -48,8 +66,13 @@ export default function NotificationsBell() {
   const [achievements, setAchievements] = useState([]);
   const [magazines, setMagazines] = useState([]);
   const [ansarTimesEditions, setAnsarTimesEditions] = useState([]);
+  const idleReady = useIdleReady();
 
   useEffect(() => {
+    // Hold all subscriptions until the browser is idle (or the timeout fires);
+    // the panel simply shows "no notifications" until then.
+    if (!idleReady) return undefined;
+
     const updatesQuery = collection(db, 'updates');
     const achievementsQuery = collection(db, 'achievements');
     const magazinesQuery = collection(db, 'schoolMagazines');
@@ -77,7 +100,7 @@ export default function NotificationsBell() {
       unsubscribeMagazines();
       unsubscribeAnsarTimes();
     };
-  }, []);
+  }, [idleReady]);
 
   const notifications = useMemo(() => {
     const updateItems = updates

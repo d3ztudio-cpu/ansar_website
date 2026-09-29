@@ -42,6 +42,22 @@ export function compareContentNewestFirst(a, b) {
   return String(b?.id || '').localeCompare(String(a?.id || ''));
 }
 
+// Upload order (FIFO): newest uploads first, independent of the record's date.
+export function getUploadTime(item) {
+  if (item?.createdAt?.toMillis) return item.createdAt.toMillis();
+  if (item?.createdAt?.seconds) return item.createdAt.seconds * 1000;
+  return null;
+}
+
+export function compareByUploadOrder(a, b) {
+  const aTime = getUploadTime(a);
+  const bTime = getUploadTime(b);
+  if (aTime == null && bTime == null) return 0;
+  if (aTime == null) return 1;
+  if (bTime == null) return -1;
+  return bTime - aTime;
+}
+
 export function getDisplayYear(value, fallback = 'Undated') {
   const parsed = parseFlexibleDate(value);
   return parsed ? parsed.getFullYear() : fallback;

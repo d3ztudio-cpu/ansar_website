@@ -1,5 +1,5 @@
 import React, { useRef, useState } from 'react';
-import { extractImageUrls } from './imageUrlUtils';
+import { extractImageUrls, normalizeImageUrl } from './imageUrlUtils';
 import { uploadImageToHostinger } from './hostingerUpload';
 
 const UploadIcon = () => (
@@ -34,15 +34,26 @@ export default function ImgBbUrlImporter({ multiple = false, onExtracted, label 
   };
 
   const handleFileSelection = async (event) => {
+    // The picker always allows selecting several photos at once. Fields that
+    // hold a list receive every URL; single-URL fields keep only the first.
     const files = Array.from(event.target.files || []);
     event.target.value = '';
     if (!files.length) return;
 
-    setUploadState({ busy: true, done: 0, total: files.length });
+    if (!multiple && files.length > 1) {
+      alert('This field stores a single image — only the first selected photo will be used. Use a carousel/gallery field to attach multiple images.');
+    }
+
+    const filesToUpload = multiple ? files : files.slice(0, 1);
+    setUploadState({ busy: true, done: 0, total: filesToUpload.length });
     try {
       const uploadedUrls = [];
-      for (let index = 0; index < files.length; index += 1) {
-        uploadedUrls.push(await uploadImageToHostinger(files[index]));
+      for (let index = 0; index < filesToUpload.length; index += 1) {
+        // Normalize before display/storage: the upload service can reply with
+        // an internal host (srv*-files.hstgr.io) that is 403-blocked at the
+        // edge — rewriting it to the canonical subdomain keeps previews and
+        // saved records working.
+        uploadedUrls.push(normalizeImageUrl(await uploadImageToHostinger(filesToUpload[index])));
         setUploadState(prev => ({ ...prev, done: index + 1 }));
       }
 
@@ -82,7 +93,7 @@ export default function ImgBbUrlImporter({ multiple = false, onExtracted, label 
       ref={fileInputRef}
       type="file"
       accept="image/*"
-      {...(multiple ? { multiple: true } : {})}
+      multiple
       onChange={handleFileSelection}
       className="hidden"
     />

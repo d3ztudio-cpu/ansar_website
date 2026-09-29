@@ -10,7 +10,7 @@ import ContentPageLayout from './ContentPageLayout';
 import LearningLabsSection from './LearningLabsSection';
 import { SettingsProvider, useSettings } from './SettingsContext';
 import { DEFAULT_SPORTS_PAGE, mergeListWithDefaults } from './contentDefaults';
-import { compareContentNewestFirst, formatDisplayDate, getDisplayYear, isYearOnly } from './dateUtils';
+import { compareByUploadOrder, compareContentNewestFirst, formatDisplayDate, getDisplayYear, isYearOnly } from './dateUtils';
 import { applySeoMetadata, createMetaDescription } from './seoUtils';
 import { LEARNING_FEATURES_DOCUMENT_CONTENT, resolveLearningFeatureImage } from './learningFeaturesDocumentContent';
 
@@ -1073,7 +1073,8 @@ function SportsPage() {
   const getAchievementYear = (item) => getDisplayYear(item.date, 'Other');
   const publishedAchievements = achievements
     .filter(item => item.published !== false)
-    .sort(compareContentNewestFirst);
+    // FIFO upload order within each year, matching the Achievements page.
+    .sort(compareByUploadOrder);
   const achievementYears = [...new Set(publishedAchievements.map(getAchievementYear))];
 
   return (

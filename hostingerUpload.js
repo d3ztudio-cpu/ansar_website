@@ -8,19 +8,16 @@
 //   https://upload.ansarschool.in/UPLOADS/<file-name>
 const HOSTINGER_UPLOAD_ENDPOINT = 'https://upload.ansarschool.in/upload.php';
 
-const MAX_FILE_SIZE_BYTES = 8 * 1024 * 1024; // 8 MB per image
-
 /**
  * Uploads a single image file to the school's Hostinger storage via upload.php
  * and resolves with the public URL
  * (e.g. https://upload.ansarschool.in/UPLOADS/1737500000_ab12c.jpg).
+ *
+ * No client-side size limit: large photos are accepted as-is and the server
+ * decides what it can store. Network/browser limits still apply naturally.
  */
 export async function uploadImageToHostinger(file) {
   if (!file) throw new Error('No file selected.');
-
-  if (file.size > MAX_FILE_SIZE_BYTES) {
-    throw new Error('Image is larger than 8 MB. Please compress it first.');
-  }
 
   const formData = new FormData();
   formData.append('file', file);

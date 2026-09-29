@@ -4,12 +4,20 @@ import Layout from './Layout';
 import ShareButton from './ShareButton';
 import { useContentCollection } from './useContentCollection';
 
-function getAchievementTime(item) {
-  const dateTime = Date.parse(item.date);
-  if (!Number.isNaN(dateTime)) return dateTime;
+// Achievements display in upload order (FIFO): newest uploads first.
+function getUploadTime(item) {
   if (item.createdAt?.toMillis) return item.createdAt.toMillis();
   if (item.createdAt?.seconds) return item.createdAt.seconds * 1000;
-  return Number.MIN_SAFE_INTEGER;
+  return null;
+}
+
+function compareByUploadOrder(a, b) {
+  const aTime = getUploadTime(a);
+  const bTime = getUploadTime(b);
+  if (aTime == null && bTime == null) return 0;
+  if (aTime == null) return 1;
+  if (bTime == null) return -1;
+  return bTime - aTime;
 }
 
 function AchievementCard({ achievement, priority = false }) {
@@ -67,7 +75,7 @@ export default function Achievements() {
   const { data: achievements, loading } = useContentCollection('achievements', null);
   const publishedAchievements = achievements
     .filter(item => item.published !== false)
-    .sort((a, b) => getAchievementTime(b) - getAchievementTime(a));
+    .sort(compareByUploadOrder);
 
   return (
     <Layout>

@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { doc, getDoc, setDoc, serverTimestamp } from 'firebase/firestore';
 import { db } from './firebase-init';
 import ImgBbUrlImporter from './ImgBbUrlImporter';
+import ImageUrlThumb from './ImageUrlThumb';
 import { DEFAULT_TRUST_MEMBERS } from './trustMembers';
 
 const DEFAULT_EVENT_COUNTDOWNS = [{ id: 'vision-2030-launch', title: 'Official Launch & Inauguration of VISION 2030!', dateTime: '2026-08-29T09:30', enabled: true }];
@@ -231,6 +232,7 @@ export default function AdminSettings() {
                   <label className="block text-sm font-bold text-slate-700 mb-2">School Premises Vertical Carousel</label>
                   {(formData.premisesImages || ['']).map((url, index) => (
                     <div key={`prem-${index}`} className="flex items-center gap-2 mb-2">
+                      <ImageUrlThumb url={url} alt={`Premises image ${index + 1}`} />
                       <input type="text" value={url} onChange={(e) => handleArrayChange('premisesImages', index, e.target.value)} placeholder="Image URL..." className="w-full p-2 border border-slate-200 rounded-lg outline-none" />
                       <button type="button" onClick={() => removeArrayItem('premisesImages', index)} disabled={formData.premisesImages.length <= 1} className="p-2 text-red-500 hover:bg-red-50 rounded-full disabled:opacity-50">✕</button>
                     </div>
@@ -244,6 +246,7 @@ export default function AdminSettings() {
                   <label className="block text-sm font-bold text-slate-700 mb-2">KG Section Vertical Carousel</label>
                   {(formData.kgImages || ['']).map((url, index) => (
                     <div key={`kg-${index}`} className="flex items-center gap-2 mb-2">
+                      <ImageUrlThumb url={url} alt={`KG image ${index + 1}`} />
                       <input type="text" value={url} onChange={(e) => handleArrayChange('kgImages', index, e.target.value)} placeholder="Image URL..." className="w-full p-2 border border-slate-200 rounded-lg outline-none" />
                       <button type="button" onClick={() => removeArrayItem('kgImages', index)} disabled={formData.kgImages.length <= 1} className="p-2 text-red-500 hover:bg-red-50 rounded-full disabled:opacity-50">✕</button>
                     </div>

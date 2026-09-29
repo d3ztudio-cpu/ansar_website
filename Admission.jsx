@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import Layout from './Layout';
 import ContentPageLayout from './ContentPageLayout';
@@ -7,7 +7,69 @@ import { useSettings } from './SettingsContext';
 
 const DEFAULT_FEE_STRUCTURE_URL = 'https://drive.google.com/file/d/1BlRQIlD4U4RjRGvVIq2Kah4xYxNjChoa/view?usp=drive_link';
 const DEFAULT_FEE_STRUCTURE_TITLE = 'Fee Structure 2026 - 2027';
-const ADMISSION_PAYMENT_PORTAL_URL = 'https://ansartrust.atcampussolutions.com/school/';
+const FEE_PAYMENT_PORTAL_URL = 'https://ansartrust.atcampussolutions.com/school/';
+
+const ADMISSION_FAQS = [
+  {
+    group: 'General Admission & Eligibility',
+    items: [
+      {
+        question: 'What is the general admission criteria at Ansar English School?',
+        answer: 'Admissions are open to all children regardless of caste, creed, religion, gender, or socio-economic background, in alignment with NEP and CBSE guidelines.'
+      },
+      {
+        question: 'What is the age requirement for entry-level and higher classes?',
+        answer: 'Candidates must meet the minimum age requirement calculated as of June 1st of the academic year: Pre-KG 3 years, LKG 4 years, UKG 5 years, and Class I 6 years. For Class II \u2013 XII it increases incrementally per grade \u2014 7 years for Class II, 11 years for Class VI, up to 17 years for Class XII. Age limits may be relaxed at the discretion of the School Admission Committee for students transferring from a recognized school based on past performance.'
+      },
+      {
+        question: 'Is there an entrance test for entry-level admissions?',
+        answer: 'No. Admissions to entry-level classes (Pre-KG to Class I) are based solely on age eligibility and an informal interaction with the child and parents. No formal testing is conducted.'
+      },
+      {
+        question: 'How are admissions processed for higher classes (Class II and above)?',
+        answer: 'Admission to higher classes depends on seat availability, past academic performance, and a diagnostic assessment to understand the student\u2019s learning needs.'
+      }
+    ]
+  },
+  {
+    group: 'Timelines & Mid-Year Admissions',
+    items: [
+      {
+        question: 'When does the admission process take place?',
+        answer: 'Regular admissions are processed at the beginning of the academic year, typically between March and May.'
+      },
+      {
+        question: 'Can I apply for mid-year admission?',
+        answer: 'Mid-year admissions up to Class IX are considered only under genuine transfer-of-residence circumstances, with applications accepted until October.'
+      },
+      {
+        question: 'Can students be admitted directly into Class X or Class XII?',
+        answer: 'Admissions to Classes X and XII are granted only in rare cases involving a transfer of residence, provided a vacancy exists and the transfer complies with CBSE direct admission guidelines.'
+      }
+    ]
+  },
+  {
+    group: 'Priorities, Financial Support & Special Inclusion',
+    items: [
+      {
+        question: 'Does the school offer priority in admissions?',
+        answer: 'Yes, a priority framework may be applied for siblings of current students, children of staff members, wards of alumni, and local community residents, while maintaining fairness and merit.'
+      },
+      {
+        question: 'Are financial assistance or scholarships available for underprivileged students?',
+        answer: 'Yes. Ansar English School provides admission to economically disadvantaged students supported by the Ansar Poor Fund (APF). Additionally, admission for orphans is supported through the Ansar Care initiative funded by the Ansar Alumni.'
+      },
+      {
+        question: 'What is the admission policy for Children with Special Learning Needs (CWSN)?',
+        answer: 'Admissions for children with special learning needs or challenges are evaluated on a case-by-case basis under the guidance of the school counselor and in strict adherence to CBSE guidelines.'
+      },
+      {
+        question: 'How does the school help new students adjust to the school environment?',
+        answer: 'The school provides structured counseling and orientation sessions for newly admitted students and parents to support a smooth transition and integration into the academic community.'
+      }
+    ]
+  }
+];
 
 function getDriveFileId(url = '') {
   const match = url.match(/\/file\/d\/([^/]+)/) || url.match(/[?&]id=([^&]+)/);
@@ -58,33 +120,81 @@ function FeeStructureActions({ title, url, onDownload }) {
   );
 }
 
-function AdmissionPaymentPortal() {
+function FaqItem({ question, answer, isOpen, onToggle }) {
   return (
-    <div className="rounded-2xl border border-amber-100 bg-amber-50 p-6 shadow-sm">
-      <div className="flex items-start gap-4">
-        <div className="flex h-12 w-12 flex-none items-center justify-center rounded-xl bg-amber-500 text-white">
-          <svg className="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8V7m0 10v-1m9-4a9 9 0 1 1-18 0 9 9 0 0 1 18 0z" />
-          </svg>
-        </div>
-        <div className="min-w-0">
-          <p className="text-sm font-black uppercase tracking-widest text-amber-700">Online Portal</p>
-          <h2 className="mt-2 whitespace-nowrap text-xl font-extrabold text-slate-950">Admission Portal</h2>
-          <p className="mt-2 text-sm leading-relaxed text-slate-600">Use the official AT Campus portal for admission-related services and online payments.</p>
-        </div>
-      </div>
-      <a
-        href={ADMISSION_PAYMENT_PORTAL_URL}
-        target="_blank"
-        rel="noopener noreferrer"
-        className="mt-6 inline-flex w-full items-center justify-center gap-2 rounded-xl bg-amber-500 px-5 py-3 text-sm font-bold text-white shadow-md transition-colors hover:bg-amber-600"
+    <div className={`overflow-hidden rounded-2xl border transition-colors ${isOpen ? 'border-emerald-300 bg-emerald-50/60' : 'border-slate-200 bg-white hover:border-emerald-200'}`}>
+      <button
+        type="button"
+        onClick={onToggle}
+        aria-expanded={isOpen}
+        className="flex w-full items-center justify-between gap-4 px-5 py-4 text-left"
       >
-        <span className="whitespace-nowrap">Open Portal</span>
-        <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M7 17 17 7M8 7h9v9" />
-        </svg>
-      </a>
+        <span className="text-base font-bold text-slate-900">{question}</span>
+        <span className={`flex h-8 w-8 flex-none items-center justify-center rounded-full transition-all ${isOpen ? 'rotate-45 bg-emerald-600 text-white' : 'bg-emerald-100 text-emerald-700'}`}>
+          <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M12 5v14M5 12h14" />
+          </svg>
+        </span>
+      </button>
+      {isOpen && (
+        <div className="px-5 pb-5">
+          <p className="text-sm leading-relaxed text-slate-600">{answer}</p>
+        </div>
+      )}
     </div>
+  );
+}
+
+function AdmissionFaqSection() {
+  const [openFaqKey, setOpenFaqKey] = useState(null);
+
+  return (
+    <section className="mb-16 rounded-3xl border border-slate-100 bg-white p-8 shadow-sm sm:p-10">
+      <div className="mb-10 text-center">
+        <p className="text-xs font-black uppercase tracking-[0.2em] text-emerald-600">Frequently Asked Questions</p>
+        <h2 className="mt-2 text-3xl font-black text-emerald-950">Admission FAQs</h2>
+        <p className="mx-auto mt-3 max-w-2xl text-slate-600">Everything parents need to know about admissions at Ansar English School, based on our official admission policy.</p>
+      </div>
+
+      <div className="space-y-10">
+        {ADMISSION_FAQS.map((group) => (
+          <div key={group.group}>
+            <h3 className="mb-4 flex items-center gap-3 text-lg font-extrabold text-slate-900">
+              <span className="h-5 w-1.5 rounded-full bg-gradient-to-b from-emerald-500 to-amber-400" aria-hidden="true" />
+              {group.group}
+            </h3>
+            <div className="space-y-3">
+              {group.items.map((faq, index) => {
+                const faqKey = `${group.group}-${index}`;
+                return (
+                  <FaqItem
+                    key={faqKey}
+                    question={faq.question}
+                    answer={faq.answer}
+                    isOpen={openFaqKey === faqKey}
+                    onToggle={() => setOpenFaqKey(openFaqKey === faqKey ? null : faqKey)}
+                  />
+                );
+              })}
+            </div>
+          </div>
+        ))}
+      </div>
+
+      <div className="mt-10 overflow-hidden rounded-2xl bg-gradient-to-br from-emerald-950 via-slate-900 to-emerald-900 p-8 text-center shadow-lg sm:p-10">
+        <h3 className="text-xl font-extrabold text-white sm:text-2xl">If you have any other queries, feel free to contact us</h3>
+        <p className="mx-auto mt-3 max-w-xl text-sm leading-relaxed text-slate-300">Our admissions team is happy to help you with anything that is not covered in the questions above.</p>
+        <Link
+          to="/contact"
+          className="mt-6 inline-flex items-center justify-center gap-2 rounded-xl bg-emerald-600 px-8 py-3.5 font-bold text-white shadow-md transition-colors hover:bg-emerald-700 hover:shadow-lg"
+        >
+          Contact Us
+          <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 12h14m-6-6 6 6-6 6" />
+          </svg>
+        </Link>
+      </div>
+    </section>
   );
 }
 
@@ -115,7 +225,6 @@ export default function Admission() {
           eyebrow="Admissions"
           sidebar={(
             <>
-              <AdmissionPaymentPortal />
               <FeeStructureActions title={feeStructureTitle} url={feeStructureUrl} onDownload={() => handlePdfDownload(feeStructureUrl)} />
               <div className="rounded-2xl border border-slate-100 bg-white p-6 shadow-sm">
                 <p className="text-sm font-bold text-slate-900">Admissions Office</p>
@@ -129,9 +238,6 @@ export default function Admission() {
             className="prose prose-slate prose-lg max-w-none prose-headings:text-slate-900 prose-a:text-emerald-600 prose-img:rounded-xl"
             dangerouslySetInnerHTML={{ __html: page.bodyHtml }}
           />
-          <div className="mt-10">
-            <AdmissionPaymentPortal />
-          </div>
           <div className="mt-6">
             <FeeStructureActions title={feeStructureTitle} url={feeStructureUrl} onDownload={() => handlePdfDownload(feeStructureUrl)} />
           </div>
@@ -142,38 +248,75 @@ export default function Admission() {
 
   return (
     <Layout>
-      <div className="max-w-6xl mx-auto py-12 lg:py-20 px-4">
-        
-        <section className="relative mb-16 overflow-hidden rounded-[2rem] bg-emerald-950 px-6 py-12 text-white shadow-2xl sm:px-10 lg:px-14 lg:py-16">
-          <div className="absolute -right-24 -top-24 h-72 w-72 rounded-full border-[55px] border-emerald-800/40" />
-          <div className="absolute -bottom-28 left-1/3 h-64 w-64 rounded-full bg-amber-400/10 blur-3xl" />
-          <div className="relative grid grid-cols-1 items-center gap-12 lg:grid-cols-[1.15fr_.85fr]">
-            <div>
-              <div className="inline-flex items-center gap-2 rounded-full border border-emerald-700 bg-emerald-900/70 px-4 py-2 text-xs font-black uppercase tracking-[0.2em] text-amber-300"><span className="h-2 w-2 rounded-full bg-amber-400" />Admissions 2026–27</div>
-              <h1 className="mt-7 text-4xl font-black leading-[1.05] sm:text-5xl lg:text-6xl">A confident first step toward a bright future.</h1>
-              <p className="mt-6 max-w-2xl text-lg leading-relaxed text-emerald-50/80">A clear, supportive admission journey into a learning community built on excellence, values, care, and opportunity.</p>
-              <div className="mt-9 flex flex-col gap-3 sm:flex-row sm:flex-wrap">
-            <Link to="/contact" className="inline-flex items-center justify-center whitespace-nowrap bg-emerald-600 text-white font-bold px-8 py-4 rounded-full shadow-lg hover:bg-emerald-700 hover:shadow-xl hover:-translate-y-1 transition-all duration-300">
-              Contact Admissions Office
-            </Link>
-            <a href={ADMISSION_PAYMENT_PORTAL_URL} target="_blank" rel="noopener noreferrer" className="inline-flex items-center justify-center whitespace-nowrap rounded-full bg-amber-500 px-8 py-4 font-bold text-white shadow-lg transition-all duration-300 hover:-translate-y-1 hover:bg-amber-600 hover:shadow-xl">
-              Admission & Payments
-            </a>
-            <a href={feeStructureUrl} target="_blank" rel="noopener noreferrer" className="inline-flex items-center justify-center whitespace-nowrap rounded-full border border-white/20 bg-white/10 px-8 py-4 font-bold text-white shadow-sm backdrop-blur-sm transition-all duration-300 hover:-translate-y-1 hover:bg-white/20">
-              View Fee Structure
-            </a>
-              </div>
-            </div>
-            <div className="relative mx-auto w-full max-w-sm">
-              <div className="absolute -inset-3 rotate-3 rounded-[2rem] border border-amber-300/30" />
-              <div className="relative rounded-[2rem] bg-white p-7 text-slate-900 shadow-2xl">
-                <p className="text-xs font-black uppercase tracking-[0.2em] text-emerald-600">Admission window</p>
-                <h2 className="mt-3 text-2xl font-black text-emerald-950">January 01 — March 31</h2>
-                <p className="mt-3 leading-relaxed text-slate-600">Our team guides every family through eligibility, assessment, documentation, and enrollment.</p>
-                <div className="mt-6 grid grid-cols-3 gap-2 border-t border-slate-100 pt-6 text-center">
-                  {[['LKG', '3½+'], ['UKG', '4½+'], ['Class I', '5½+']].map(([label, age]) => <div key={label} className="rounded-xl bg-emerald-50 px-2 py-3"><strong className="block text-lg text-emerald-800">{age}</strong><span className="text-xs font-bold text-slate-500">{label}</span></div>)}
+      <div className="mx-auto max-w-7xl px-4 py-14 sm:px-6 lg:px-8 lg:py-20">
+
+        {/* Page header */}
+        <div className="mb-14 text-center">
+          <p className="mb-2 text-sm font-bold uppercase tracking-wider text-emerald-600">Join Our Family</p>
+          <h1 className="text-4xl font-extrabold text-slate-900 lg:text-5xl">Admissions</h1>
+          <div className="mx-auto mt-4 h-1.5 w-24 rounded-full bg-gradient-to-r from-emerald-500 to-amber-400" aria-hidden="true"></div>
+          <p className="mx-auto mt-5 max-w-2xl text-lg text-slate-600">A clear, supportive admission journey into a learning community built on excellence, values, care, and opportunity.</p>
+        </div>
+
+        {/* Hero + quick actions card */}
+        <section className="mb-12 overflow-hidden rounded-3xl border border-emerald-100 bg-gradient-to-br from-emerald-50 via-white to-white shadow-lg ring-1 ring-emerald-50">
+          <div className="flex flex-col gap-6 p-6 sm:p-8 lg:flex-row lg:items-center lg:justify-between">
+            <div className="max-w-md">
+              <div className="flex items-center gap-3">
+                <span className="flex h-11 w-11 flex-none items-center justify-center rounded-xl bg-emerald-600 text-white shadow-md">
+                  <svg className="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                  </svg>
+                </span>
+                <div>
+                  <h2 className="text-xl font-extrabold text-slate-900">Admission Window</h2>
+                  <p className="text-xs font-black uppercase tracking-widest text-emerald-600">January 01 — March 31</p>
                 </div>
               </div>
+              <p className="mt-3 text-sm leading-relaxed text-slate-600">Our team guides every family through eligibility, assessment, documentation, and enrollment — a confident first step toward a bright future.</p>
+            </div>
+            <div className="grid gap-3 sm:grid-cols-3 lg:min-w-0 lg:flex-1">
+              <a
+                href={FEE_PAYMENT_PORTAL_URL}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="group flex h-full flex-col gap-2 rounded-xl border border-slate-100 border-t-4 border-t-amber-500 bg-white p-4 text-left shadow-sm transition-all hover:-translate-y-0.5 hover:border-amber-300 hover:bg-amber-50 hover:shadow-md"
+              >
+                <span className="flex h-9 w-9 items-center justify-center rounded-full bg-amber-100 text-amber-700 transition-colors group-hover:bg-amber-600 group-hover:text-white">
+                  <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V6a3 3 0 00-3-3H6a3 3 0 00-3 3v10a3 3 0 003 3z" />
+                  </svg>
+                </span>
+                <span className="text-xs font-black uppercase tracking-wider text-slate-400">Online Payments</span>
+                <span className="whitespace-nowrap text-sm font-extrabold leading-5 tracking-tight text-slate-900">Fee Payment</span>
+              </a>
+              <Link
+                to="/contact"
+                className="group flex h-full flex-col gap-2 rounded-xl border border-slate-100 border-t-4 border-t-emerald-500 bg-white p-4 text-left shadow-sm transition-all hover:-translate-y-0.5 hover:border-emerald-300 hover:bg-emerald-50 hover:shadow-md"
+              >
+                <span className="flex h-9 w-9 items-center justify-center rounded-full bg-emerald-100 text-emerald-700 transition-colors group-hover:bg-emerald-600 group-hover:text-white">
+                  <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 8l7.89 5.26a2 2 0 0 0 2.22 0L21 8M5 19h14a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v10a2 2 0 0 0 2 2z" />
+                  </svg>
+                </span>
+                <span className="text-xs font-black uppercase tracking-wider text-slate-400">Talk to Us</span>
+                <span className="whitespace-nowrap text-sm font-extrabold leading-5 tracking-tight text-slate-900">Admissions Office</span>
+              </Link>
+              <a
+                href={feeStructureUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="group flex h-full flex-col gap-2 rounded-xl border border-slate-100 border-t-4 border-t-sky-500 bg-white p-4 text-left shadow-sm transition-all hover:-translate-y-0.5 hover:border-sky-300 hover:bg-sky-50 hover:shadow-md"
+              >
+                <span className="flex h-9 w-9 items-center justify-center rounded-full bg-sky-100 text-sky-700 transition-colors group-hover:bg-sky-600 group-hover:text-white">
+                  <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                  </svg>
+                </span>
+                <span className="text-xs font-black uppercase tracking-wider text-slate-400">Official Document</span>
+                <span className="whitespace-nowrap text-sm font-extrabold leading-5 tracking-tight text-slate-900">Fee Structure</span>
+              </a>
             </div>
           </div>
         </section>
@@ -205,7 +348,7 @@ export default function Admission() {
                 </div>
               </div>
             </div>
-            
+
             <div className="bg-white p-8 sm:p-10 rounded-3xl shadow-sm border border-slate-100 academics-card">
               <h2 className="text-2xl font-bold text-slate-900 mb-6">Documentation Checklist</h2>
               <ul className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -218,8 +361,6 @@ export default function Admission() {
           </div>
 
           <div className="space-y-8">
-            <AdmissionPaymentPortal />
-
             <div className="bg-slate-900 p-8 rounded-3xl shadow-xl text-white academics-card">
               <h2 className="text-xl font-bold mb-6 text-emerald-400">Eligibility Criteria</h2>
               <div className="space-y-4">
@@ -240,7 +381,7 @@ export default function Admission() {
                 <a href={feeStructureUrl} target="_blank" rel="noopener noreferrer" className="w-full rounded-xl bg-slate-900 px-4 py-3 text-sm font-bold text-white shadow-md transition-colors hover:bg-slate-800 sm:text-base">
                   View {feeStructureTitle}
                 </a>
-                <button 
+                <button
                   onClick={() => handlePdfDownload(feeStructureUrl)}
                   className="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-3 px-4 rounded-xl transition-colors shadow-md flex justify-center items-center gap-2"
                 >
@@ -251,6 +392,8 @@ export default function Admission() {
             </div>
           </div>
         </div>
+
+        <AdmissionFaqSection />
       </div>
     </Layout>
   );

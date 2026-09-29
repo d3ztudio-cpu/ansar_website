@@ -7,7 +7,7 @@ import { useSettings } from './SettingsContext';
 import { useContentCollection } from './useContentCollection';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Link } from 'react-router-dom';
-import { compareContentNewestFirst, getDisplayYear, isYearOnly } from './dateUtils';
+import { compareByUploadOrder, compareContentNewestFirst, getDisplayYear, isYearOnly } from './dateUtils';
 import EventCountdown from './EventCountdown';
 
 const NoticePopup = lazy(() => import('./NoticePopup'));
@@ -281,10 +281,9 @@ export default function Home() {
   const homeEvents = eventItems
     .filter(item => item.published !== false && (!item.category || item.category === 'Events'))
     .sort(compareContentNewestFirst)
-    .slice(0, 3);
-  const homeSportsAchievements = sportsAchievements
+    .slice(0, 3);    const homeSportsAchievements = sportsAchievements
     .filter(item => item.published !== false)
-    .sort(compareContentNewestFirst)
+    .sort(compareByUploadOrder)
     .slice(0, 8);
   const displayLearningFeatures = FALLBACK_FEATURES.map(feature => {
     const saved = learningFeatures.find(item => item.slug === feature.slug && item.published !== false);

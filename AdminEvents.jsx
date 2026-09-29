@@ -4,6 +4,7 @@ import { db } from './firebase-init';
 import { clearGoogleSheetsCache, useContentCollection } from './useContentCollection';
 import { saveSheetRecord } from './googleSheetsAdminApi';
 import ImgBbUrlImporter from './ImgBbUrlImporter';
+import ImageUrlThumb from './ImageUrlThumb';
 import { softDeleteRecord } from './adminUndo';
 import { normalizeImageUrl } from './imageUrlUtils';
 
@@ -67,6 +68,16 @@ export default function AdminEvents() {
     if (formData.imageUrls.length <= 1) return; // Keep at least one
     const newImageUrls = formData.imageUrls.filter((_, i) => i !== index);
     setFormData(prev => ({ ...prev, imageUrls: newImageUrls }));
+  };
+
+  const moveImageUrl = (index, direction) => {
+    setFormData(prev => {
+      const images = [...(Array.isArray(prev.imageUrls) ? prev.imageUrls : [])];
+      const targetIndex = index + direction;
+      if (targetIndex < 0 || targetIndex >= images.length) return prev;
+      [images[index], images[targetIndex]] = [images[targetIndex], images[index]];
+      return { ...prev, imageUrls: images };
+    });
   };
 
   const handleEdit = (item) => {
@@ -197,8 +208,11 @@ export default function AdminEvents() {
                   onExtracted={appendImageUrls}
                 />
               </div>
+              <p className="text-xs font-bold text-slate-500">The first image is used as the event thumbnail. Use <span className="text-emerald-700">&uarr;</span> / <span className="text-emerald-700">&darr;</span> to swap images and set the priority one.</p>
               {formData.imageUrls.map((url, index) => (
                 <div key={index} className="flex items-center gap-2">
+                  <span className={`flex h-9 w-9 flex-none items-center justify-center rounded-lg text-xs font-black ${index === 0 ? 'bg-emerald-600 text-white' : 'bg-slate-100 text-slate-500'}`} title={index === 0 ? 'Cover image' : `Image ${index + 1}`}>{index + 1}</span>
+                  <ImageUrlThumb url={url} alt={`Event image ${index + 1}`} />
                   <input 
                     type="url" 
                     value={url} 
@@ -206,6 +220,8 @@ export default function AdminEvents() {
                     placeholder="https://example.com/image.jpg"
                     className="w-full p-2 border border-slate-200 rounded-lg focus:ring-2 focus:ring-emerald-500 outline-none" 
                   />
+                  <button type="button" onClick={() => moveImageUrl(index, -1)} disabled={index === 0} aria-label="Move image up" className="rounded-lg border border-slate-200 px-2.5 py-2 font-bold text-slate-600 hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-40">&uarr;</button>
+                  <button type="button" onClick={() => moveImageUrl(index, 1)} disabled={index === formData.imageUrls.length - 1} aria-label="Move image down" className="rounded-lg border border-slate-200 px-2.5 py-2 font-bold text-slate-600 hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-40">&darr;</button>
                   <button type="button" onClick={() => removeImageUrlField(index)} className="p-2 text-red-500 hover:bg-red-50 rounded-full disabled:opacity-50" disabled={formData.imageUrls.length <= 1}>
                     <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20"><path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM7 9a1 1 0 000 2h6a1 1 0 100-2H7z" clipRule="evenodd" /></svg>
                   </button>

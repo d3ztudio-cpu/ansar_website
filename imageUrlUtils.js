@@ -10,6 +10,26 @@ const DIRECT_IMAGE_HOSTS = [
   'res.cloudinary.com'
 ];
 
+// Hostinger's internal server names (srv*-files.hstgr.io) are 403-blocked at
+// their edge, but files stored under them live in the same public_html/UPLOADS
+// folder that upload.ansarschool.in serves. Rewrite saved URLs so records that
+// captured the internal host display correctly again.
+const LEGACY_UPLOAD_HOSTS = {
+  'srv1090-files.hstgr.io': 'upload.ansarschool.in'
+};
+
+/** Maps URLs saved with a defunct upload host onto the canonical subdomain. */
+export function repairLegacyUploadHost(value) {
+  const input = String(value || '');
+  return input.replace(
+    /^(https?:\/\/)([^/?#]+)(\/UPLOADS\/[^?#]*)/i,
+    (match, scheme, host, path) => {
+      const canonicalHost = LEGACY_UPLOAD_HOSTS[host.toLowerCase()];
+      return canonicalHost ? `${scheme}${canonicalHost}${path}` : match;
+    }
+  );
+}
+
 function stripTrailingPunctuation(value) {
   return String(value || '').replace(/[),.;\]]+$/g, '');
 }
@@ -17,7 +37,9 @@ function stripTrailingPunctuation(value) {
 export function normalizeImageUrl(value) {
   if (!value || typeof value !== 'string') return '';
 
-  const trimmedUrl = stripTrailingPunctuation(value.trim().replace(/&amp;/g, '&'));
+  const trimmedUrl = stripTrailingPunctuation(
+    repairLegacyUploadHost(value.trim().replace(/&amp;/g, '&'))
+  );
   if (!trimmedUrl) return '';
 
   try {

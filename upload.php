@@ -62,8 +62,8 @@ $file = $_FILES['file'];
 if (($file['error'] ?? UPLOAD_ERR_OK) !== UPLOAD_ERR_OK) {
     respondError('Upload failed (code ' . $file['error'] . '). The file may be too large.');
 }
-if ($file['size'] <= 0 || $file['size'] > 8 * 1024 * 1024) {
-    respondError('Image must be between 1 byte and 8 MB.');
+if ($file['size'] <= 0) {
+    respondError('The selected file is empty.');
 }
 
 // Real image check (blocks disguised files regardless of extension)
@@ -72,11 +72,10 @@ if ($info === false) {
     respondError('The selected file is not a valid image.');
 }
 
+// Any PHP-supported image type is accepted; keep a sane extension fallback.
 $allowedTypes = [IMAGETYPE_JPEG => 'jpg', IMAGETYPE_PNG => 'png', IMAGETYPE_GIF => 'gif', IMAGETYPE_WEBP => 'webp'];
-$extension = $allowedTypes[$info[2]] ?? null;
-if ($extension === null) {
-    respondError('Only JPG, PNG, GIF, or WebP images are allowed.');
-}
+$extension = $allowedTypes[$info[2]]
+    ?? (image_type_to_extension($info[2], false) ?: 'img');
 
 // ----- Ensure the target directory exists (public_html/UPLOADS) -----
 $uploadDir = __DIR__ . '/UPLOADS';
@@ -93,9 +92,10 @@ if (!move_uploaded_file($file['tmp_name'], $targetPath)) {
 }
 @chmod($targetPath, 0644);
 
-// ----- Public URL (uses the requested host when served via the subdomain) -----
-$host = $_SERVER['HTTP_HOST'] ?? HOST_BASE;
-$url = 'https://' . $host . '/UPLOADS/' . $name;
+// ----- Public URL (always the canonical subdomain) -----
+// Do NOT trust $_SERVER['HTTP_HOST']: behind Hostinger's edge proxy it can be
+// the internal server name (srv*-files.hstgr.io), which is 403-blocked publicly.
+$url = 'https://' . HOST_BASE . '/UPLOADS/' . $name;
 
 echo json_encode(['status' => 'success', 'url' => $url]);
 exit;

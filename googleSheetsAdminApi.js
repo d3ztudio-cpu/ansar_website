@@ -45,6 +45,21 @@ export function saveSheetRecord(collectionName, record) {
   return postToSheets('save', { collectionName, record });
 }
 
+/**
+ * Ask the Apps Script Web App to email a system-generated acknowledgement to a
+ * visitor who just submitted the contact form. Runs with the same write token,
+ * so no extra credentials are needed.
+ */
+export function sendContactAcknowledgement({ name, email, destination, category, applyingForClass }) {
+  return postToSheets('sendContactAck', {
+    name,
+    email,
+    destination,
+    category,
+    applyingForClass
+  });
+}
+
 export function deleteSheetRecord(collectionName, id, record) {
   return postToSheets('delete', { collectionName, id, record });
 }

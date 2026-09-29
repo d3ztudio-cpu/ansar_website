@@ -85,6 +85,7 @@ const SHEET_COLUMNS = {
     'email',
     'destination',
     'category',
+    'applyingForClass',
     'message',
     'published'
   ],
@@ -209,6 +210,10 @@ function doPost(e) {
 
     if (action === 'save') {
       return json_({ ok: true, item: saveRecord_(body) });
+    }
+
+    if (action === 'sendContactAck') {
+      return json_({ ok: true, emailed: sendContactAcknowledgement_(body) });
     }
 
     if (action === 'delete') {
@@ -659,6 +664,68 @@ function saveRecord_(body) {
   }
 
   return record;
+}
+
+/**
+ * Sends a system-generated acknowledgement to a visitor who submitted the
+ * website contact (or admission enquiry) form. Called with the admin write
+ * token, so it cannot be abused by third parties to send arbitrary mail.
+ */
+function sendContactAcknowledgement_(body) {
+  const recipient = String(body.email || '').trim();
+  const name = String(body.name || '').trim();
+  const destination = String(body.destination || '').trim() || 'School';
+  const category = String(body.category || '').trim() || 'General Enquiry';
+  const applyingForClass = String(body.applyingForClass || '').trim();
+
+  if (!recipient || recipient.indexOf('@') === -1) {
+    throw new Error('A valid visitor email address is required.');
+  }
+
+  const firstName = name.split(/\s+/)[0] || 'there';
+  const subject = 'We have received your request \u2014 Ansar English School';
+  const classLine = applyingForClass
+    ? '<tr><td style="padding:6px 14px 6px 0;font-weight:bold;color:#064e3b;">Class Applying For</td><td style="padding:6px 0;color:#374151;">' + applyingForClass + '</td></tr>'
+    : '';
+
+  const html = [
+    '<div style="font-family:Arial,Helvetica,sans-serif;max-width:560px;margin:0 auto;border:1px solid #e2e8f0;border-radius:12px;overflow:hidden;">',
+    '  <div style="background:#064e3b;color:#ffffff;padding:24px 28px;">',
+    '    <h1 style="margin:0;font-size:20px;">Ansar English School</h1>',
+    '    <p style="margin:6px 0 0;font-size:13px;color:#a7f3d0;">Perumpilavu, Thrissur, Kerala</p>',
+    '  </div>',
+    '  <div style="padding:28px;color:#111827;">',
+    '    <p style="margin:0 0 14px;">Dear ' + firstName + ',</p>',
+    '    <p style="margin:0 0 14px;line-height:1.6;">Thank you for reaching out to us. We have <strong>received your request</strong>, and our team will review it and get back to you as soon as possible.</p>',
+    '    <table style="border-collapse:collapse;font-size:14px;margin:18px 0;">',
+    '      <tr><td style="padding:6px 14px 6px 0;font-weight:bold;color:#064e3b;">Submitted For</td><td style="padding:6px 0;color:#374151;">' + destination + '</td></tr>',
+    '      <tr><td style="padding:6px 14px 6px 0;font-weight:bold;color:#064e3b;">Enquiry Type</td><td style="padding:6px 0;color:#374151;">' + category + '</td></tr>',
+    classLine,
+    '    </table>',
+    '    <p style="margin:0 0 14px;line-height:1.6;">If your matter is urgent, please call the school office at <strong>+91 81298 08051</strong>.</p>',
+    '    <p style="margin:0;line-height:1.6;">Warm regards,<br><strong>Team Ansar English School</strong></p>',
+    '  </div>',
+    '  <div style="background:#f8fafc;padding:14px 28px;font-size:12px;color:#64748b;">This is a system-generated acknowledgement. Please do not reply to this email.</div>',
+    '</div>'
+  ].join('\n');
+
+  const plainText = 'Dear ' + firstName + ',\n\n' +
+    'Thank you for reaching out to Ansar English School. We have received your request, and our team will review it and get back to you as soon as possible.\n\n' +
+    'Submitted For: ' + destination + '\n' +
+    'Enquiry Type: ' + category + '\n' +
+    (applyingForClass ? 'Class Applying For: ' + applyingForClass + '\n' : '') +
+    '\nIf your matter is urgent, please call the school office at +91 81298 08051.\n\n' +
+    'Warm regards,\nTeam Ansar English School\n\n(This is a system-generated acknowledgement. Please do not reply.)';
+
+  MailApp.sendEmail({
+    to: recipient,
+    subject: subject,
+    body: plainText,
+    htmlBody: html,
+    name: 'Ansar English School'
+  });
+
+  return true;
 }
 
 function deleteRecord_(body) {
