@@ -2,6 +2,8 @@ import React from 'react';
 import Layout from './Layout';
 import { useSettings } from './SettingsContext';
 import { DEFAULT_ACADEMICS_PAGE, DEFAULT_ACADEMIC_SECTIONS, mergeListWithDefaults } from './contentDefaults';
+import AcademicCalendar from './AcademicCalendar';
+import { SCHOOL_ACADEMIC_CALENDAR, withSavedCalendarMonths } from './academicCalendarData';
 
 function ImagePlaceholder({ label, className = '' }) {
   return (
@@ -66,6 +68,17 @@ export default function Academics() {
                 </article>
               ))}
             </div>
+          </div>
+        </section>
+
+        <section className="bg-emerald-50/70 px-4 py-16 lg:py-24">
+          <div className="mx-auto max-w-6xl">
+            <div className="max-w-3xl">
+              <p className="text-sm font-black uppercase tracking-widest text-emerald-600">Academic Calendar</p>
+              <h2 className="mt-3 text-3xl font-extrabold text-slate-900 lg:text-4xl">Academic Year 2026-2027</h2>
+              <p className="mt-5 text-lg leading-relaxed text-slate-600">Explore the monthly calendar for Ansar English School, including working days, important dates, holidays, assessments, and school activities.</p>
+            </div>
+            <AcademicCalendar calendar={withSavedCalendarMonths(SCHOOL_ACADEMIC_CALENDAR, settings?.academicCalendars?.school)} />
           </div>
         </section>
 

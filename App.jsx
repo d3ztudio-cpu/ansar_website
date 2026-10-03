@@ -1,4 +1,4 @@
-import React, { lazy, Suspense, useEffect, useState, useRef } from 'react';
+import React, { lazy, Suspense, useCallback, useEffect, useLayoutEffect, useState, useRef } from 'react';
 import { BrowserRouter as Router, Routes, Route, useParams, Navigate, useLocation, Link } from 'react-router-dom';
 import { doc, setDoc, serverTimestamp, collection, query, orderBy, onSnapshot } from 'firebase/firestore';
 import { db } from './firebase-init';
@@ -54,6 +54,7 @@ const AdminFieldTrips = lazy(() => import('./AdminFieldTrips'));
 const AdminLeadership = lazy(() => import('./AdminLeadership'));
 const AdminNotices = lazy(() => import('./AdminNotices'));
 const AdminAcademics = lazy(() => import('./AdminAcademics'));
+const AdminAcademicCalendar = lazy(() => import('./AdminAcademicCalendar'));
 const AdminSettings = lazy(() => import('./AdminSettings'));
 const AdminPublicDisclosure = lazy(() => import('./AdminPublicDisclosure'));
 const AdminAtl = lazy(() => import('./AdminAtl'));
@@ -89,6 +90,11 @@ const ADMIN_EMAILS = [
 const SPROUTS_ADMIN_EMAIL = 'sprouts@ansar.in';
 let authServices = null;
 let authServicesPromise = null;
+
+function isAuthorizedAdmin(email) {
+  const normalizedEmail = String(email || '').trim().toLowerCase();
+  return ADMIN_EMAILS.includes(normalizedEmail) || normalizedEmail === SPROUTS_ADMIN_EMAIL;
+}
 
 /**
  * Load the Firebase Auth module, retrying after failures (e.g. a stale cached
@@ -1186,11 +1192,6 @@ function AdminLogin({ onDenied }) {
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
 
-  const isAuthorizedAdmin = (email) => (
-    ADMIN_EMAILS.includes(String(email || '').toLowerCase())
-    || String(email || '').toLowerCase() === SPROUTS_ADMIN_EMAIL
-  );
-
   const handleEmailAuth = async (e) => {
     e.preventDefault();
     setLoading(true);
@@ -1275,6 +1276,21 @@ function AdminLogin({ onDenied }) {
       </div>
     </div>
   );
+}
+
+/**
+ * Starts or stops the private Auth listener as SPA navigation enters/leaves
+ * /admin. useLayoutEffect prevents a stale login screen from flashing while
+ * Firebase restores an existing session.
+ */
+function AdminRouteObserver({ onRouteChange }) {
+  const { pathname } = useLocation();
+
+  useLayoutEffect(() => {
+    onRouteChange(pathname.startsWith('/admin'));
+  }, [pathname, onRouteChange]);
+
+  return null;
 }
 
 // --- ADMIN DASHBOARD (ANALYTICS & METRICS) ---
@@ -1373,10 +1389,21 @@ function AdminDashboard() {
 export default function App() {
   const [user, setUser] = useState(null);
   const [authLoading, setAuthLoading] = useState(true);
+  const [isAdminRoute, setIsAdminRoute] = useState(() => window.location.pathname.startsWith('/admin'));
   const [deniedEmail, setDeniedEmail] = useState(null);
   const isSproutsAdmin = String(user?.email || '').toLowerCase() === SPROUTS_ADMIN_EMAIL;
 
   const handleDenied = (email) => setDeniedEmail(email || 'your account');
+  const handleAdminRouteChange = useCallback((nextIsAdminRoute) => {
+    setIsAdminRoute(previousIsAdminRoute => {
+      if (previousIsAdminRoute === nextIsAdminRoute) return previousIsAdminRoute;
+      if (nextIsAdminRoute) {
+        // Do not let a prior public route's null state decide the admin view.
+        setAuthLoading(true);
+      }
+      return nextIsAdminRoute;
+    });
+  }, []);
 
   // The boot splash must never outlive a failed or skipped auth init.
   useEffect(() => {
@@ -1389,7 +1416,7 @@ export default function App() {
     // Public routes do not use authentication. Avoid an Auth round trip and a
     // user-document write during their critical rendering path; the listener
     // still starts immediately whenever an administrator opens /admin.
-    if (!window.location.pathname.startsWith('/admin')) {
+    if (!isAdminRoute) {
       setAuthLoading(false);
       return undefined;
     }
@@ -1417,11 +1444,12 @@ export default function App() {
       if (active) setAuthLoading(false);
     });
     return () => { active = false; unsubscribe(); };
-  }, []);
+  }, [isAdminRoute]);
 
   return (
     <SettingsProvider>
     <Router>
+      <AdminRouteObserver onRouteChange={handleAdminRouteChange} />
       <SiteSeo />
       <ScrollToTop />
       <Suspense fallback={<RouteFallback />}>
@@ -1464,11 +1492,12 @@ export default function App() {
         {/* Admin Dashboard Routes */}
         <Route path="/admin/*" element={
           authLoading ? (
-            <div className="min-h-screen flex items-center justify-center bg-slate-900">
-              <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-emerald-500"></div>
+            <div className="min-h-screen flex flex-col items-center justify-center gap-4 bg-slate-900 text-white" role="status" aria-live="polite">
+              <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-emerald-500" aria-hidden="true"></div>
+              <p className="text-sm font-medium text-slate-300">Checking authentication…</p>
             </div>
           ) : user ? (
-            (ADMIN_EMAILS.includes(user.email) || isSproutsAdmin) ? (
+            isAuthorizedAdmin(user.email) ? (
               <AdminLayout user={user} onLogout={handleSignOut} sproutsOnly={isSproutsAdmin}>
                 <Routes>
                   {isSproutsAdmin ? <>
@@ -1496,6 +1525,7 @@ export default function App() {
                   <Route path="/library/quiz" element={<AdminQuizCorner />} />
                   <Route path="/leadership" element={<AdminLeadership />} />
                   <Route path="/academics" element={<AdminAcademics />} />
+                  <Route path="/academic-calendar" element={<AdminAcademicCalendar />} />
                   <Route path="/public-disclosure" element={<AdminPublicDisclosure />} />
                   <Route path="/gallery" element={<AdminGallery />} />
                   <Route path="/notices" element={<AdminNotices />} />

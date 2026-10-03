@@ -253,7 +253,7 @@ ${formData.message}`;
                     <h4 className="text-lg font-medium">Call Us</h4>
                     <div className="mt-2 space-y-2 text-slate-300">
                       <a href={`tel:+91${schoolPhone}`} className="block transition-colors hover:text-emerald-300"><span className="font-semibold text-white">School:</span> +91 81298 08051</a>
-                      <a href={`tel:+91${sproutsPhone}`} className="block transition-colors hover:text-orange-300"><span className="font-semibold text-white">Ansar Sprouts (KG Admission):</span> +91 81298 51737</a>
+                      <a href={`tel:+91${sproutsPhone}`} className="block whitespace-nowrap text-sm transition-colors hover:text-orange-300"><span className="font-semibold text-white">Ansar Sprouts (KG):</span> +91 81298 51737</a>
                       <a href={`tel:+91${classes1to9Phone}`} className="block transition-colors hover:text-emerald-300"><span className="font-semibold text-white">For Class 1 to 9:</span> +91 91889 09891</a>
                     </div>
                   </div>

@@ -1,4 +1,5 @@
-import React, { useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
+import { useLocation } from 'react-router-dom';
 import Layout from './Layout';
 import { STAFF_DIRECTORY } from './staffData';
 
@@ -75,8 +76,12 @@ function StaffTable({ members }) {
 }
 
 export default function Staff() {
-  const [section, setSection] = useState('All Sections');
+  const location = useLocation();
+  const requestedSection = new URLSearchParams(location.search).get('section')?.toLowerCase() === 'sprouts' ? 'Sprouts' : 'All Sections';
+  const [section, setSection] = useState(requestedSection);
   const [search, setSearch] = useState('');
+
+  useEffect(() => setSection(requestedSection), [requestedSection]);
 
   const filtered = useMemo(() => {
     const term = search.trim().toLowerCase();
@@ -94,7 +99,7 @@ export default function Staff() {
           <div className="mx-auto max-w-7xl px-4 py-16 sm:px-6 lg:px-8 lg:py-24">
             <p className="text-sm font-black uppercase tracking-[0.22em] text-amber-300">Ansar Family</p>
             <h1 className="mt-3 max-w-4xl text-4xl font-black leading-tight sm:text-5xl lg:text-6xl">Meet Our Faculty</h1>
-            <p className="mt-6 max-w-3xl text-lg font-medium leading-relaxed text-emerald-50/85">Meet the leadership, counsellors, teachers, and physical education faculty who serve our students across every section of Ansar English School.</p>
+            <p className="mt-6 max-w-3xl text-lg font-medium leading-relaxed text-emerald-50/85">{section === 'Sprouts' ? 'Meet the dedicated faculty who nurture and guide children in Ansar Sprouts.' : 'Meet the leadership, counsellors, teachers, and physical education faculty who serve our students across every section of Ansar English School.'}</p>
             <div className="mt-8 inline-flex rounded-full border border-white/15 bg-white/10 px-4 py-2 text-sm font-bold text-emerald-50">Academic Year 2026–27 · {STAFF_DIRECTORY.length} Faculty Members</div>
           </div>
         </section>

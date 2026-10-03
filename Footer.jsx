@@ -106,7 +106,7 @@ export default function Footer() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-12 pt-8 border-t border-slate-800 text-xs text-slate-500 flex flex-col sm:flex-row justify-between items-center">
         <p>© {new Date().getFullYear()} Ansar English School. All rights reserved.</p>
         <div className="flex flex-col sm:flex-row items-center gap-4 mt-4 sm:mt-0">
-          <p>This website was developed and deployed by <a href="https://d3ztudio-main.web.app" target="_blank" rel="noopener noreferrer" className="text-emerald-500 font-semibold hover:text-emerald-400 hover:underline transition-colors">D3ZTUDIO</a></p>
+          <p>Designed &amp; Developed by <a href="https://d3ztudio-main.web.app" target="_blank" rel="noopener noreferrer" className="text-emerald-500 font-semibold hover:text-emerald-400 hover:underline transition-colors">D3ZTUDIO</a></p>
         </div>
       </div>
     </footer>

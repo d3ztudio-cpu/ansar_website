@@ -3,6 +3,9 @@ import { AnimatePresence, motion } from 'framer-motion';
 import { Link } from 'react-router-dom';
 import Layout from './Layout';
 import { useContentCollection, useContentDocument } from './useContentCollection';
+import AcademicCalendar from './AcademicCalendar';
+import { SPROUTS_ACADEMIC_CALENDAR, withSavedCalendarMonths } from './academicCalendarData';
+import { useSettings } from './SettingsContext';
 
 const iconPaths = {
   art: ['M12 22a10 10 0 1 1 10-10c0 2.2-1.8 4-4 4h-1.8a2.2 2.2 0 0 0-2.2 2.2c0 2.1-2 3.8-4 3.8Z', 'M7.5 10.5h.01M10 6.5h.01M15 7.5h.01M17 11.5h.01'],
@@ -131,6 +134,7 @@ const floatAnimation = {
 };
 
 export default function AnsarSprouts() {
+  const settings = useSettings();
   const { data } = useContentDocument('pages', 'ansar-sprouts');
   const { data: sproutsActivities, loading: activitiesLoading } = useContentCollection('sproutsActivities', 'date', 'desc', { sheetsOnly: true });
   const images = Array.isArray(data?.sproutsImages) && data.sproutsImages.length ? data.sproutsImages : DEFAULT_SPROUTS_IMAGES;
@@ -187,6 +191,17 @@ export default function AnsarSprouts() {
               </div>
               <div className="absolute -bottom-5 -left-3 rotate-[-5deg] rounded-2xl bg-[#fbad18] px-5 py-3 font-black text-white shadow-lg">Play • Learn • Bloom</div>
             </motion.div>
+          </div>
+        </section>
+
+        <section className="bg-gradient-to-b from-[#fbad18]/10 to-[#4f1f71]/10 px-4 py-16 lg:py-20">
+          <div className="mx-auto max-w-7xl">
+            <div className="mx-auto max-w-3xl text-center">
+              <span className="inline-flex rounded-full bg-[#fbad18] px-5 py-2 text-xs font-black uppercase tracking-[0.2em] text-white shadow-md">Academic Calendar</span>
+              <h2 className="mt-5 text-4xl font-black leading-tight text-[#4f1f71] sm:text-5xl">Academic Year 2026-2027</h2>
+              <p className="mt-5 text-lg font-semibold leading-8 text-slate-600">A month-by-month guide to the Ansar Sprouts year, with special days, holidays, assessments, and joyful learning events.</p>
+            </div>
+            <AcademicCalendar calendar={withSavedCalendarMonths(SPROUTS_ACADEMIC_CALENDAR, settings?.academicCalendars?.sprouts)} accent="sprouts" />
           </div>
         </section>
 
@@ -560,6 +575,7 @@ export default function AnsarSprouts() {
                 <p className="mt-5 text-lg font-semibold leading-8 text-white/90">Ansar English School, Perumpilavu is committed to fostering a thriving educational environment. Our dedicated team of well-educated and trained teachers creates a nurturing and supportive atmosphere in which every child feels encouraged to learn and grow.</p>
                 <p className="mt-4 font-semibold leading-8 text-white/75">Beyond traditional teaching roles, our educators serve as mentors who guide students academically and personally. We continually invest in professional development through CBSE-certified courses, online and offline workshops, and school empowerment initiatives, equipping teachers to inspire learners and help them reach their full potential.</p>
                 <div className="mt-7 flex flex-wrap gap-3">{['Qualified educators', 'Caring mentors', 'CBSE-certified training', 'Continuous development'].map(item => <span key={item} className="rounded-full bg-white/10 px-4 py-2 text-sm font-black text-[#fbad18] ring-1 ring-white/20">{item}</span>)}</div>
+                <Link to="/ansar-family?section=sprouts" className="mt-7 inline-flex rounded-full bg-[#fbad18] px-6 py-3 font-black text-[#4f1f71] shadow-lg transition hover:-translate-y-1 hover:bg-white">Meet the Sprouts Faculty</Link>
               </div>
             </div>
           </div>

@@ -1,6 +1,6 @@
 export const DEFAULT_TRUST_MEMBERS = [
   { name: 'MAMMUNNI K K', role: 'Chairman', imageUrl: '/trustees/act-member-01.png' },
-  { name: 'V T ABDULLAH KOYA THANGAL', role: 'Acting Chairman', imageUrl: '/trustees/act-member-02.png' },
+  { name: 'V T ABDULLAH KOYA THANGAL', role: 'Managing Committee Member', imageUrl: '/trustees/act-member-02.png' },
   { name: 'MOHAMMED K V', role: 'Vice Chairman', imageUrl: '/trustees/act-member-03.png' },
   { name: 'E A KUNJAHAMMU', role: 'Secretary', imageUrl: '/trustees/act-member-04.png' },
   { name: 'SHAJU MOHAMEDUNNI', role: 'Asst. Secretary', imageUrl: '/trustees/act-member-05.png' },

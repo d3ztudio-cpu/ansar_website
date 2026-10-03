@@ -66,7 +66,7 @@ const RECENT_PROGRAMME_CONTEXT = [
 
 const TRUSTEES_CONTEXT = [
   'Chairman: MAMMUNNI K K',
-  'Acting Chairman: V T ABDULLAH KOYA THANGAL',
+  'Managing Committee Member: V T ABDULLAH KOYA THANGAL',
   'Vice Chairman: MOHAMMED K V',
   'Secretary: E A KUNJAHAMMU',
   'Assistant Secretary: SHAJU MOHAMEDUNNI',
