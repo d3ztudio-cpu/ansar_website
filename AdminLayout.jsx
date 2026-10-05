@@ -49,6 +49,7 @@ export default function AdminLayout({ children, user, onLogout, sproutsOnly = fa
     if (path.includes('/gallery')) return 'Gallery';
     if (path.includes('/notices')) return 'Notices';
     if (path.includes('/settings')) return 'Settings';
+    if (path.includes('/analytics')) return 'Analytics & SEO';
     return 'Dashboard';
   };
 
@@ -76,6 +77,7 @@ export default function AdminLayout({ children, user, onLogout, sproutsOnly = fa
           {sproutsOnly ? (
           <Link to="/admin/ansar-sprouts" className="block rounded-lg bg-orange-500 px-4 py-3 font-medium text-white"><span className="mr-3" aria-hidden="true">🌱</span>Ansar Sprouts</Link>
           ) : <>
+          <Link to="/admin/analytics" className={`block px-4 py-3 rounded-lg font-medium transition-colors ${currentModule === 'Analytics & SEO' ? 'bg-emerald-600 text-white' : 'text-slate-300 hover:bg-slate-800 hover:text-white'}`}><span className="mr-3" aria-hidden="true">↗</span>Analytics & SEO</Link>
           <Link to="/admin/dashboard" className={`block px-4 py-3 rounded-lg font-medium transition-colors ${currentModule === 'Dashboard' ? 'bg-emerald-600 text-white' : 'text-slate-300 hover:bg-slate-800 hover:text-white'}`}><span className="mr-3" aria-hidden="true">▦</span>Dashboard</Link>
           <Link to="/admin/settings" className={`block px-4 py-3 rounded-lg font-medium transition-colors ${currentModule === 'Settings' ? 'bg-emerald-600 text-white' : 'text-slate-300 hover:bg-slate-800 hover:text-white'}`}><span className="mr-3" aria-hidden="true">⚙</span>Settings & Trust Photos</Link>
           <Link to="/admin/news" className={`block px-4 py-3 rounded-lg font-medium transition-colors ${currentModule === 'News' ? 'bg-emerald-600 text-white' : 'text-slate-300 hover:bg-slate-800 hover:text-white'}`}><span className="mr-3" aria-hidden="true">▤</span>News</Link>

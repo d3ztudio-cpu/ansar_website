@@ -91,7 +91,7 @@ const curioStages = [
   { name: 'Create Curio', icon: 'sparkle', text: 'Express ideas through imagination, making, problem-solving, performance, and creative work.' }
 ];
 
-const sproutsFacilities = [
+const DEFAULT_SPROUTS_FACILITIES = [
   {
     title: 'Learning Resource Center',
     icon: 'book',
@@ -138,6 +138,9 @@ export default function AnsarSprouts() {
   const { data } = useContentDocument('pages', 'ansar-sprouts');
   const { data: sproutsActivities, loading: activitiesLoading } = useContentCollection('sproutsActivities', 'date', 'desc', { sheetsOnly: true });
   const images = Array.isArray(data?.sproutsImages) && data.sproutsImages.length ? data.sproutsImages : DEFAULT_SPROUTS_IMAGES;
+  const facilities = data?.sproutsFacilities && data.sproutsFacilities.length
+    ? data.sproutsFacilities
+    : DEFAULT_SPROUTS_FACILITIES;
   const [imageIndex, setImageIndex] = useState(0);
   const [direction, setDirection] = useState(1);
 
@@ -405,11 +408,10 @@ export default function AnsarSprouts() {
               <p className="mt-5 text-lg font-semibold leading-8 text-slate-600">Every space is thoughtfully planned to help children read, think, create, explore, and become comfortable with the world around them.</p>
             </div>
 
-            <div className="mt-12 grid gap-7 md:grid-cols-2 xl:grid-cols-4">
-              {sproutsFacilities.map((facility, index) => (
+            <div className="mt-12 grid gap-7 md:grid-cols-2 xl:grid-cols-4">                  {facilities.map((facility, index) => (
                 <motion.article key={facility.title} initial={{ opacity: 0, y: 30 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true, amount: 0.2 }} transition={{ delay: index * 0.1 }} whileHover={{ y: -8 }} className="overflow-hidden rounded-[2.2rem] border-4 border-white bg-white shadow-xl">
                   <div className={`relative flex min-h-52 items-center justify-center overflow-hidden bg-gradient-to-br ${facility.color} p-8`}>
-                    {facility.imageField ? <img src={data?.[facility.imageField] || DEFAULT_RADIO_STATION_IMAGE} alt={`${facility.title} facility`} className="absolute inset-0 h-full w-full object-cover" loading="lazy" /> : <motion.div animate={{ y: [0, -8, 0], rotate: [-2, 2, -2] }} transition={{ duration: 4, repeat: Infinity, ease: 'easeInOut', delay: index * 0.5 }}><SproutIcon name={facility.icon} className={`h-24 w-24 ${facility.accent}`} /></motion.div>}
+                    {facility.images && facility.images.length ? <img src={facility.images[0]} alt={`${facility.title} facility`} className="absolute inset-0 h-full w-full object-cover" loading="lazy" /> : <motion.div animate={{ y: [0, -8, 0], rotate: [-2, 2, -2] }} transition={{ duration: 4, repeat: Infinity, ease: 'easeInOut', delay: index * 0.5 }}><SproutIcon name={facility.icon} className={`h-24 w-24 ${facility.accent}`} /></motion.div>}
                   </div>
                   <div className="p-7">
                     <p className={`text-xs font-black uppercase tracking-[0.18em] ${facility.accent}`}>Dedicated Facility</p>

@@ -53,7 +53,7 @@ service cloud.firestore {
     function isAdmin() {
       return isAuthenticated() && (
         request.auth.token.admin == true ||
-        (request.auth.token.email != null && request.auth.token.email in ['d3ztudio@gmail.com', 'ansarmedia@ansarschool.in', 'shafeeqpulikkal32@gmail.com', 'ansarschooloffice@gmail.com']) ||
+        (request.auth.token.email != null && request.auth.token.email in ['d3ztudio@gmail.com', 'ansarmedia@ansarschool.in', 'shafeeqpulikkal32@gmail.com', 'ansarschooloffice@gmail.com', 'aesmedia2025@gmail.com']) ||
         (request.auth.token.email != null && exists(/databases/$(database)/documents/admins/$(request.auth.token.email)))
       );
     }
@@ -139,7 +139,7 @@ service cloud.firestore {
     // ===============================================================
     
     function isValidPage() {
-      return hasOnlyAllowedFields(['title', 'slug', 'subtitle', 'category', 'heroImageUrl', 'bodyHtml', 'virtualTourUrl', 'virtualTourText', 'order', 'published', 'href', 'metaDescription', 'keywords', 'clubsTitle', 'clubsBody', 'clubsImages', 'nssTitle', 'nssBody', 'nssImages', 'spcTitle', 'spcBody', 'spcImages', 'sproutsImages', 'radioStationImageUrl', 'createdAt', 'updatedAt']) &&
+      return hasOnlyAllowedFields(['title', 'slug', 'subtitle', 'category', 'heroImageUrl', 'bodyHtml', 'virtualTourUrl', 'virtualTourText', 'order', 'published', 'href', 'metaDescription', 'keywords', 'clubsTitle', 'clubsBody', 'clubsImages', 'nssTitle', 'nssBody', 'nssImages', 'spcTitle', 'spcBody', 'spcImages', 'sproutsImages', 'sproutsFacilities', 'radioStationImageUrl', 'createdAt', 'updatedAt']) &&
              isValidStringLength('title', 1, 200) &&
              isValidStringLength('slug', 1, 200) &&
              isValidOptionalString('subtitle', 0, 1000) &&
@@ -159,9 +159,7 @@ service cloud.firestore {
              isOptionalUrlList('nssImages', 30) &&
              isValidOptionalString('spcTitle', 0, 200) &&
              isValidOptionalString('spcBody', 0, 50000) &&
-             isOptionalUrlList('spcImages', 30) &&
-             isOptionalUrlList('sproutsImages', 30) &&
-             isValidUrl('radioStationImageUrl') &&
+             isOptionalUrlList('spcImages', 30) &&             isOptionalUrlList('sproutsImages', 30) &&             isValidUrl('radioStationImageUrl') &&             isOptionalUrlList('sproutsFacilities', 30) &&
              isOptionalNumber('order') &&
              isOptionalBool('published') &&
              isOptionalTimestamp('createdAt') &&
@@ -645,6 +643,20 @@ service cloud.firestore {
       allow read: if true;
       allow create, update: if isAdmin();
       allow delete: if false; // Settings documents should not be deleted, only updated
+    }
+
+    // Analytics snapshots are written only by a trusted server-side bridge.
+    match /analyticsSnapshots/{snapshotId} {
+      allow read: if isAdmin();
+      allow write: if false;
+    }
+
+    match /analyticsReports/{reportId} {
+      allow read, create, update, delete: if isAdmin();
+    }
+
+    match /seoPages/{pageId} {
+      allow read, create, update, delete: if isAdmin();
     }
 
     // Sports Page Content

@@ -50,6 +50,7 @@ const AdminLearningFeatures = lazy(() => import('./AdminLearningFeatures'));
 const AdminLifeAtAnsar = lazy(() => import('./AdminLifeAtAnsar'));
 const AdminLearningLabs = lazy(() => import('./AdminLearningLabs'));
 const AdminAnsarSprouts = lazy(() => import('./AdminAnsarSprouts'));
+const AdminSproutsFacilities = lazy(() => import('./AdminSproutsFacilities'));
 const AdminFieldTrips = lazy(() => import('./AdminFieldTrips'));
 const AdminLeadership = lazy(() => import('./AdminLeadership'));
 const AdminNotices = lazy(() => import('./AdminNotices'));
@@ -61,6 +62,7 @@ const AdminAtl = lazy(() => import('./AdminAtl'));
 const AdminLibrary = lazy(() => import('./AdminLibrary'));
 const AdminAlumni = lazy(() => import('./AdminAlumni'));
 const AdminQuizCorner = lazy(() => import('./AdminQuizCorner'));
+const AdminAnalytics = lazy(() => import('./AdminAnalytics'));
 
 const BOOT_SPLASH_ID = 'boot-splash';
 let bootSplashHidden = false;
@@ -85,7 +87,8 @@ const ADMIN_EMAILS = [
   'd3ztudio@gmail.com',
   'ansarmedia@ansarschool.in',
   'shafeeqpulikkal32@gmail.com',
-  'ansarschooloffice@gmail.com'
+  'ansarschooloffice@gmail.com',
+  'aesmedia2025@gmail.com'
 ];
 const SPROUTS_ADMIN_EMAIL = 'sprouts@ansar.in';
 let authServices = null;
@@ -1198,6 +1201,7 @@ function AdminLogin({ onDenied }) {
     setError('');
     try {
       const services = await ensureAuthServices();
+      await services.authPersistenceReady;
       const credential = await services.signInWithEmailAndPassword(services.auth, e.target.email.value, e.target.password.value);
       if (!isAuthorizedAdmin(credential?.user?.email)) {
         await handleSignOut();
@@ -1215,6 +1219,7 @@ function AdminLogin({ onDenied }) {
     setError('');
     try {
       const services = await ensureAuthServices();
+      await services.authPersistenceReady;
       const credential = await services.signInWithPopup(services.auth, new services.GoogleAuthProvider());
       const email = credential?.user?.email;
       if (!isAuthorizedAdmin(email)) {
@@ -1415,7 +1420,8 @@ export default function App() {
   useEffect(() => {
     // Public routes do not use authentication. Avoid an Auth round trip and a
     // user-document write during their critical rendering path; the listener
-    // still starts immediately whenever an administrator opens /admin.
+    // starts whenever an administrator opens /admin. SPA navigation inside
+    // /admin does not change isAdminRoute, so the session listener persists.
     if (!isAdminRoute) {
       setAuthLoading(false);
       return undefined;
@@ -1425,6 +1431,8 @@ export default function App() {
     let unsubscribe = () => {};
     let active = true;
     ensureAuthServices().then((services) => {
+      return services.authPersistenceReady.then(() => services);
+    }).then((services) => {
       if (!active) return;
       unsubscribe = services.onAuthStateChanged(services.auth, async (currentUser) => {
       setUser(currentUser);
@@ -1503,10 +1511,12 @@ export default function App() {
                   {isSproutsAdmin ? <>
                     <Route path="/" element={<Navigate to="/admin/ansar-sprouts" replace />} />
                     <Route path="/ansar-sprouts" element={<AdminAnsarSprouts />} />
+                    <Route path="/facilities" element={<AdminSproutsFacilities />} />
                     <Route path="*" element={<Navigate to="/admin/ansar-sprouts" replace />} />
                   </> : <>
                   <Route path="/" element={<Navigate to="/admin/dashboard" replace />} />
                   <Route path="/dashboard" element={<AdminDashboard />} />
+                  <Route path="/analytics" element={<AdminAnalytics />} />
                   <Route path="/pages" element={<Navigate to="/admin/dashboard" replace />} />
                   <Route path="/updates" element={<Navigate to="/admin/news" replace />} />
                   <Route path="/news" element={<AdminUpdates fixedCategory="News" />} />
