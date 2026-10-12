@@ -59,7 +59,7 @@ export default function Footer() {
           <nav className="flex flex-col space-y-2 text-sm">
             <Link to="/about" className="text-slate-400 hover:text-emerald-400 transition-colors">Who we are</Link>
             <Link to="/about" className="text-slate-400 hover:text-emerald-400 transition-colors">Vision & Mission</Link>
-            <Link to="/leadership" className="text-slate-400 hover:text-emerald-400 transition-colors">Leadership</Link>
+            <Link to="/#leadership" className="text-slate-400 hover:text-emerald-400 transition-colors">Leadership</Link>
             <Link to="/ansar-family" className="text-slate-400 hover:text-emerald-400 transition-colors">Faculty</Link>
             <Link to="/sop" className="text-slate-400 hover:text-emerald-400 transition-colors">SOP</Link>
           </nav>
@@ -96,7 +96,7 @@ export default function Footer() {
             <Link to="/achievements" className="text-slate-400 hover:text-emerald-400 transition-colors">Achievements</Link>
             <Link to="/life-at-ansar" className="text-slate-400 hover:text-emerald-400 transition-colors">Life at Ansar</Link>
             <Link to="/field-trips" className="text-slate-400 hover:text-emerald-400 transition-colors">Field Trips</Link>
-            <Link to="/learning-labs" className="text-slate-400 hover:text-emerald-400 transition-colors">Learning Labs</Link>
+            <Link to="/learning/advanced-labs" className="text-slate-400 hover:text-emerald-400 transition-colors">Learning Labs</Link>
             <Link to="/extension-services" className="text-slate-400 hover:text-emerald-400 transition-colors">Extension Services</Link>
             <Link to="/ansar-media-production" className="text-slate-400 hover:text-emerald-400 transition-colors">Ansar Media Productions</Link>
           </nav>

@@ -139,7 +139,12 @@
       },
       {
         "source": "/library/quiz.html",
-        "destination": "/library/quiz",
+        "destination": "/ansar-media-production/add-ons/online-quiz",
+        "type": 301
+      },
+      {
+        "source": "/library/quiz",
+        "destination": "/ansar-media-production/add-ons/online-quiz",
         "type": 301
       },
       {
@@ -245,7 +250,7 @@
         ]
       },
       {
-        "source": "/library/quiz",
+        "source": "/ansar-media-production/add-ons/online-quiz",
         "headers": [
           {
             "key": "Cache-Control",
@@ -339,7 +344,7 @@
         "destination": "/index.html"
       },
       {
-        "source": "/library/quiz",
+        "source": "/ansar-media-production/add-ons/online-quiz{,/**}",
         "destination": "/index.html"
       },
       {

@@ -27,9 +27,17 @@ class AppErrorBoundary extends React.Component {
 
 const APP_BUILD_ID = __APP_BUILD_ID__;
 let updateReloadStarted = false;
+const UPDATE_RELOAD_KEY = 'ansar:lastUpdateReloadBuild';
 
 function reloadForAppUpdate() {
   if (updateReloadStarted) return;
+  // A worker handover and version probe can arrive together on slower mobile
+  // connections. Reload only once per build so the page cannot get stuck in a
+  // reload loop before its chunks render.
+  try {
+    if (window.sessionStorage.getItem(UPDATE_RELOAD_KEY) === APP_BUILD_ID) return;
+    window.sessionStorage.setItem(UPDATE_RELOAD_KEY, APP_BUILD_ID);
+  } catch {}
   updateReloadStarted = true;
   window.location.reload();
 }
@@ -39,7 +47,10 @@ async function checkForAppUpdate() {
     const response = await fetch(`/version.json?t=${Date.now()}`, { cache: 'no-store' });
     if (!response.ok) return;
     const version = await response.json();
-    if (version?.buildId && version.buildId !== APP_BUILD_ID) reloadForAppUpdate();
+    if (version?.buildId && version.buildId !== APP_BUILD_ID) {
+      try { window.sessionStorage.removeItem(UPDATE_RELOAD_KEY); } catch {}
+      reloadForAppUpdate();
+    }
   } catch {
     // A temporary network failure should not interrupt the current page.
   }

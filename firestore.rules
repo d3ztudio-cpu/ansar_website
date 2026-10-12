@@ -139,7 +139,7 @@ service cloud.firestore {
     // ===============================================================
     
     function isValidPage() {
-      return hasOnlyAllowedFields(['title', 'slug', 'subtitle', 'category', 'heroImageUrl', 'bodyHtml', 'virtualTourUrl', 'virtualTourText', 'order', 'published', 'href', 'metaDescription', 'keywords', 'clubsTitle', 'clubsBody', 'clubsImages', 'nssTitle', 'nssBody', 'nssImages', 'spcTitle', 'spcBody', 'spcImages', 'sproutsImages', 'sproutsFacilities', 'radioStationImageUrl', 'createdAt', 'updatedAt']) &&
+      return hasOnlyAllowedFields(['title', 'slug', 'subtitle', 'category', 'heroImageUrl', 'bodyHtml', 'virtualTourUrl', 'virtualTourText', 'order', 'published', 'href', 'metaDescription', 'keywords', 'clubsTitle', 'clubsBody', 'clubsImages', 'nssTitle', 'nssBody', 'nssImages', 'spcTitle', 'spcBody', 'spcImages', 'sproutsImages', 'sproutsFacilities', 'radioStationImageUrl', 'sproutsSkatingImageUrl', 'sproutsCyclingImageUrl', 'createdAt', 'updatedAt']) &&
              isValidStringLength('title', 1, 200) &&
              isValidStringLength('slug', 1, 200) &&
              isValidOptionalString('subtitle', 0, 1000) &&
@@ -159,7 +159,8 @@ service cloud.firestore {
              isOptionalUrlList('nssImages', 30) &&
              isValidOptionalString('spcTitle', 0, 200) &&
              isValidOptionalString('spcBody', 0, 50000) &&
-             isOptionalUrlList('spcImages', 30) &&             isOptionalUrlList('sproutsImages', 30) &&             isValidUrl('radioStationImageUrl') &&             isOptionalUrlList('sproutsFacilities', 30) &&
+             isOptionalUrlList('spcImages', 30) &&             isOptionalUrlList('sproutsImages', 30) &&             isValidUrl('radioStationImageUrl') &&             isValidUrl('sproutsSkatingImageUrl') && isValidUrl('sproutsCyclingImageUrl') &&
+             isOptionalUrlList('sproutsFacilities', 30) &&
              isOptionalNumber('order') &&
              isOptionalBool('published') &&
              isOptionalTimestamp('createdAt') &&
@@ -566,6 +567,53 @@ service cloud.firestore {
         allow create: if isAuthenticated() && validParticipantCreate(uid) && get(/databases/$(database)/documents/quizSessions/$(quizId)).data.status in ['lobby','running'];
         allow update: if isVerifiedAdmin() || (isAuthenticated() && validParticipantUpdate(uid, quizId));
         allow delete: if isVerifiedAdmin();
+      }
+    }
+
+    // Staff directory is private: only verified website administrators can
+    // read it. Staff verification below compares a submitted code/phone pair
+    // inside rules without ever exposing directory records to the browser.
+    function isExamController() {
+      return isVerifiedAdmin() || (isAuthenticated() && request.auth.token.email_verified == true && request.auth.token.email != null && exists(/databases/$(database)/documents/staffExamControllers/$(request.auth.token.email)));
+    }
+    function validStaffDirectory() {
+      return request.resource.data.keys().hasOnly(['staffCode','name','phoneNumber','createdAt','updatedAt']) &&
+        request.resource.data.staffCode is string && request.resource.data.staffCode.size() >= 2 && request.resource.data.staffCode.size() <= 30 &&
+        request.resource.data.name is string && request.resource.data.name.size() >= 2 && request.resource.data.name.size() <= 120 &&
+        request.resource.data.phoneNumber is string && request.resource.data.phoneNumber.size() >= 7 && request.resource.data.phoneNumber.size() <= 20 &&
+        request.resource.data.createdAt is timestamp && request.resource.data.updatedAt is timestamp;
+    }
+    function validStaffProfile(uid) {
+      return request.resource.data.keys().hasOnly(['uid','staffCode','phoneNumber','email','displayName','createdAt','updatedAt']) &&
+        request.resource.data.uid == uid && request.resource.data.staffCode is string && request.resource.data.phoneNumber is string && request.resource.data.email is string && request.resource.data.email.size() <= 200 && request.resource.data.displayName is string && request.resource.data.displayName.size() <= 120 && request.resource.data.createdAt is timestamp && request.resource.data.updatedAt is timestamp;
+    }
+    match /staffDirectory/{staffCode} {
+      allow read: if isVerifiedAdmin();
+      allow create: if isVerifiedAdmin() && staffCode == request.resource.data.staffCode && validStaffDirectory() && request.resource.data.createdAt == request.time && request.resource.data.updatedAt == request.time;
+      allow update: if isVerifiedAdmin() && staffCode == request.resource.data.staffCode && validStaffDirectory() && request.resource.data.createdAt == resource.data.createdAt && request.resource.data.updatedAt == request.time;
+      allow delete: if isVerifiedAdmin();
+    }
+    match /staffExamControllers/{email} {
+      allow get: if isExamController();
+      allow list: if isVerifiedAdmin();
+      allow create, update, delete: if isVerifiedAdmin();
+    }
+    match /staffExamProfiles/{uid} {
+      allow get: if isAuthenticated() && request.auth.uid == uid;
+      allow create: if isAuthenticated() && request.auth.uid == uid && validStaffProfile(uid) && request.resource.data.createdAt == request.time && request.resource.data.updatedAt == request.time && request.resource.data.staffCode == get(/databases/$(database)/documents/staffDirectory/$(request.resource.data.staffCode)).data.staffCode && request.resource.data.phoneNumber == get(/databases/$(database)/documents/staffDirectory/$(request.resource.data.staffCode)).data.phoneNumber;
+      allow update: if isAuthenticated() && request.auth.uid == uid && validStaffProfile(uid) && request.resource.data.staffCode == resource.data.staffCode && request.resource.data.phoneNumber == resource.data.phoneNumber && request.resource.data.createdAt == resource.data.createdAt && request.resource.data.updatedAt == request.time;
+      allow delete: if false;
+    }
+    match /staffExamSessions/{examId} {
+      allow read: if isExamController() || (isAuthenticated() && exists(/databases/$(database)/documents/staffExamProfiles/$(request.auth.uid)) && (resource.data.status in ['lobby','running'] || (resource.data.status == 'ended' && exists(/databases/$(database)/documents/staffExamSessions/$(examId)/participants/$(request.auth.uid)))));
+      allow create, update, delete: if isExamController();
+      match /questions/{questionId} { allow read: if isExamController() || (isAuthenticated() && exists(/databases/$(database)/documents/staffExamSessions/$(examId)/participants/$(request.auth.uid))); allow write: if isExamController(); }
+      match /answers/{answerId} { allow read, write: if isExamController(); }
+      match /participants/{uid} {
+        allow read: if isExamController() || (isAuthenticated() && request.auth.uid == uid);
+        allow create: if isAuthenticated() && request.auth.uid == uid && exists(/databases/$(database)/documents/staffExamProfiles/$(uid)) && request.resource.data.uid == uid && request.resource.data.staffCode == get(/databases/$(database)/documents/staffExamProfiles/$(uid)).data.staffCode && request.resource.data.name == get(/databases/$(database)/documents/staffExamProfiles/$(uid)).data.displayName && request.resource.data.status == 'waiting';
+        allow update: if isExamController() || (isAuthenticated() && request.auth.uid == uid && request.resource.data.uid == resource.data.uid && request.resource.data.staffCode == resource.data.staffCode && request.resource.data.name == resource.data.name && request.resource.data.joinedAt == resource.data.joinedAt && request.resource.data.updatedAt == request.time && request.resource.data.status in ['waiting','active','submitted'] && !request.resource.data.diff(resource.data).affectedKeys().hasAny(['score','total','attended','correct','failed','review','scoredAt']));
+        allow delete: if isExamController();
       }
     }
 

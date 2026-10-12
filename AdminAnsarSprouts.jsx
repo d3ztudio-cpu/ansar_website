@@ -15,6 +15,8 @@ export default function AdminAnsarSprouts() {
   const { data, loading } = useContentDocument('pages', 'ansar-sprouts');
   const [images, setImages] = useState(DEFAULT_SPROUTS_IMAGES);
   const [radioStationImageUrl, setRadioStationImageUrl] = useState(DEFAULT_RADIO_STATION_IMAGE);
+  const [skatingImageUrl, setSkatingImageUrl] = useState('');
+  const [cyclingImageUrl, setCyclingImageUrl] = useState('');
   const [saving, setSaving] = useState(false);
   const [refreshKey, setRefreshKey] = useState(0);
   const { data: activities, loading: activitiesLoading } = useContentCollection('sproutsActivities', 'date', 'desc', { sheetsOnly: true, refreshKey });
@@ -25,6 +27,8 @@ export default function AdminAnsarSprouts() {
   useEffect(() => {
     if (Array.isArray(data?.sproutsImages) && data.sproutsImages.length) setImages(data.sproutsImages);
     setRadioStationImageUrl(data?.radioStationImageUrl || DEFAULT_RADIO_STATION_IMAGE);
+    setSkatingImageUrl(data?.sproutsSkatingImageUrl || '');
+    setCyclingImageUrl(data?.sproutsCyclingImageUrl || '');
   }, [data]);
 
   const appendImages = urls => setImages(current => [...new Set([...current.filter(Boolean), ...urls])].slice(0, MAX_IMAGES));
@@ -35,17 +39,23 @@ export default function AdminAnsarSprouts() {
     try {
       const sproutsImages = [...new Set(images.map(normalizeImageUrl).filter(Boolean))].slice(0, MAX_IMAGES);
       const normalizedRadioStationImageUrl = normalizeImageUrl(radioStationImageUrl);
+      const normalizedSkatingImageUrl = normalizeImageUrl(skatingImageUrl);
+      const normalizedCyclingImageUrl = normalizeImageUrl(cyclingImageUrl);
       await setDoc(doc(db, 'pages', 'ansar-sprouts'), {
         title: 'Ansar Sprouts',
         slug: 'ansar-sprouts',
         sproutsImages,
         radioStationImageUrl: normalizedRadioStationImageUrl,
+        sproutsSkatingImageUrl: normalizedSkatingImageUrl,
+        sproutsCyclingImageUrl: normalizedCyclingImageUrl,
         published: true,
         updatedAt: serverTimestamp()
       }, { merge: true });
       setImages(sproutsImages.length ? sproutsImages : DEFAULT_SPROUTS_IMAGES);
       setRadioStationImageUrl(normalizedRadioStationImageUrl);
-      alert('Ansar Sprouts images and facility image saved.');
+      setSkatingImageUrl(normalizedSkatingImageUrl);
+      setCyclingImageUrl(normalizedCyclingImageUrl);
+      alert('Ansar Sprouts images and activity card images saved.');
     } catch (error) {
       alert(`Save failed: ${error.message}`);
     } finally {
@@ -109,6 +119,12 @@ export default function AdminAnsarSprouts() {
       <div className="mt-4 grid gap-4 rounded-2xl border border-slate-100 bg-slate-50 p-4 sm:grid-cols-[12rem_1fr] sm:items-center">
         <div className="aspect-[4/3] overflow-hidden rounded-xl bg-white ring-1 ring-slate-200">{radioStationImageUrl ? <img src={radioStationImageUrl} alt="Sprouts FM Radio Station preview" className="h-full w-full object-cover" /> : <div className="flex h-full items-center justify-center px-4 text-center text-sm font-bold text-slate-400">No image uploaded</div>}</div>
         <label><span className="text-xs font-black uppercase tracking-wider text-slate-500">Facility image URL</span><input type="url" value={radioStationImageUrl} onChange={event => setRadioStationImageUrl(event.target.value)} placeholder="https://example.com/radio-station.jpg" className="mt-1 w-full rounded-xl border border-slate-200 bg-white p-3 outline-none focus:ring-2 focus:ring-orange-400" /></label>
+      </div>
+    </div>
+    <div className="mt-8 border-t border-slate-100 pt-7">
+      <div><h3 className="text-xl font-extrabold text-slate-900">Extra-curricular activity card images</h3><p className="mt-1 text-sm leading-relaxed text-slate-500">Add a photo for each card. Leave a field blank to keep its illustrated background.</p></div>
+      <div className="mt-4 grid gap-4 lg:grid-cols-2">
+        {[['Skating', skatingImageUrl, setSkatingImageUrl], ['Cycling', cyclingImageUrl, setCyclingImageUrl]].map(([label, url, setUrl]) => <div key={label} className="rounded-2xl border border-slate-100 bg-slate-50 p-4"><div className="flex items-center justify-between gap-3"><h4 className="font-extrabold text-slate-900">{label}</h4><ImgBbUrlImporter label="Extract ImgBB URL" onExtracted={value => setUrl(value || '')} /></div><div className="mt-3 aspect-[16/9] overflow-hidden rounded-xl bg-white ring-1 ring-slate-200">{url ? <img src={url} alt={`${label} card preview`} className="h-full w-full object-cover" /> : <div className="flex h-full items-center justify-center text-sm font-bold text-slate-400">No image selected</div>}</div><label className="mt-3 block"><span className="text-xs font-black uppercase tracking-wider text-slate-500">{label} image URL</span><input type="url" value={url} onChange={event => setUrl(event.target.value)} placeholder="https://example.com/image.jpg" className="mt-1 w-full rounded-xl border border-slate-200 bg-white p-3 outline-none focus:ring-2 focus:ring-orange-400" /></label></div>)}
       </div>
     </div>
     <div className="mt-7 border-t border-slate-100 pt-6"><button type="submit" disabled={saving} className="rounded-xl bg-orange-500 px-7 py-3 font-black text-white shadow hover:bg-orange-600 disabled:opacity-50">{saving ? 'Saving...' : 'Save Sprouts Images & Facility'}</button></div>

@@ -189,6 +189,7 @@ export default function NotificationsBell() {
       if (nextPermission === 'granted') {
         await registerForSchoolPushNotifications();
       }
+      // A visitor has made a choice, so never leave the prompt over content.
       setShowPermissionPrompt(false);
     } catch (error) {
       console.warn('Notification permission could not be requested:', error);

@@ -11,7 +11,7 @@
  */
 // Increment on each recovery deployment so clients immediately discard stale
 // HTML and asset caches from an earlier version.
-const VERSION = 'v7';
+const VERSION = 'v8';
 const PAGE_CACHE = `pages-${VERSION}`;
 const ASSET_CACHE = `assets-${VERSION}`;
 const IMAGE_CACHE = `images-${VERSION}`;

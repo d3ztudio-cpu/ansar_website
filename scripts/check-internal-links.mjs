@@ -7,17 +7,17 @@ const sourceExtensions = new Set(['.js', '.jsx', '.html']);
 const ignoredDirectories = new Set(['.git', '.firebase', 'dist', 'node_modules', 'public', 'scripts']);
 const exactRoutes = new Set([
   '/', '/about', '/academics', '/admission', '/news', '/events', '/contact', '/gallery',
-  '/sports-page', '/atl', '/library', '/library/quiz', '/ansar-sprouts', '/extension-services', '/life-at-ansar',
+  '/sports-page', '/atl', '/library', '/library/quiz', '/ansar-media-production/add-ons/online-quiz', '/ansar-media-production/add-ons/online-quiz/student', '/ansar-media-production/add-ons/online-quiz/staff', '/ansar-sprouts', '/extension-services', '/life-at-ansar',
   '/field-trips', '/ansar-family',
   '/ansar-times', '/alumni', '/achievements', '/ansar-media-production', '/sop',
-  '/school-policies', '/mandatory-public-disclosure', '/admin', '/admin/dashboard', '/admin/updates', '/admin/news', '/admin/events',
+  '/school-policies', '/mandatory-public-disclosure', '/admin', '/admin/dashboard', '/admin/analytics', '/admin/updates', '/admin/news', '/admin/events',
   '/admin/atl',
   '/admin/achievements', '/admin/sports-achievements', '/admin/learning-features',
   '/admin/life-at-ansar', '/admin/learning-labs',
   '/admin/ansar-sprouts',
   '/admin/field-trips',
-  '/admin/ansar-times', '/admin/leadership', '/admin/academics', '/admin/public-disclosure',
-  '/admin/gallery', '/admin/notices', '/admin/settings', '/admin/library', '/admin/library/quiz', '/admin/alumni'
+  '/admin/ansar-times', '/admin/leadership', '/admin/academics', '/admin/academic-calendar', '/admin/public-disclosure',
+  '/admin/gallery', '/admin/notices', '/admin/settings', '/admin/library', '/admin/library/quiz', '/admin/ansar-media-production/add-ons/online-quiz', '/admin/ansar-media-production/add-ons/staff-exams', '/admin/alumni'
 ]);
 const parameterizedRoutes = [
   /^\/(?:news|events|achievements|sports-achievements)\/[^/]+$/,

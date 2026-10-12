@@ -141,6 +141,8 @@ export default function AnsarSprouts() {
   const facilities = data?.sproutsFacilities && data.sproutsFacilities.length
     ? data.sproutsFacilities
     : DEFAULT_SPROUTS_FACILITIES;
+  const skatingImageUrl = data?.sproutsSkatingImageUrl || '';
+  const cyclingImageUrl = data?.sproutsCyclingImageUrl || '';
   const [imageIndex, setImageIndex] = useState(0);
   const [direction, setDirection] = useState(1);
 
@@ -471,7 +473,7 @@ export default function AnsarSprouts() {
             <div className="mt-12 grid gap-7 lg:grid-cols-2">
               <motion.article initial={{ opacity: 0, x: -30 }} whileInView={{ opacity: 1, x: 0 }} viewport={{ once: true, amount: 0.25 }} whileHover={{ y: -8, rotate: -0.5 }} className="overflow-hidden rounded-[2.3rem] border-4 border-white bg-white shadow-xl">
                 <div className="flex min-h-56 items-center justify-center bg-gradient-to-br from-[#fbad18] via-[#4f1f71] to-[#fbad18] p-8">
-                  <motion.div animate={{ x: [-8, 8, -8] }} transition={{ duration: 2.5, repeat: Infinity, ease: 'easeInOut' }}><SproutIcon name="skate" className="h-28 w-28 text-white" /></motion.div>
+                  {skatingImageUrl ? <img src={skatingImageUrl} alt="Children skating at Ansar Sprouts" className="h-full w-full object-cover" loading="lazy" decoding="async" /> : <motion.div animate={{ x: [-8, 8, -8] }} transition={{ duration: 2.5, repeat: Infinity, ease: 'easeInOut' }}><SproutIcon name="skate" className="h-28 w-28 text-white" /></motion.div>}
                 </div>
                 <div className="p-7 sm:p-9">
                   <p className="text-xs font-black uppercase tracking-[0.18em] text-[#4f1f71]">Skating</p>
@@ -483,7 +485,7 @@ export default function AnsarSprouts() {
 
               <motion.article initial={{ opacity: 0, x: 30 }} whileInView={{ opacity: 1, x: 0 }} viewport={{ once: true, amount: 0.25 }} whileHover={{ y: -8, rotate: 0.5 }} className="overflow-hidden rounded-[2.3rem] border-4 border-white bg-white shadow-xl">
                 <div className="flex min-h-56 items-center justify-center bg-gradient-to-br from-[#fbad18] via-[#fbad18] to-[#fbad18] p-8">
-                  <motion.div animate={{ x: [-10, 10, -10] }} transition={{ duration: 3, repeat: Infinity, ease: 'easeInOut' }}><SproutIcon name="bike" className="h-28 w-28 text-white" /></motion.div>
+                  {cyclingImageUrl ? <img src={cyclingImageUrl} alt="Children cycling at Ansar Sprouts" className="h-full w-full object-cover" loading="lazy" decoding="async" /> : <motion.div animate={{ x: [-10, 10, -10] }} transition={{ duration: 3, repeat: Infinity, ease: 'easeInOut' }}><SproutIcon name="bike" className="h-28 w-28 text-white" /></motion.div>}
                 </div>
                 <div className="p-7 sm:p-9">
                   <p className="text-xs font-black uppercase tracking-[0.18em] text-[#4f1f71]">Cycling</p>

@@ -39,6 +39,8 @@ const LibraryPage = lazy(() => import('./LibraryPage'));
 const Alumni = lazy(() => import('./Alumni'));
 const AlumniArticle = lazy(() => import('./AlumniArticle'));
 const QuizCorner = lazy(() => import('./QuizCorner'));
+const QuizPortal = lazy(() => import('./QuizPortal'));
+const StaffExamPortal = lazy(() => import('./StaffExamPortal'));
 const AdminLayout = lazy(() => import('./AdminLayout'));
 const AdminUpdates = lazy(() => import('./AdminUpdates'));
 const AdminEvents = lazy(() => import('./AdminEvents'));
@@ -61,6 +63,7 @@ const AdminAtl = lazy(() => import('./AdminAtl'));
 const AdminLibrary = lazy(() => import('./AdminLibrary'));
 const AdminAlumni = lazy(() => import('./AdminAlumni'));
 const AdminQuizCorner = lazy(() => import('./AdminQuizCorner'));
+const AdminStaffExams = lazy(() => import('./AdminStaffExams'));
 const AdminAnalytics = lazy(() => import('./AdminAnalytics'));
 
 const BOOT_SPLASH_ID = 'boot-splash';
@@ -825,6 +828,10 @@ function AnsarMediaProductionPage() {
             );
           })}
         </section>
+        <section className="mt-16 rounded-3xl border border-indigo-100 bg-gradient-to-r from-indigo-50 to-cyan-50 p-7 shadow-sm sm:p-10">
+          <p className="text-sm font-black uppercase tracking-widest text-indigo-700">Add-ons</p>
+          <div className="mt-3 flex flex-col justify-between gap-6 sm:flex-row sm:items-end"><div><h2 className="text-3xl font-extrabold text-slate-900">Online Quiz & Exam</h2><p className="mt-3 max-w-2xl text-lg leading-relaxed text-slate-600">A secure live quiz space for students, with staff online exams planned as the next phase.</p></div><Link to="/ansar-media-production/add-ons/online-quiz" className="inline-flex shrink-0 rounded-xl bg-indigo-700 px-6 py-3 font-extrabold text-white transition hover:bg-indigo-800">Open online quiz</Link></div>
+        </section>
       </main>
     </Layout>
   );
@@ -1478,7 +1485,10 @@ export default function App() {
         <Route path="/sports-page" element={<SportsPage />} />
         <Route path="/atl" element={<AtlPage />} />
         <Route path="/library" element={<LibraryPage />} />
-        <Route path="/library/quiz" element={<QuizCorner />} />
+        <Route path="/library/quiz" element={<Navigate to="/ansar-media-production/add-ons/online-quiz" replace />} />
+        <Route path="/ansar-media-production/add-ons/online-quiz" element={<QuizPortal />} />
+        <Route path="/ansar-media-production/add-ons/online-quiz/student" element={<QuizCorner />} />
+        <Route path="/ansar-media-production/add-ons/online-quiz/staff" element={<StaffExamPortal />} />
         <Route path="/ansar-sprouts" element={<AnsarSprouts />} />
         <Route path="/ansar-sprouts/activities/:id" element={<SproutsActivityArticle />} />
         <Route path="/field-trips" element={<FieldTrips />} />
@@ -1535,7 +1545,9 @@ export default function App() {
                   <Route path="/ansar-times" element={<AdminAnsarTimes />} />
                   <Route path="/library" element={<AdminLibrary />} />
                   <Route path="/alumni" element={<AdminAlumni />} />
-                  <Route path="/library/quiz" element={<AdminQuizCorner />} />
+                  <Route path="/library/quiz" element={<Navigate to="/admin/ansar-media-production/add-ons/online-quiz" replace />} />
+                  <Route path="/ansar-media-production/add-ons/online-quiz" element={<AdminQuizCorner />} />
+                  <Route path="/ansar-media-production/add-ons/staff-exams" element={<AdminStaffExams />} />
                   <Route path="/leadership" element={<AdminLeadership />} />
                   <Route path="/academics" element={<AdminAcademics />} />
                   <Route path="/academic-calendar" element={<AdminAcademicCalendar />} />
