@@ -8,6 +8,17 @@
 //   https://upload.ansarschool.in/UPLOADS/<file-name>
 const HOSTINGER_UPLOAD_ENDPOINT = 'https://upload.ansarschool.in/upload.php';
 
+// Some Android and iOS gallery providers return an empty or generic MIME type
+// for otherwise valid photos. Accept common image filename extensions as a
+// client-side fallback; upload.php still inspects the file itself before it is
+// stored, so this does not weaken server-side validation.
+const IMAGE_FILE_EXTENSION = /\.(?:avif|bmp|gif|heic|heif|jpe?g|png|webp)$/i;
+
+export function isImageFile(file) {
+  if (!file || typeof file.name !== 'string') return false;
+  return /^image\//i.test(file.type || '') || IMAGE_FILE_EXTENSION.test(file.name);
+}
+
 /**
  * Uploads a single image file to the school's Hostinger storage via upload.php
  * and resolves with the public URL

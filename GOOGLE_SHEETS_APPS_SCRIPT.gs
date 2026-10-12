@@ -116,6 +116,7 @@ const SHEET_COLUMNS = {
     'order',
     'published'
   ],
+  pushSubscriptions: ['id', 'token', 'updatedAt'],
   electionSettings: [
     'key',
     'value'
@@ -204,6 +205,10 @@ function doPost(e) {
       validateElectionShareKey_(body.key);
       deleteRecord_({ collectionName: 'electionCandidates', id: body.id });
       return json_({ ok: true });
+    }
+
+    if (action === 'registerPushToken') {
+      return json_({ ok: true, subscription: registerPushToken_(body) });
     }
 
     validateToken_(body.token);
@@ -664,6 +669,122 @@ function saveRecord_(body) {
   }
 
   return record;
+}
+
+// Stores only an opt-in FCM device token. The public web app never exposes
+// the subscriber list to visitors.
+function registerPushToken_(body) {
+  const token = String(body.token || '').trim();
+  if (!token || token.length < 80 || token.length > 4096) throw new Error('Invalid push token.');
+  const id = Utilities.base64EncodeWebSafe(Utilities.computeDigest(Utilities.DigestAlgorithm.SHA_256, token));
+  return saveRecord_({ collectionName: 'pushSubscriptions', spreadsheetId: body.spreadsheetId, record: { id: id, token: token, updatedAt: new Date().toISOString() } });
+}
+
+/**
+ * Run this manually from the Apps Script editor after adding these Script
+ * Properties: FCM_PROJECT_ID, FCM_SERVICE_ACCOUNT_EMAIL and
+ * FCM_SERVICE_ACCOUNT_PRIVATE_KEY. It sends a harmless test alert to every
+ * device which has explicitly enabled notifications on the website.
+ *
+ * This is deliberately not exposed through doPost: a public endpoint must
+ * never be allowed to broadcast a notification to all subscribers.
+ */
+function testSchoolPushNotification() {
+  const result = sendPushToSubscribers_({
+    title: 'Ansar English School',
+    body: 'Test notification: school alerts are working on this device.',
+    url: 'https://ansarschool.in/'
+  });
+  Logger.log(JSON.stringify(result));
+  return result;
+}
+
+function sendPushToSubscribers_(message) {
+  const sheet = getSpreadsheet_().getSheetByName('pushSubscriptions');
+  if (!sheet) throw new Error('No pushSubscriptions sheet yet. First enable notifications on a website device.');
+
+  const subscriptions = readSheetObjects_(sheet)
+    .map(function(row) { return String(row.token || '').trim(); })
+    .filter(Boolean);
+  if (!subscriptions.length) throw new Error('No opted-in devices yet. Enable notifications on at least one device first.');
+
+  const accessToken = getFcmAccessToken_();
+  const projectId = getRequiredScriptProperty_('FCM_PROJECT_ID');
+  const endpoint = 'https://fcm.googleapis.com/v1/projects/' + encodeURIComponent(projectId) + '/messages:send';
+  const results = { sent: 0, failed: 0, failures: [] };
+
+  subscriptions.forEach(function(token) {
+    const response = UrlFetchApp.fetch(endpoint, {
+      method: 'post',
+      contentType: 'application/json',
+      headers: { Authorization: 'Bearer ' + accessToken },
+      muteHttpExceptions: true,
+      payload: JSON.stringify({
+        message: {
+          token: token,
+          notification: { title: message.title, body: message.body },
+          webpush: {
+            headers: { Urgency: 'high' },
+            notification: {
+              icon: 'https://ansarschool.in/icon-192.png',
+              badge: 'https://ansarschool.in/icon-192.png'
+            },
+            fcm_options: { link: message.url || 'https://ansarschool.in/' }
+          }
+        }
+      })
+    });
+    if (response.getResponseCode() >= 200 && response.getResponseCode() < 300) {
+      results.sent += 1;
+    } else {
+      results.failed += 1;
+      results.failures.push(response.getResponseCode() + ': ' + response.getContentText().substring(0, 300));
+    }
+  });
+  return results;
+}
+
+function getFcmAccessToken_() {
+  const email = getRequiredScriptProperty_('FCM_SERVICE_ACCOUNT_EMAIL');
+  // Script Properties accept either real line breaks or JSON-style "\\n".
+  const privateKey = getRequiredScriptProperty_('FCM_SERVICE_ACCOUNT_PRIVATE_KEY').replace(/\\n/g, '\n');
+  const now = Math.floor(Date.now() / 1000);
+  const encodedHeader = base64Url_({ alg: 'RS256', typ: 'JWT' });
+  const encodedClaim = base64Url_({
+    iss: email,
+    scope: 'https://www.googleapis.com/auth/firebase.messaging',
+    aud: 'https://oauth2.googleapis.com/token',
+    iat: now,
+    exp: now + 3600
+  });
+  const unsignedJwt = encodedHeader + '.' + encodedClaim;
+  const signature = Utilities.computeRsaSha256Signature(unsignedJwt, privateKey);
+  const jwt = unsignedJwt + '.' + Utilities.base64EncodeWebSafe(signature).replace(/=+$/g, '');
+  const response = UrlFetchApp.fetch('https://oauth2.googleapis.com/token', {
+    method: 'post',
+    contentType: 'application/x-www-form-urlencoded',
+    muteHttpExceptions: true,
+    payload: {
+      grant_type: 'urn:ietf:params:oauth:grant-type:jwt-bearer',
+      assertion: jwt
+    }
+  });
+  if (response.getResponseCode() !== 200) {
+    throw new Error('Could not authenticate the FCM service account: ' + response.getContentText().substring(0, 500));
+  }
+  const payload = JSON.parse(response.getContentText());
+  if (!payload.access_token) throw new Error('FCM authentication returned no access token.');
+  return payload.access_token;
+}
+
+function getRequiredScriptProperty_(name) {
+  const value = PropertiesService.getScriptProperties().getProperty(name);
+  if (!value) throw new Error('Missing Script Property: ' + name);
+  return String(value);
+}
+
+function base64Url_(value) {
+  return Utilities.base64EncodeWebSafe(JSON.stringify(value)).replace(/=+$/g, '');
 }
 
 /**

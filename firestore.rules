@@ -656,7 +656,9 @@ service cloud.firestore {
     }
 
     match /seoPages/{pageId} {
-      allow read, create, update, delete: if isAdmin();
+      // SEO values are displayed in public page metadata; only edits are private.
+      allow read: if true;
+      allow create, update, delete: if isAdmin();
     }
 
     // Sports Page Content

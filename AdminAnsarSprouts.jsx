@@ -6,6 +6,7 @@ import { normalizeImageUrl } from './imageUrlUtils';
 import ImgBbUrlImporter from './ImgBbUrlImporter';
 import { DEFAULT_RADIO_STATION_IMAGE, DEFAULT_SPROUTS_IMAGES } from './AnsarSprouts';
 import { deleteSheetRecord, saveSheetRecord } from './googleSheetsAdminApi';
+import AdminSproutsFacilities from './AdminSproutsFacilities';
 
 const MAX_IMAGES = 30;
 const EMPTY_ACTIVITY = { title: '', category: '', date: '', description: '', imageUrls: [''], order: 0, published: true };
@@ -112,6 +113,8 @@ export default function AdminAnsarSprouts() {
     </div>
     <div className="mt-7 border-t border-slate-100 pt-6"><button type="submit" disabled={saving} className="rounded-xl bg-orange-500 px-7 py-3 font-black text-white shadow hover:bg-orange-600 disabled:opacity-50">{saving ? 'Saving...' : 'Save Sprouts Images & Facility'}</button></div>
   </form>
+
+  <AdminSproutsFacilities />
 
   <form onSubmit={saveActivity} className="rounded-2xl border border-emerald-100 bg-white p-6 shadow-xl sm:p-8">
     <p className="text-xs font-black uppercase tracking-widest text-emerald-600">Sprouts-only gallery</p>

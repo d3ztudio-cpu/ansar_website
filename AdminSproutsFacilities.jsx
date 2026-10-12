@@ -1,5 +1,5 @@
-import React, { useMemo, useState } from 'react';
-import { doc, setDoc, serverTimestamp } from 'firebase/firestore';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
+import { doc, getDoc, setDoc, serverTimestamp } from 'firebase/firestore';
 import { db } from './firebase-init';
 import { clearGoogleSheetsCache } from './useContentCollection';
 import { normalizeImageUrl } from './imageUrlUtils';
@@ -151,11 +151,43 @@ function ImageCard({ image, index, onChange, onRemove, placeholder }) {
   );
 }
 
+function FacilityPhotoUploader({ image, index, onChange, onRemove }) {
+  const inputRef = useRef(null);
+  const [dragging, setDragging] = useState(false);
+  const [uploading, setUploading] = useState(false);
+
+  const upload = async (file) => {
+    if (!file) return;
+    setUploading(true);
+    try { onChange(await uploadImageToHostinger(file)); }
+    catch (error) { alert(error.message || 'Device upload failed. Please try again.'); }
+    finally { setUploading(false); }
+  };
+
+  return <div className={`relative w-52 overflow-hidden rounded-2xl border bg-white p-3 shadow-sm transition ${dragging ? 'border-orange-400 ring-2 ring-orange-200' : 'border-slate-200'}`} onDragEnter={(event) => { event.preventDefault(); setDragging(true); }} onDragOver={(event) => event.preventDefault()} onDragLeave={() => setDragging(false)} onDrop={(event) => { event.preventDefault(); setDragging(false); upload(event.dataTransfer.files?.[0]); }}>
+    <input ref={inputRef} type="file" accept="image/*,.avif,.heic,.heif" className="hidden" onChange={(event) => { upload(event.target.files?.[0]); event.target.value = ''; }} />
+    <div className="relative aspect-[4/3] overflow-hidden rounded-xl bg-orange-50">
+      {image ? <img src={image} alt={`Facility image ${index + 1}`} className="h-full w-full object-cover" loading="lazy" /> : <div className="flex h-full items-center justify-center px-3 text-center text-xs font-bold text-slate-400">{uploading ? 'Uploading image…' : 'Drop a photo here'}</div>}
+      {uploading && <div className="absolute inset-0 flex items-center justify-center bg-white/75 text-xs font-black text-orange-600">Uploading…</div>}
+      {image && <button type="button" onClick={onRemove} className="absolute right-2 top-2 rounded-full bg-white/90 px-2 py-1 text-red-600 shadow hover:bg-red-50" aria-label={`Remove image ${index + 1}`}>×</button>}
+    </div>
+    <button type="button" disabled={uploading} onClick={() => inputRef.current?.click()} className="mt-3 w-full rounded-lg bg-orange-500 px-3 py-2 text-xs font-black text-white transition hover:bg-orange-600 disabled:opacity-60">{image ? 'Replace photo' : 'Browse device gallery'}</button>
+    <p className="mt-2 text-center text-[10px] font-semibold text-slate-400">or drag and drop a photo</p>
+  </div>;
+}
+
 export default function AdminSproutsFacilities() {
   const [cards, setCards] = useState(DEFAULT_CARD_DATA);
   const [saving, setSaving] = useState(false);
   const [saveError, setSaveError] = useState('');
   const [refreshKey, setRefreshKey] = useState(0);
+
+  useEffect(() => {
+    getDoc(doc(db, 'pages', 'ansar-sprouts')).then((snapshot) => {
+      const saved = snapshot.data()?.sproutsFacilities;
+      if (Array.isArray(saved) && saved.length) setCards(DEFAULT_CARD_DATA.map((fallback, index) => ({ ...fallback, ...(saved[index] || {}) })));
+    }).catch((error) => setSaveError(error.message || 'Could not load facility photos.'));
+  }, []);
 
 
   const controls = useMemo(() => {
@@ -167,8 +199,8 @@ export default function AdminSproutsFacilities() {
     }));
   }, [cards]);
 
-  const updateText = (field, value) => {
-    const next = controls.map((card) => ({ ...card, [field]: value }));
+  const updateText = (index, field, value) => {
+    const next = controls.map((card, cardIndex) => cardIndex === index ? { ...card, [field]: value } : card);
     setCards(next);
   };
 
@@ -177,11 +209,11 @@ export default function AdminSproutsFacilities() {
     setCards(next);
   };
 
-  const updateImages = (index, value) => {
+  const updateImages = (index, imageIndex, value) => {
     const next = controls.map((card, i) => {
       if (i !== index) return card;
       const current = toArray(card.images);
-      const nextImages = current.length ? current.map((item, imageIndex) => (imageIndex === 0 ? value : item)) : [value];
+      const nextImages = current.length ? current.map((item, currentIndex) => (currentIndex === imageIndex ? value : item)) : [value];
       return { ...card, images: nextImages };
     });
     setCards(next);
@@ -337,7 +369,7 @@ export default function AdminSproutsFacilities() {
                   <label className="text-xs font-black uppercase tracking-wider text-slate-500">Title</label>
                   <input
                     value={card.title}
-                    onChange={(event) => updateText('title', event.target.value)}
+                    onChange={(event) => updateText(index, 'title', event.target.value)}
                     placeholder="Learning Resource Center"
                     className="mt-1 w-full rounded-xl border border-slate-200 bg-white p-3 text-sm font-bold outline-none focus:ring-2 focus:ring-orange-400"
                   />
@@ -347,7 +379,7 @@ export default function AdminSproutsFacilities() {
                   <label className="text-xs font-black uppercase tracking-wider text-slate-500">Small label</label>
                   <input
                     value={card.label}
-                    onChange={(event) => updateText('label', event.target.value)}
+                    onChange={(event) => updateText(index, 'label', event.target.value)}
                     placeholder="DEDICATED FACILITY"
                     className="mt-1 w-full rounded-xl border border-slate-200 bg-white p-3 text-xs font-black uppercase tracking-widest outline-none focus:ring-2 focus:ring-orange-400"
                   />
@@ -357,7 +389,7 @@ export default function AdminSproutsFacilities() {
                   <label className="text-xs font-black uppercase tracking-wider text-slate-500">Description</label>
                   <textarea
                     value={card.description}
-                    onChange={(event) => updateText('description', event.target.value)}
+                    onChange={(event) => updateText(index, 'description', event.target.value)}
                     placeholder="A dedicated space..."
                     className="mt-1 min-h-24 w-full rounded-xl border border-slate-200 bg-white p-3 text-sm outline-none focus:ring-2 focus:ring-orange-400"
                   />
@@ -378,12 +410,11 @@ export default function AdminSproutsFacilities() {
                   <span className="text-xs font-black uppercase tracking-wider text-slate-500">Images ({card.images.length}/{MAX_FACILITY_CARD_IMAGES})</span>
                   <div className="flex flex-1 flex-wrap gap-3">
                     {card.images.map((image, imageIndex) => (
-                      <ImageCard
+                      <FacilityPhotoUploader
                         key={`${card.title || index}-img-${imageIndex}`}
                         index={imageIndex}
                         image={image}
-                        placeholder="Drop image or paste URL"
-                        onChange={(value) => updateImages(index, value)}
+                        onChange={(value) => updateImages(index, imageIndex, value)}
                         onRemove={() => removeImage(index, imageIndex)}
                       />
                     ))}

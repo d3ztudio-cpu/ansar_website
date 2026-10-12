@@ -102,8 +102,12 @@ export const DEFAULT_ACADEMIC_SECTIONS = [
 
 export function mergeListWithDefaults(savedItems, defaultItems) {
   const saved = Array.isArray(savedItems) ? savedItems : [];
-  return defaultItems.map((item, index) => ({
-    ...item,
+  // Keep every saved item. The old implementation only iterated defaults,
+  // which silently discarded new admin-created cards (for example Cycling)
+  // once the public page read the settings document.
+  const length = Math.max(defaultItems.length, saved.length);
+  return Array.from({ length }, (_, index) => ({
+    ...(defaultItems[index] || {}),
     ...(saved[index] || {})
   }));
 }

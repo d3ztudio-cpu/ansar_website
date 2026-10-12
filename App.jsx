@@ -50,7 +50,6 @@ const AdminLearningFeatures = lazy(() => import('./AdminLearningFeatures'));
 const AdminLifeAtAnsar = lazy(() => import('./AdminLifeAtAnsar'));
 const AdminLearningLabs = lazy(() => import('./AdminLearningLabs'));
 const AdminAnsarSprouts = lazy(() => import('./AdminAnsarSprouts'));
-const AdminSproutsFacilities = lazy(() => import('./AdminSproutsFacilities'));
 const AdminFieldTrips = lazy(() => import('./AdminFieldTrips'));
 const AdminLeadership = lazy(() => import('./AdminLeadership'));
 const AdminNotices = lazy(() => import('./AdminNotices'));
@@ -315,8 +314,13 @@ function SiteSeo() {
   const { pathname } = useLocation();
 
   useEffect(() => {
-    const seo = getSeoForPath(pathname);
-    applySeoMetadata({ ...seo, keywords: seo.keywords || DEFAULT_SEO.keywords }, pathname);
+    const fallback = getSeoForPath(pathname);
+    // SEO values become public HTML metadata, so publish an admin save live.
+    const seoRef = doc(db, 'seoPages', encodeURIComponent(pathname));
+    return onSnapshot(seoRef, (snapshot) => {
+      const saved = snapshot.exists() ? snapshot.data() : {};
+      applySeoMetadata({ ...fallback, ...saved, keywords: saved.keywords || fallback.keywords || DEFAULT_SEO.keywords }, pathname);
+    }, () => applySeoMetadata({ ...fallback, keywords: fallback.keywords || DEFAULT_SEO.keywords }, pathname));
   }, [pathname]);
 
   return null;
@@ -1511,7 +1515,6 @@ export default function App() {
                   {isSproutsAdmin ? <>
                     <Route path="/" element={<Navigate to="/admin/ansar-sprouts" replace />} />
                     <Route path="/ansar-sprouts" element={<AdminAnsarSprouts />} />
-                    <Route path="/facilities" element={<AdminSproutsFacilities />} />
                     <Route path="*" element={<Navigate to="/admin/ansar-sprouts" replace />} />
                   </> : <>
                   <Route path="/" element={<Navigate to="/admin/dashboard" replace />} />

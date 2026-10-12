@@ -19,14 +19,6 @@ export default function NewsCard({ id, title, excerpt, thumbnailUrl, coverImageU
       <div className="relative z-10 w-full aspect-[4/3] bg-slate-100 overflow-hidden flex-shrink-0 border-b border-slate-100">
         {targetImage ? (
           <>
-            <img
-              src={targetImage}
-              alt=""
-              aria-hidden="true"
-              className="absolute inset-0 h-full w-full scale-110 object-cover opacity-20 blur-xl"
-              loading={priority ? 'eager' : 'lazy'}
-              decoding="async"
-            />
             <img 
               src={targetImage} 
               alt={title} 

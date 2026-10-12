@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { addDoc, collection, doc, getDoc, serverTimestamp, setDoc, updateDoc } from 'firebase/firestore';
 import { db } from './firebase-init';
 import { clearGoogleSheetsCache, useContentCollection } from './useContentCollection';
@@ -63,24 +63,51 @@ export default function AdminSportsAchievements() {
   });
   const [isSavingPage, setIsSavingPage] = useState(false);
   const [pageMessage, setPageMessage] = useState('');
+  const [sportsPageLoaded, setSportsPageLoaded] = useState(false);
+  // A late settings read must never replace a sports card an administrator
+  // has just added to the form.
+  const sportsPageDirtyRef = useRef(false);
 
   useEffect(() => {
+    let active = true;
     getDoc(doc(db, 'settings', 'global')).then(snapshot => {
-      if (!snapshot.exists()) return;
+      if (!active || sportsPageDirtyRef.current || !snapshot.exists()) return;
       const data = snapshot.data();
       setSportsPage({
         title: data.sportsPageTitle || DEFAULT_SPORTS_PAGE.title,
         description: data.sportsPageDescription || DEFAULT_SPORTS_PAGE.description,
         items: mergeListWithDefaults(data.sportsItems, DEFAULT_SPORTS_PAGE.items)
       });
-    }).catch(error => setPageMessage(`Error loading Sports page: ${error.message}`));
+    }).catch(error => {
+      if (active) setPageMessage(`Error loading Sports page: ${error.message}`);
+    }).finally(() => {
+      if (active) setSportsPageLoaded(true);
+    });
+    return () => { active = false; };
   }, []);
 
   const updateSportItem = (index, field, value) => {
+    sportsPageDirtyRef.current = true;
     setSportsPage(prev => ({
       ...prev,
       items: prev.items.map((item, itemIndex) => itemIndex === index ? { ...item, [field]: value } : item)
     }));
+  };
+
+  const updateSportsPageField = (field, value) => {
+    sportsPageDirtyRef.current = true;
+    setSportsPage(prev => ({ ...prev, [field]: value }));
+  };
+
+  const addSportCard = () => {
+    sportsPageDirtyRef.current = true;
+    setSportsPage(prev => ({ ...prev, items: [...prev.items, { title: '', description: '', imageUrl: '' }] }));
+    setPageMessage('New sport card added. Enter its details, then select Save Sports Page.');
+  };
+
+  const removeSportCard = (index) => {
+    sportsPageDirtyRef.current = true;
+    setSportsPage(prev => ({ ...prev, items: prev.items.filter((_, itemIndex) => itemIndex !== index) }));
   };
 
   const saveSportsPage = async (event) => {
@@ -97,6 +124,7 @@ export default function AdminSportsAchievements() {
         sportsItems: items,
         updatedAt: serverTimestamp()
       }, { merge: true });
+      sportsPageDirtyRef.current = false;
       setPageMessage('Sports page content updated successfully!');
     } catch (error) {
       setPageMessage(`Error saving Sports page: ${error.message}`);
@@ -262,10 +290,10 @@ export default function AdminSportsAchievements() {
         <form onSubmit={saveSportsPage} className="space-y-5">
           <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
             <label className="text-sm font-bold text-slate-700">Page Title
-              <input value={sportsPage.title} onChange={event => setSportsPage(prev => ({ ...prev, title: event.target.value }))} className="mt-2 w-full rounded-lg border border-slate-200 p-3 font-normal outline-none focus:ring-2 focus:ring-emerald-500" />
+              <input value={sportsPage.title} onChange={event => updateSportsPageField('title', event.target.value)} className="mt-2 w-full rounded-lg border border-slate-200 p-3 font-normal outline-none focus:ring-2 focus:ring-emerald-500" />
             </label>
             <label className="text-sm font-bold text-slate-700">Page Description
-              <textarea value={sportsPage.description} onChange={event => setSportsPage(prev => ({ ...prev, description: event.target.value }))} className="mt-2 h-24 w-full rounded-lg border border-slate-200 p-3 font-normal outline-none focus:ring-2 focus:ring-emerald-500" />
+              <textarea value={sportsPage.description} onChange={event => updateSportsPageField('description', event.target.value)} className="mt-2 h-24 w-full rounded-lg border border-slate-200 p-3 font-normal outline-none focus:ring-2 focus:ring-emerald-500" />
             </label>
           </div>
           <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
@@ -273,7 +301,7 @@ export default function AdminSportsAchievements() {
               <div key={`sport-${index}`} className="space-y-3 rounded-xl border border-slate-100 bg-slate-50 p-4">
                 <div className="flex items-center justify-between gap-3">
                   <h3 className="font-bold text-emerald-800">{sport.title || `Sport ${index + 1}`}</h3>
-                  <button type="button" onClick={() => setSportsPage(prev => ({ ...prev, items: prev.items.filter((_, itemIndex) => itemIndex !== index) }))} disabled={sportsPage.items.length <= 1} className="rounded-lg px-3 py-2 text-sm font-bold text-red-600 hover:bg-red-50 disabled:opacity-40">Remove</button>
+                  <button type="button" onClick={() => removeSportCard(index)} disabled={sportsPage.items.length <= 1} className="rounded-lg px-3 py-2 text-sm font-bold text-red-600 hover:bg-red-50 disabled:opacity-40">Remove</button>
                 </div>
                 <input value={sport.title || ''} onChange={event => updateSportItem(index, 'title', event.target.value)} placeholder="Sport title" className="w-full rounded-lg border border-slate-200 p-3 outline-none focus:ring-2 focus:ring-emerald-500" />
                 <textarea value={sport.description || ''} onChange={event => updateSportItem(index, 'description', event.target.value)} placeholder="Sport description" className="h-24 w-full rounded-lg border border-slate-200 p-3 outline-none focus:ring-2 focus:ring-emerald-500" />
@@ -283,7 +311,7 @@ export default function AdminSportsAchievements() {
             ))}
           </div>
           <div className="flex flex-wrap items-center justify-between gap-3">
-            <button type="button" onClick={() => setSportsPage(prev => ({ ...prev, items: [...prev.items, { title: '', description: '', imageUrl: '' }] }))} className="rounded-lg bg-white px-4 py-2 text-sm font-bold text-emerald-700 ring-1 ring-emerald-100 hover:bg-emerald-50">+ Add Sport</button>
+            <button type="button" onClick={addSportCard} disabled={!sportsPageLoaded} className="rounded-lg bg-white px-4 py-2 text-sm font-bold text-emerald-700 ring-1 ring-emerald-100 hover:bg-emerald-50 disabled:cursor-wait disabled:opacity-50">{sportsPageLoaded ? '+ Add Sport' : 'Loading sports...'}</button>
             <button type="submit" disabled={isSavingPage} className="rounded-lg bg-emerald-600 px-6 py-2.5 font-bold text-white hover:bg-emerald-700 disabled:opacity-50">{isSavingPage ? 'Saving...' : 'Save Sports Page'}</button>
           </div>
         </form>

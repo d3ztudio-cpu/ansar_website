@@ -16,6 +16,7 @@ export default function FloatingSocials() {
   const settings = useSettings();
   const [isScrolledPast, setIsScrolledPast] = useState(false);
   const [showBackToTop, setShowBackToTop] = useState(false);
+  const [isMobileOpen, setIsMobileOpen] = useState(false);
 
   useEffect(() => {
     let frameId = null;
@@ -42,10 +43,10 @@ export default function FloatingSocials() {
 
   return (
     <>
-      <div className={`fixed right-3 bottom-3 z-40 transition-all duration-500 ease-in-out md:left-auto md:bottom-auto md:right-0 md:top-1/2 md:-translate-y-1/2 md:translate-x-0 ${isScrolledPast ? 'md:opacity-0 md:translate-x-full md:pointer-events-none' : 'opacity-100 md:translate-x-0'}`}>
+      <div className={`fixed bottom-4 right-4 z-40 flex flex-col items-end gap-2 transition-all duration-500 ease-in-out md:bottom-auto md:right-0 md:top-1/2 md:block md:-translate-y-1/2 md:translate-x-0 ${isScrolledPast ? 'md:pointer-events-none md:translate-x-full md:opacity-0' : 'opacity-100 md:translate-x-0'}`}>
         {/* Prevent inner rendering until settings are fully loaded to eliminate icon layout glitching & FOUC */}
         {settings?._isLoaded && (
-          <div className="floating-panel-container flex flex-row md:flex-col items-center justify-center gap-2 md:gap-3 p-2 md:p-3 bg-white shadow-[0_10px_40px_-15px_rgba(0,0,0,0.3)] rounded-2xl md:rounded-l-2xl md:rounded-r-none border border-emerald-100 md:border-r-0">
+          <div className={`floating-panel-container ${isMobileOpen ? 'grid' : 'hidden'} grid-cols-3 items-center justify-center gap-2 rounded-2xl border border-emerald-100 bg-white p-2 shadow-[0_10px_40px_-15px_rgba(0,0,0,0.3)] md:flex md:flex-col md:gap-3 md:rounded-l-2xl md:rounded-r-none md:border-r-0 md:p-3`}>
       {settings?.whatsappChannelUrl && (
         <a href={settings.whatsappChannelUrl} target="_blank" rel="noopener noreferrer" className="group relative flex items-center justify-center p-2.5 text-slate-400 hover:text-white bg-white hover:bg-[#25D366] rounded-xl transition-all duration-300 shadow-sm hover:shadow-lg">
           <span className="floating-icon-aura absolute inset-0 rounded-xl bg-[#25D366]"></span>
@@ -74,6 +75,23 @@ export default function FloatingSocials() {
       </a>
           </div>
         )}
+        <button
+          type="button"
+          onClick={() => setIsMobileOpen(open => !open)}
+          className="flex h-12 w-12 items-center justify-center rounded-full border-2 border-white bg-emerald-800 text-white shadow-xl transition hover:bg-emerald-700 md:hidden"
+          aria-label={isMobileOpen ? 'Close social links' : 'Open social links'}
+          aria-expanded={isMobileOpen}
+        >
+          {isMobileOpen ? (
+            <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M6 18 18 6M6 6l12 12" /></svg>
+          ) : (
+            <svg className="gemini-social-sparkle h-7 w-7" viewBox="0 0 24 24" aria-hidden="true">
+              <defs><linearGradient id="social-gemini-gradient" x1="3" y1="3" x2="21" y2="21" gradientUnits="userSpaceOnUse"><stop stopColor="#60a5fa" /><stop offset="0.42" stopColor="#c084fc" /><stop offset="0.72" stopColor="#f472b6" /><stop offset="1" stopColor="#fbbf24" /></linearGradient></defs>
+              <path fill="url(#social-gemini-gradient)" d="M12 1.75c.78 5.16 4.09 8.47 9.25 9.25-5.16.78-8.47 4.09-9.25 9.25C11.22 15.09 7.91 11.78 2.75 11c5.16-.78 8.47-4.09 9.25-9.25Z" />
+              <path fill="url(#social-gemini-gradient)" opacity=".85" d="M19.2 2.2c.25 1.66 1.31 2.72 2.97 2.97-1.66.25-2.72 1.31-2.97 2.97-.25-1.66-1.31-2.72-2.97-2.97 1.66-.25 2.72-1.31 2.97-2.97Z" />
+            </svg>
+          )}
+        </button>
       </div>
 
       {/* Back to Top Button */}

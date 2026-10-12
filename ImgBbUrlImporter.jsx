@@ -34,7 +34,10 @@ export default function ImgBbUrlImporter({ multiple = false, onExtracted, label 
   };
 
   const uploadFiles = async (selectedFiles) => {
-    const files = Array.from(selectedFiles || []).filter(file => file.type.startsWith('image/'));
+    // Gallery providers do not consistently expose a MIME type or even a
+    // filename extension. Send the selected file to the upload service and
+    // let its content-based image validation make the final decision.
+    const files = Array.from(selectedFiles || []);
     if (!files.length) {
       alert('Please select image files only.');
       return;
@@ -62,7 +65,10 @@ export default function ImgBbUrlImporter({ multiple = false, onExtracted, label 
   };
 
   const handleFileSelection = (event) => {
-    const files = event.target.files;
+    // Snapshot the File objects before clearing the input. On several mobile
+    // browsers (and when selecting a second image), clearing first empties
+    // the live FileList and incorrectly triggers the "image files only" alert.
+    const files = Array.from(event.target.files || []);
     event.target.value = '';
     uploadFiles(files);
   };
@@ -73,7 +79,7 @@ export default function ImgBbUrlImporter({ multiple = false, onExtracted, label 
     if (!uploadState.busy) uploadFiles(event.dataTransfer.files);
   };
 
-  const hiddenFileInput = <input ref={fileInputRef} type="file" accept="image/*" multiple onChange={handleFileSelection} className="hidden" />;
+  const hiddenFileInput = <input ref={fileInputRef} type="file" accept="image/*,.avif,.heic,.heif" multiple onChange={handleFileSelection} className="hidden" />;
 
   const dropZone = (
     <button

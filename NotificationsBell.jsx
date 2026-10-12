@@ -1,7 +1,8 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { collection, onSnapshot } from 'firebase/firestore';
 import { Link } from 'react-router-dom';
 import { db } from './firebase-init';
+import { registerForSchoolPushNotifications } from './pushNotifications';
 
 // Starts Firestore subscriptions only once the page has settled (idle) so the
 // bell's four listeners never compete with the page's own content for the
@@ -51,9 +52,13 @@ function relativeTime(millis) {
 }
 
 const LAST_SEEN_KEY = 'ansar:lastSeenNotification';
+const PROMPT_DISMISSED_UNTIL_KEY = 'ansar:notificationPromptDismissedUntil';
 
 export default function NotificationsBell() {
   const [isOpen, setIsOpen] = useState(false);
+  const [permission, setPermission] = useState(() => (
+    typeof Notification === 'undefined' ? 'unsupported' : Notification.permission
+  ));
   const [lastSeenMillis, setLastSeenMillis] = useState(() => {
     try {
       const stored = window.localStorage.getItem(LAST_SEEN_KEY);
@@ -66,7 +71,20 @@ export default function NotificationsBell() {
   const [achievements, setAchievements] = useState([]);
   const [magazines, setMagazines] = useState([]);
   const [ansarTimesEditions, setAnsarTimesEditions] = useState([]);
+  const [showPermissionPrompt, setShowPermissionPrompt] = useState(false);
+  const knownNotificationKeys = useRef(null);
   const idleReady = useIdleReady();
+
+  useEffect(() => {
+    if (permission !== 'default') return undefined;
+    try {
+      if (Number(window.localStorage.getItem(PROMPT_DISMISSED_UNTIL_KEY)) > Date.now()) return undefined;
+    } catch {
+      // The prompt can still be shown when storage is unavailable.
+    }
+    const timer = window.setTimeout(() => setShowPermissionPrompt(true), 3000);
+    return () => window.clearTimeout(timer);
+  }, [permission]);
 
   useEffect(() => {
     // Hold all subscriptions until the browser is idle (or the timeout fires);
@@ -163,7 +181,34 @@ export default function NotificationsBell() {
     }
   };
 
-  const toggleOpen = () => {
+  const requestNotificationPermission = async () => {
+    if (typeof Notification === 'undefined' || Notification.permission !== 'default') return;
+    try {
+      const nextPermission = await Notification.requestPermission();
+      setPermission(nextPermission);
+      if (nextPermission === 'granted') {
+        await registerForSchoolPushNotifications();
+      }
+      setShowPermissionPrompt(false);
+    } catch (error) {
+      console.warn('Notification permission could not be requested:', error);
+    }
+  };
+
+  const dismissPermissionPrompt = () => {
+    setShowPermissionPrompt(false);
+    try {
+      // Do not repeatedly interrupt a visitor who chose not to opt in.
+      window.localStorage.setItem(PROMPT_DISMISSED_UNTIL_KEY, String(Date.now() + 7 * 24 * 60 * 60 * 1000));
+    } catch {
+      // Ignore storage failures.
+    }
+  };
+
+  const toggleOpen = async () => {
+    // Permission dialogs must be initiated by a real tap. Ask only once, on
+    // the notification bell the visitor has deliberately chosen to open.
+    await requestNotificationPermission();
     setIsOpen(open => {
       const next = !open;
       if (next) markSeen();
@@ -171,8 +216,43 @@ export default function NotificationsBell() {
     });
   };
 
+  useEffect(() => {
+    const currentKeys = new Set(notifications.map(item => `${item.type}-${item.id}`));
+    if (knownNotificationKeys.current === null) {
+      // The first Firestore snapshot is existing history, not a new alert.
+      knownNotificationKeys.current = currentKeys;
+      return;
+    }
+
+    const newItems = notifications.filter(item => !knownNotificationKeys.current.has(`${item.type}-${item.id}`));
+    knownNotificationKeys.current = currentKeys;
+    if (permission !== 'granted' || typeof Notification === 'undefined') return;
+
+    newItems.slice(0, 3).forEach((item) => {
+      const alert = new Notification('Ansar English School', {
+        body: `New ${item.type}: ${item.title}`,
+        icon: '/icon-192.png',
+        tag: `ansar-${item.type}-${item.id}`
+      });
+      alert.onclick = () => {
+        window.focus();
+        window.location.assign(item.href);
+      };
+    });
+  }, [notifications, permission]);
+
   return (
     <div className="relative">
+      {showPermissionPrompt && (
+        <section className="fixed bottom-5 left-4 right-4 z-[70] mx-auto max-w-md rounded-2xl border border-emerald-200 bg-white p-5 shadow-2xl sm:left-auto sm:right-6" role="dialog" aria-label="Enable school update alerts">
+          <p className="text-base font-extrabold text-slate-900">Get new school updates</p>
+          <p className="mt-1 text-sm leading-relaxed text-slate-600">Enable notifications for news, events, achievements, and Ansar Times updates.</p>
+          <div className="mt-4 flex flex-wrap gap-3">
+            <button type="button" onClick={requestNotificationPermission} className="rounded-xl bg-emerald-700 px-4 py-2.5 text-sm font-black text-white hover:bg-emerald-800">Enable notifications</button>
+            <button type="button" onClick={dismissPermissionPrompt} className="rounded-xl px-4 py-2.5 text-sm font-bold text-slate-600 hover:bg-slate-100">Not now</button>
+          </div>
+        </section>
+      )}
       <button
         type="button"
         onClick={toggleOpen}
@@ -191,6 +271,12 @@ export default function NotificationsBell() {
             <h3 className="text-sm font-extrabold text-slate-900">Notifications</h3>
             <span className="rounded-full bg-emerald-50 px-2 py-1 text-xs font-bold text-emerald-700">{notifications.length}</span>
           </div>
+          {permission === 'default' && (
+            <button type="button" onClick={requestNotificationPermission} className="w-full border-b border-emerald-100 bg-emerald-50 px-4 py-2.5 text-left text-xs font-bold text-emerald-800 hover:bg-emerald-100">
+              Enable browser alerts for new school updates
+            </button>
+          )}
+          {permission === 'denied' && <p className="border-b border-amber-100 bg-amber-50 px-4 py-2.5 text-xs font-medium text-amber-900">Alerts are blocked in this browser. Enable them in browser settings to receive notifications.</p>}
           <div className="max-h-96 overflow-y-auto">
             {notifications.length ? notifications.map(item => (
               <Link

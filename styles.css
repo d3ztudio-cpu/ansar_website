@@ -690,6 +690,15 @@ input:focus, textarea:focus, select:focus {
   }
 }
 
+@keyframes geminiSocialSparkle {
+  0%, 100% { transform: scale(0.92) rotate(0deg); filter: drop-shadow(0 0 0 rgba(192,132,252,0)); }
+  50% { transform: scale(1.12) rotate(12deg); filter: drop-shadow(0 0 7px rgba(192,132,252,.8)); }
+}
+
+.gemini-social-sparkle {
+  animation: geminiSocialSparkle 2.6s ease-in-out infinite;
+}
+
 .floating-panel-container {
   opacity: 0; /* Prevent FOUC before animation starts */
   animation: slideInPanel 1.2s cubic-bezier(0.16, 1, 0.3, 1) forwards;
@@ -705,6 +714,7 @@ input:focus, textarea:focus, select:focus {
     animation: none;
     opacity: 0.16;
   }
+  .gemini-social-sparkle { animation: none; }
 }
 
 /* ========================================================
@@ -797,9 +807,10 @@ header, section, footer, main, .container, .row, .grid-wrapper {
 
 @media (max-width: 767px) {
   .floating-panel-container {
-    /* Keep vertical right-aligned but scale down to save screen space */
+    /* Mobile links are an opened 3-column dock, never a long strip over the hero. */
     padding: 8px !important;
     gap: 8px !important;
+    animation-duration: 0.22s;
   }
   .floating-panel-container a {
     padding: 8px !important;

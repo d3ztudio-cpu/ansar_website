@@ -32,6 +32,15 @@
     html.route-admin { background: #0f172a; }
     body { margin: 0; min-width: 320px; background: transparent; font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; }
     #root { min-height: 100vh; }
+    #app-startup {
+      min-height: 100vh; display: grid; place-items: center; padding: 24px;
+      box-sizing: border-box; text-align: center; background: #f8fafc;
+    }
+    #app-startup > div { max-width: 320px; }
+    #app-startup strong { display: block; margin-top: 14px; font-size: 20px; color: #0f172a; }
+    #app-startup p { margin: 8px 0 0; color: #475569; font-size: 14px; line-height: 1.5; }
+    .startup-mark { width: 44px; height: 44px; margin: auto; border-radius: 14px; background: conic-gradient(#60a5fa, #c084fc, #f472b6, #fbbf24, #60a5fa); animation: startup-spin 1.4s linear infinite; }
+    @keyframes startup-spin { to { transform: rotate(360deg); } }
     /* Boot bar: a slim indeterminate progress line at the very top. It lives
        OUTSIDE #root so React can never wipe it abruptly — it fades itself out
        once the app shell is ready (App.jsx) or after the 8s failsafe. */
@@ -199,7 +208,7 @@
 </head>
 <body>
   <div id="boot-splash" aria-hidden="true"></div>
-  <div id="root"></div>
+  <div id="root"><div id="app-startup"><div><div class="startup-mark"></div><strong>Loading Ansar English School</strong><p>Please wait while the latest website update loads.</p></div></div></div>
   <noscript>This website requires JavaScript to display Ansar English School content.</noscript>
   <script type="module" src="/main.jsx"></script>
 </body>

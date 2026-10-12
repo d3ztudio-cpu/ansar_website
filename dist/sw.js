@@ -9,7 +9,9 @@
  *    capped LRU-ish trim, making repeat gallery/hero views dramatically faster.
  *  - Everything else: network only.
  */
-const VERSION = 'v3';
+// Increment on each recovery deployment so clients immediately discard stale
+// HTML and asset caches from an earlier version.
+const VERSION = 'v7';
 const PAGE_CACHE = `pages-${VERSION}`;
 const ASSET_CACHE = `assets-${VERSION}`;
 const IMAGE_CACHE = `images-${VERSION}`;
@@ -113,4 +115,44 @@ self.addEventListener('fetch', (event) => {
   if (isImageRequest(url) && (url.origin === self.location.origin || IMAGE_HOSTS.includes(url.hostname))) {
     event.respondWith(cacheFirst(request, IMAGE_CACHE));
   }
+});
+
+// Firebase Messaging must run inside the same service worker used by the site.
+// It receives FCM alerts even when no Ansar School page is currently open.
+try {
+  importScripts('https://www.gstatic.com/firebasejs/12.14.0/firebase-app-compat.js');
+  importScripts('https://www.gstatic.com/firebasejs/12.14.0/firebase-messaging-compat.js');
+  firebase.initializeApp({
+    apiKey: 'AIzaSyApBeUtd8i7VC6wpOSxjD1PPYjQEQBGQ4Y',
+    authDomain: 'ansar-english-school.firebaseapp.com',
+    projectId: 'ansar-english-school',
+    storageBucket: 'ansar-english-school.firebasestorage.app',
+    messagingSenderId: '729617648651',
+    appId: '1:729617648651:web:f5d90b86b9b387d86b0b0e'
+  });
+  const messaging = firebase.messaging();
+  messaging.onBackgroundMessage((payload) => {
+    const notification = payload.notification || {};
+    const data = payload.data || {};
+    return self.registration.showNotification(notification.title || 'Ansar English School', {
+      body: notification.body || 'There is a new school update.',
+      icon: notification.icon || '/icon-192.png',
+      badge: '/icon-192.png',
+      data: { url: payload.fcmOptions?.link || data.url || '/' }
+    });
+  });
+} catch (error) {
+  // Caching and offline support remain available if the Messaging SDK cannot
+  // be loaded, for example while a visitor is offline for the first install.
+  console.warn('Firebase Messaging service worker setup failed.', error);
+}
+
+self.addEventListener('notificationclick', (event) => {
+  event.notification.close();
+  const url = event.notification.data?.url || '/';
+  event.waitUntil(clients.matchAll({ type: 'window', includeUncontrolled: true }).then((windows) => {
+    const existing = windows.find((client) => new URL(client.url).origin === self.location.origin);
+    if (existing) return existing.focus().then(() => existing.navigate(url));
+    return clients.openWindow(url);
+  }));
 });
