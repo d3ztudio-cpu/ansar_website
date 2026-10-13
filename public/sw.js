@@ -11,7 +11,7 @@
  */
 // Increment on each recovery deployment so clients immediately discard stale
 // HTML and asset caches from an earlier version.
-const VERSION = 'v10';
+const VERSION = 'v11';
 const PAGE_CACHE = `pages-${VERSION}`;
 const ASSET_CACHE = `assets-${VERSION}`;
 const IMAGE_CACHE = `images-${VERSION}`;
@@ -72,6 +72,19 @@ async function cacheFirst(request, cacheName) {
   return response;
 }
 
+async function networkFirstAsset(request) {
+  const cache = await caches.open(ASSET_CACHE);
+  try {
+    const response = await fetch(request);
+    if (response && response.ok) await cache.put(request, response.clone());
+    return response;
+  } catch (error) {
+    const cached = await cache.match(request);
+    if (cached) return cached;
+    throw error;
+  }
+}
+
 async function networkFirstPage(request) {
   const cache = await caches.open(PAGE_CACHE);
   try {
@@ -107,7 +120,9 @@ self.addEventListener('fetch', (event) => {
 
   // Immutable hashed build output.
   if (url.origin === self.location.origin && url.pathname.startsWith('/assets/')) {
-    event.respondWith(cacheFirst(request, ASSET_CACHE));
+    // Prefer the network even for hashed files. This prevents a restored
+    // mobile tab from pairing an old app shell with a deleted lazy chunk.
+    event.respondWith(networkFirstAsset(request));
     return;
   }
 

@@ -105,7 +105,7 @@ window.addEventListener('unhandledrejection', (event) => {
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
     navigator.serviceWorker
-      .register(`/sw.js?v=${encodeURIComponent(APP_BUILD_ID)}`, { updateViaCache: 'none' })
+      .register('/sw.js', { updateViaCache: 'none' })
       .then(registration => registration.update())
       .catch((error) => {
         console.error('Service worker registration failed:', error);

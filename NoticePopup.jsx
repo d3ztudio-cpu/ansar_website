@@ -1,5 +1,4 @@
 import React, { useState, useEffect } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
 import { collection, query, where, onSnapshot } from 'firebase/firestore';
 import { db } from './firebase-init';
 import { useNavigate } from 'react-router-dom';
@@ -9,6 +8,7 @@ let hasShownNoticeThisPageLoad = false;
 export default function NoticePopup() {
   const [notice, setNotice] = useState(null);
   const [isVisible, setIsVisible] = useState(false);
+  const [imageFailed, setImageFailed] = useState(false);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -16,6 +16,7 @@ export default function NoticePopup() {
     const unsubscribe = onSnapshot(q, (snapshot) => {
       if (!snapshot.empty) {
         setNotice({ id: snapshot.docs[0].id, ...snapshot.docs[0].data() });
+        setImageFailed(false);
         if (!hasShownNoticeThisPageLoad) {
           hasShownNoticeThisPageLoad = true;
           setIsVisible(true);
@@ -23,6 +24,11 @@ export default function NoticePopup() {
       } else {
         setIsVisible(false);
       }
+    }, (error) => {
+      // A notice is optional public content. A transient Firestore failure
+      // must never affect the home page on a slow mobile connection.
+      console.warn('Notice banner could not be loaded:', error);
+      setIsVisible(false);
     });
     return () => unsubscribe();
   }, []);
@@ -56,7 +62,8 @@ export default function NoticePopup() {
           background: rgba(0, 0, 0, 0.88);
           display: flex; align-items: center; justify-content: center;
           z-index: 9999;
-          backdrop-filter: blur(8px);
+          /* Avoid backdrop-filter and 3D transforms here: both can exhaust
+             the compositor on lower-memory mobile devices. */
         }
         .notice-container-fluid {
           position: relative;
@@ -72,9 +79,8 @@ export default function NoticePopup() {
           height: auto;
           object-fit: contain; /* Keeps widescreen posters perfectly uncropped and clear */
           border-radius: 12px;
-          image-rendering: -webkit-optimize-contrast; 
-          image-rendering: crisp-edges;               
-          transform: translateZ(0);                    
+          max-height: min(62vh, 620px);
+          background: #111827;
         }
         .notice-overlay-content {
           position: absolute;
@@ -116,23 +122,9 @@ export default function NoticePopup() {
           }
         }
       `}</style>
-    <AnimatePresence>
-      {isVisible && (
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          exit={{ opacity: 0 }}
-          className="notice-popup-overlay"
-          onClick={() => setIsVisible(false)}
-        >
-          <motion.div
-            initial={{ scale: 0.95, opacity: 0, y: 20 }}
-            animate={{ scale: 1, opacity: 1, y: 0 }}
-            exit={{ scale: 0.95, opacity: 0, y: 20 }}
-            transition={{ type: 'spring', damping: 25, stiffness: 300 }}
-            className="notice-container-fluid"
-            onClick={(e) => e.stopPropagation()}
-          >
+    {isVisible && (
+      <div className="notice-popup-overlay" role="dialog" aria-modal="true" aria-label={notice.title || 'School notice'} onClick={() => setIsVisible(false)}>
+        <div className="notice-container-fluid" onClick={(e) => e.stopPropagation()}>
             {/* Floating Close Button */}
             <button 
               onClick={() => setIsVisible(false)} 
@@ -144,12 +136,14 @@ export default function NoticePopup() {
               </svg>
             </button>
             
-            {notice.imageUrl ? (
+            {notice.imageUrl && !imageFailed ? (
               <div className="relative w-full h-full flex flex-col rounded-xl overflow-hidden bg-black/80 ring-1 ring-white/10">
               <img 
                 src={notice.imageUrl} 
                 alt={notice.title || "Notice Banner"} 
-                  className="notice-popup-img"
+                className="notice-popup-img"
+                decoding="async"
+                onError={() => setImageFailed(true)}
               />
                 <div className="notice-overlay-content">
                   <h3 className="text-xl sm:text-2xl lg:text-3xl font-extrabold text-white leading-tight drop-shadow-lg text-left pr-4">
@@ -161,7 +155,7 @@ export default function NoticePopup() {
                     </button>
                   )}
                 </div>
-                <motion.div initial={{ width: '100%' }} animate={{ width: '0%' }} transition={{ duration: 10, ease: 'linear' }} className="absolute bottom-0 left-0 h-1.5 bg-amber-400 z-10" />
+                <div className="absolute bottom-0 left-0 h-1.5 w-full bg-amber-400 z-10" />
               </div>
             ) : (
               <div className="p-8 sm:p-12 relative bg-white rounded-2xl shadow-2xl max-w-lg mx-auto w-full text-center">
@@ -173,13 +167,12 @@ export default function NoticePopup() {
                     <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5l7 7-7 7"></path></svg>
                   </button>
                 )}
-                <motion.div initial={{ width: '100%' }} animate={{ width: '0%' }} transition={{ duration: 10, ease: 'linear' }} className="absolute bottom-0 left-0 h-1.5 bg-amber-400 rounded-b-2xl" />
+                <div className="absolute bottom-0 left-0 h-1.5 w-full bg-amber-400 rounded-b-2xl" />
               </div>
             )}
-          </motion.div>
-        </motion.div>
-      )}
-    </AnimatePresence>
+        </div>
+      </div>
+    )}
     </>
   );
 }
