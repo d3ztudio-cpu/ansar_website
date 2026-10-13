@@ -1,14 +1,63 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { formatDuration } from './quizUtils';
 
-export default function QuizQuestionPlayer({ quiz, questions, answers, remainingMs, setAnswer, recordQuestionTime, submit }) {
+const formatCountdown = ms => {
+  const seconds = Math.max(0, Math.ceil(ms / 1000));
+  return `${Math.floor(seconds / 60)}:${String(seconds % 60).padStart(2, '0')}`;
+};
+
+export default function QuizQuestionPlayer({ quiz, questions, answers, remainingMs, setAnswer, recordQuestionTime, submit, onSecurityEvent }) {
   const [index, setIndex] = useState(0);
+  const [fullscreenRequired, setFullscreenRequired] = useState(false);
   const enteredAt = useRef(Date.now());
   const moving = useRef(false);
   const timedOut = useRef(false);
+  const securityEventReported = useRef(false);
   const question = questions[index];
+  const splitTiming = quiz?.timingMode === 'per-question';
+  const perQuestionMs = splitTiming ? Math.max(5, Number(quiz?.questionSeconds) || 20) * 1000 : 0;
+  const totalMs = splitTiming ? perQuestionMs * questions.length : Math.max(0, Number(quiz?.durationMinutes || 0) * 60000);
+  const elapsedMs = Math.max(0, totalMs - remainingMs);
+  const currentSlot = splitTiming && perQuestionMs ? Math.floor(elapsedMs / perQuestionMs) : index;
+  const splitExamEnded = splitTiming && elapsedMs >= totalMs;
+  const questionRemainingMs = splitTiming && perQuestionMs
+    ? (splitExamEnded ? 0 : Math.max(0, perQuestionMs - (elapsedMs % perQuestionMs)))
+    : remainingMs;
 
   useEffect(() => { enteredAt.current = Date.now(); }, [index]);
+
+  useEffect(() => {
+    const secureLock = reason => {
+      setFullscreenRequired(true);
+      if (!securityEventReported.current) {
+        securityEventReported.current = true;
+        onSecurityEvent?.(reason);
+      }
+    };
+    const onFullscreenChange = () => { if (!document.fullscreenElement) secureLock('Fullscreen exited during exam'); };
+    const onVisibilityChange = () => { if (document.hidden) secureLock('Exam tab was hidden'); };
+    const onKeyDown = event => {
+      if (event.key === 'F11') { event.preventDefault(); secureLock('Fullscreen shortcut was used'); }
+      if (event.key === 'Escape') event.preventDefault();
+    };
+    document.addEventListener('fullscreenchange', onFullscreenChange);
+    document.addEventListener('visibilitychange', onVisibilityChange);
+    window.addEventListener('keydown', onKeyDown, true);
+    return () => {
+      document.removeEventListener('fullscreenchange', onFullscreenChange);
+      document.removeEventListener('visibilitychange', onVisibilityChange);
+      window.removeEventListener('keydown', onKeyDown, true);
+    };
+  }, [onSecurityEvent]);
+
+  const resumeFullscreen = async () => {
+    try {
+      await document.documentElement.requestFullscreen();
+      setFullscreenRequired(false);
+    } catch {
+      setFullscreenRequired(true);
+    }
+  };
 
   const saveTime = async () => {
     if (!question) return {};
@@ -30,11 +79,44 @@ export default function QuizQuestionPlayer({ quiz, questions, answers, remaining
   };
 
   useEffect(() => {
-    if (remainingMs !== 0 || timedOut.current || !question) return;
+    if (!splitTiming || !questions.length || moving.current) return;
+
+    // Split mode is strictly slot-based. If an older page state was moved
+    // manually, bring it back to the active slot before processing expiry.
+    if (currentSlot < index) {
+      setIndex(currentSlot);
+      return;
+    }
+
+    // A slot is over as soon as the next slot begins. Store an explicit blank
+    // answer for every missed question, then move forward even if Firestore is
+    // temporarily slow. Blank answers are scored as wrong by the result flow.
+    if ((splitExamEnded || currentSlot >= questions.length) && !timedOut.current) {
+      timedOut.current = true;
+      moving.current = true;
+      const expiredQuestion = questions[Math.min(index, questions.length - 1)];
+      if (expiredQuestion && !answers[expiredQuestion.id]) setAnswer(expiredQuestion.id, '');
+      saveTime().then(timings => submit(true, timings)).finally(() => { moving.current = false; });
+      return;
+    }
+
+    if (currentSlot > index) {
+      moving.current = true;
+      const expiredQuestion = questions[index];
+      if (expiredQuestion && !answers[expiredQuestion.id]) setAnswer(expiredQuestion.id, '');
+      saveTime().finally(() => {
+        setIndex(currentSlot);
+        moving.current = false;
+      });
+    }
+  }, [answers, currentSlot, index, questions, splitExamEnded, splitTiming]);
+
+  useEffect(() => {
+    if ((splitTiming || remainingMs !== 0) || timedOut.current || !question) return;
     timedOut.current = true;
     moving.current = true;
     saveTime().then(timings => submit(true, timings)).finally(() => { moving.current = false; });
-  }, [remainingMs, question?.id]);
+  }, [remainingMs, question?.id, splitTiming]);
 
   useEffect(() => {
     if (quiz?.status !== 'ended' || timedOut.current || !question) return;
@@ -49,7 +131,7 @@ export default function QuizQuestionPlayer({ quiz, questions, answers, remaining
     <div className="mx-auto max-w-4xl">
       <header className="sticky top-0 z-10 rounded-2xl bg-indigo-700 p-4 shadow-xl sm:flex sm:items-center sm:justify-between">
         <div><p className="text-xs font-black uppercase text-indigo-200">Question {index + 1} of {questions.length}</p><h1 className="text-xl font-black">{quiz?.title}</h1></div>
-        <div className={`mt-3 rounded-xl px-4 py-2 text-center font-mono text-xl sm:mt-0 ${remainingMs <= 60000 ? 'animate-pulse bg-red-600' : 'bg-slate-950'}`}>Time left: {formatDuration(remainingMs)}</div>
+        <div className={`mt-3 rounded-xl px-4 py-2 text-center font-mono text-xl sm:mt-0 ${questionRemainingMs <= 60000 ? 'animate-pulse bg-red-600' : 'bg-slate-950'}`}><span className="block text-[10px] font-sans font-black uppercase tracking-wide text-indigo-100">{splitTiming ? 'This question' : 'Entire exam'}</span>{splitTiming ? formatCountdown(questionRemainingMs) : formatDuration(questionRemainingMs)}</div>
       </header>
 
       <div className="mt-5 flex gap-1">{questions.map((item, itemIndex) => <span key={item.id} className={`h-2 flex-1 rounded-full ${itemIndex === index ? 'bg-amber-400' : answers[item.id] ? 'bg-emerald-500' : 'bg-slate-700'}`} />)}</div>
@@ -61,10 +143,10 @@ export default function QuizQuestionPlayer({ quiz, questions, answers, remaining
       </section>
 
       <nav className="mt-6 flex items-center justify-between gap-4">
-        <button disabled={index === 0} onClick={() => move(index - 1)} className="rounded-2xl border border-white/30 px-6 py-4 font-black disabled:invisible">← Previous</button>
+        <button disabled={splitTiming || index === 0} onClick={() => move(index - 1)} className="rounded-2xl border border-white/30 px-6 py-4 font-black disabled:invisible">← Previous</button>
         <span className="text-sm font-bold text-slate-400">Answered {Object.values(answers).filter(Boolean).length}/{questions.length}</span>
-        {index < questions.length - 1 ? <button onClick={() => move(index + 1)} className="rounded-2xl bg-indigo-500 px-7 py-4 font-black">Next →</button> : <button onClick={finish} className="rounded-2xl bg-emerald-500 px-7 py-4 font-black text-slate-950">Submit quiz</button>}
+        {index < questions.length - 1 ? <button disabled={splitTiming} onClick={() => move(index + 1)} title={splitTiming ? 'Questions advance automatically when the timer ends.' : undefined} className="rounded-2xl bg-indigo-500 px-7 py-4 font-black disabled:cursor-not-allowed disabled:opacity-45">{splitTiming ? 'Auto-advance' : 'Next →'}</button> : <button onClick={finish} className="rounded-2xl bg-amber-400 px-7 py-4 font-black text-slate-950 shadow-lg shadow-amber-400/20 transition hover:bg-amber-300 focus:outline-none focus:ring-4 focus:ring-amber-200">Submit exam</button>}
       </nav>
-    </div>
+    </div>{fullscreenRequired && <div role="dialog" aria-modal="true" className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/95 p-6 text-center"><section className="max-w-md rounded-3xl border border-white/15 bg-slate-900 p-8 shadow-2xl"><p className="text-xs font-black uppercase tracking-[.2em] text-amber-300">Secure exam mode</p><h2 className="mt-3 text-3xl font-black">Return to full screen</h2><p className="mt-4 leading-7 text-slate-300">Your exam is paused while full screen is unavailable. Continue only after restoring secure exam mode.</p><button onClick={resumeFullscreen} className="mt-7 w-full rounded-xl bg-amber-400 px-5 py-3 font-black text-slate-950 transition hover:bg-amber-300">Resume secure exam</button></section></div>}
   </main>;
 }

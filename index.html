@@ -85,10 +85,22 @@
     }
   </script>
   <script>
-    // Failsafe: if the app shell never mounts (e.g. a stale cached document
-    // referencing a deleted JS chunk), fade the boot bar out instead of
-    // showing an endless spinner.
+    // Failsafe for a stale mobile app shell. Refresh once in the background;
+    // do not expose a visitor-facing update/error page.
     window.setTimeout(function () {
+      if (!document.documentElement.dataset.appReady) {
+        try {
+          var reloadKey = 'ansar:bootstrap-reload';
+          if (!window.sessionStorage.getItem(reloadKey)) {
+            window.sessionStorage.setItem(reloadKey, '1');
+            window.location.replace(window.location.href);
+            return;
+          }
+        } catch (error) {
+          window.location.replace(window.location.href);
+          return;
+        }
+      }
       var bar = document.getElementById('boot-splash');
       if (bar && !bar.classList.contains('is-hidden')) {
         bar.classList.add('is-hidden');

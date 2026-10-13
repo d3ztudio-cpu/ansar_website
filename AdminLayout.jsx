@@ -57,7 +57,7 @@ export default function AdminLayout({ children, user, onLogout, sproutsOnly = fa
   const currentModule = getModuleTitle();
 
   return (
-    <div className="min-h-screen flex bg-slate-50 font-sans">
+    <div className="flex h-[100dvh] min-h-0 overflow-hidden bg-slate-50 font-sans">
       {/* Mobile Sidebar Overlay */}
       {isSidebarOpen && (
         <div 
@@ -93,8 +93,8 @@ export default function AdminLayout({ children, user, onLogout, sproutsOnly = fa
           <Link to="/admin/field-trips" className={`block px-4 py-3 rounded-lg font-medium transition-colors ${currentModule === 'Field Trips' ? 'bg-emerald-600 text-white' : 'text-slate-300 hover:bg-slate-800 hover:text-white'}`}><span className="mr-3" aria-hidden="true">➜</span>Field Trips</Link>
           <Link to="/admin/ansar-times" className={`block px-4 py-3 rounded-lg font-medium transition-colors ${currentModule === 'Ansar Times' ? 'bg-emerald-600 text-white' : 'text-slate-300 hover:bg-slate-800 hover:text-white'}`}><span className="mr-3" aria-hidden="true">◷</span>Ansar Times</Link>
           <Link to="/admin/library" className={`block px-4 py-3 rounded-lg font-medium transition-colors ${currentModule === 'Library' ? 'bg-emerald-600 text-white' : 'text-slate-300 hover:bg-slate-800 hover:text-white'}`}><span className="mr-3" aria-hidden="true">▣</span>Library</Link>
-          <Link to="/admin/ansar-media-production/add-ons/online-quiz" className={`block px-4 py-3 rounded-lg font-medium transition-colors ${currentModule === 'Media Productions Add-ons' ? 'bg-emerald-600 text-white' : 'text-slate-300 hover:bg-slate-800 hover:text-white'}`}><span className="mr-3" aria-hidden="true">▶</span>Media Add-ons</Link>
-          <Link to="/admin/ansar-media-production/add-ons/staff-exams" className={`block px-4 py-3 rounded-lg font-medium transition-colors ${currentModule === 'Media Productions Add-ons' ? 'bg-emerald-600 text-white' : 'text-slate-300 hover:bg-slate-800 hover:text-white'}`}><span className="mr-3" aria-hidden="true">▤</span>Staff Exams</Link>
+          <Link to="/admin/ansar-media-production/add-ons/online-quiz" className={`block px-4 py-3 rounded-lg font-medium transition-colors ${path.includes('/admin/ansar-media-production/add-ons/online-quiz') ? 'bg-emerald-600 text-white' : 'text-slate-300 hover:bg-slate-800 hover:text-white'}`}><span className="mr-3" aria-hidden="true">▶</span>Media Add-ons</Link>
+          <Link to="/admin/ansar-media-production/add-ons/staff-exams" className={`ml-4 block border-l border-slate-700 px-4 py-2.5 text-sm font-medium transition-colors ${path.includes('/admin/ansar-media-production/add-ons/staff-exams') ? 'rounded-r-lg border-l-emerald-400 bg-emerald-600/90 text-white' : 'text-slate-400 hover:bg-slate-800 hover:text-white'}`}><span className="mr-2" aria-hidden="true">↳</span>Staff Exams</Link>
           <Link to="/admin/alumni" className={`block px-4 py-3 rounded-lg font-medium transition-colors ${currentModule === 'Alumni' ? 'bg-emerald-600 text-white' : 'text-slate-300 hover:bg-slate-800 hover:text-white'}`}><span className="mr-3" aria-hidden="true">A</span>Alumni</Link>
           <Link to="/admin/leadership" className={`block px-4 py-3 rounded-lg font-medium transition-colors ${currentModule === 'Leadership' ? 'bg-emerald-600 text-white' : 'text-slate-300 hover:bg-slate-800 hover:text-white'}`}><span className="mr-3" aria-hidden="true">♙</span>Leadership</Link>
           <Link to="/admin/academics" className={`block px-4 py-3 rounded-lg font-medium transition-colors ${currentModule === 'Academics & Admissions' ? 'bg-emerald-600 text-white' : 'text-slate-300 hover:bg-slate-800 hover:text-white'}`}><span className="mr-3" aria-hidden="true">▥</span>Academics & Admissions</Link>
@@ -107,7 +107,7 @@ export default function AdminLayout({ children, user, onLogout, sproutsOnly = fa
       </aside>
 
       {/* Main Content Area */}
-      <div className="flex-1 flex flex-col min-w-0 h-screen overflow-hidden">
+      <div className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden">
         
         {/* Sticky Header */}
         <header className="sticky top-0 z-30 h-20 flex items-center justify-between px-4 sm:px-8 bg-white border-b border-slate-200 shadow-sm shrink-0">
@@ -137,7 +137,7 @@ export default function AdminLayout({ children, user, onLogout, sproutsOnly = fa
         </header>
 
         {/* Dynamic Inner Content */}
-        <main className="flex-1 overflow-y-auto p-4 sm:p-8">
+        <main className="relative min-h-0 flex-1 overflow-y-auto overscroll-contain p-4 sm:p-8">
           <div className="max-w-7xl mx-auto pb-12">
             {children}
           </div>

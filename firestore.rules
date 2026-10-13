@@ -587,8 +587,20 @@ service cloud.firestore {
       return request.resource.data.keys().hasOnly(['uid','staffCode','phoneNumber','email','displayName','createdAt','updatedAt']) &&
         request.resource.data.uid == uid && request.resource.data.staffCode is string && request.resource.data.phoneNumber is string && request.resource.data.email is string && request.resource.data.email.size() <= 200 && request.resource.data.displayName is string && request.resource.data.displayName.size() <= 120 && request.resource.data.createdAt is timestamp && request.resource.data.updatedAt is timestamp;
     }
+    function validStaffParticipant(uid) {
+      return request.resource.data.keys().hasOnly(['uid','name','staffCode','status','progress','shuffleSeed','joinedAt','updatedAt','startedAt','answers','timedOut','questionTimings','submittedAt','score','total','attended','correct','failed','review','scoredAt']) &&
+        request.resource.data.uid == uid && request.resource.data.name is string && request.resource.data.name.size() >= 1 && request.resource.data.name.size() <= 120 &&
+        request.resource.data.staffCode is string && request.resource.data.staffCode.size() >= 2 && request.resource.data.staffCode.size() <= 30 &&
+        request.resource.data.status in ['waiting','active','submitted','scored'] && request.resource.data.progress is int && request.resource.data.progress >= 0 && request.resource.data.progress <= 200 &&
+        request.resource.data.shuffleSeed is int && request.resource.data.joinedAt is timestamp && request.resource.data.updatedAt is timestamp &&
+        (!('answers' in request.resource.data) || (request.resource.data.answers is map && request.resource.data.answers.size() <= 200)) &&
+        (!('questionTimings' in request.resource.data) || (request.resource.data.questionTimings is map && request.resource.data.questionTimings.size() <= 200));
+    }
     match /staffDirectory/{staffCode} {
-      allow read: if isVerifiedAdmin();
+      // A verified staff member can fetch only their own matched directory record
+      // after their private profile has been created; collection listing remains admin-only.
+      allow get: if isVerifiedAdmin() || (isAuthenticated() && exists(/databases/$(database)/documents/staffExamProfiles/$(request.auth.uid)) && resource.data.staffCode == get(/databases/$(database)/documents/staffExamProfiles/$(request.auth.uid)).data.staffCode && resource.data.phoneNumber == get(/databases/$(database)/documents/staffExamProfiles/$(request.auth.uid)).data.phoneNumber);
+      allow list: if isVerifiedAdmin();
       allow create: if isVerifiedAdmin() && staffCode == request.resource.data.staffCode && validStaffDirectory() && request.resource.data.createdAt == request.time && request.resource.data.updatedAt == request.time;
       allow update: if isVerifiedAdmin() && staffCode == request.resource.data.staffCode && validStaffDirectory() && request.resource.data.createdAt == resource.data.createdAt && request.resource.data.updatedAt == request.time;
       allow delete: if isVerifiedAdmin();
@@ -600,19 +612,33 @@ service cloud.firestore {
     }
     match /staffExamProfiles/{uid} {
       allow get: if isAuthenticated() && request.auth.uid == uid;
-      allow create: if isAuthenticated() && request.auth.uid == uid && validStaffProfile(uid) && request.resource.data.createdAt == request.time && request.resource.data.updatedAt == request.time && request.resource.data.staffCode == get(/databases/$(database)/documents/staffDirectory/$(request.resource.data.staffCode)).data.staffCode && request.resource.data.phoneNumber == get(/databases/$(database)/documents/staffDirectory/$(request.resource.data.staffCode)).data.phoneNumber;
-      allow update: if isAuthenticated() && request.auth.uid == uid && validStaffProfile(uid) && request.resource.data.staffCode == resource.data.staffCode && request.resource.data.phoneNumber == resource.data.phoneNumber && request.resource.data.createdAt == resource.data.createdAt && request.resource.data.updatedAt == request.time;
+      allow create: if isAuthenticated() && request.auth.uid == uid && validStaffProfile(uid) && request.resource.data.displayName == '' && request.resource.data.createdAt == request.time && request.resource.data.updatedAt == request.time && request.resource.data.staffCode == get(/databases/$(database)/documents/staffDirectory/$(request.resource.data.staffCode)).data.staffCode && request.resource.data.phoneNumber == get(/databases/$(database)/documents/staffDirectory/$(request.resource.data.staffCode)).data.phoneNumber;
+      allow update: if isAuthenticated() && request.auth.uid == uid && validStaffProfile(uid) && request.resource.data.staffCode == resource.data.staffCode && request.resource.data.phoneNumber == resource.data.phoneNumber && request.resource.data.createdAt == resource.data.createdAt && request.resource.data.updatedAt == request.time && request.resource.data.displayName == get(/databases/$(database)/documents/staffDirectory/$(resource.data.staffCode)).data.name;
       allow delete: if false;
     }
     match /staffExamSessions/{examId} {
       allow read: if isExamController() || (isAuthenticated() && exists(/databases/$(database)/documents/staffExamProfiles/$(request.auth.uid)) && (resource.data.status in ['lobby','running'] || (resource.data.status == 'ended' && exists(/databases/$(database)/documents/staffExamSessions/$(examId)/participants/$(request.auth.uid)))));
       allow create, update, delete: if isExamController();
-      match /questions/{questionId} { allow read: if isExamController() || (isAuthenticated() && exists(/databases/$(database)/documents/staffExamSessions/$(examId)/participants/$(request.auth.uid))); allow write: if isExamController(); }
-      match /answers/{answerId} { allow read, write: if isExamController(); }
+      // Questions remain unavailable in the lobby. They are readable while active,
+      // and again after the owner's attempt is locked for their grade review.
+      match /questions/{questionId} {
+        allow read: if isExamController() || (isAuthenticated() && exists(/databases/$(database)/documents/staffExamSessions/$(examId)/participants/$(request.auth.uid)) && ((get(/databases/$(database)/documents/staffExamSessions/$(examId)/participants/$(request.auth.uid)).data.status == 'active' && get(/databases/$(database)/documents/staffExamSessions/$(examId)).data.status == 'running') || get(/databases/$(database)/documents/staffExamSessions/$(examId)/participants/$(request.auth.uid)).data.status in ['submitted', 'scored']));
+        allow write: if isExamController();
+      }
+      // Answer keys stay private while an attempt is active. Once a participant
+      // has irrevocably submitted, their own locked attempt may read the key to
+      // calculate and display its immediate result. Writing remains controller-only.
+      match /answers/{answerId} {
+        allow read: if isExamController() || (isAuthenticated() && exists(/databases/$(database)/documents/staffExamSessions/$(examId)/participants/$(request.auth.uid)) && get(/databases/$(database)/documents/staffExamSessions/$(examId)/participants/$(request.auth.uid)).data.status in ['submitted', 'scored']);
+        allow write: if isExamController();
+      }
       match /participants/{uid} {
         allow read: if isExamController() || (isAuthenticated() && request.auth.uid == uid);
-        allow create: if isAuthenticated() && request.auth.uid == uid && exists(/databases/$(database)/documents/staffExamProfiles/$(uid)) && request.resource.data.uid == uid && request.resource.data.staffCode == get(/databases/$(database)/documents/staffExamProfiles/$(uid)).data.staffCode && request.resource.data.name == get(/databases/$(database)/documents/staffExamProfiles/$(uid)).data.displayName && request.resource.data.status == 'waiting';
-        allow update: if isExamController() || (isAuthenticated() && request.auth.uid == uid && request.resource.data.uid == resource.data.uid && request.resource.data.staffCode == resource.data.staffCode && request.resource.data.name == resource.data.name && request.resource.data.joinedAt == resource.data.joinedAt && request.resource.data.updatedAt == request.time && request.resource.data.status in ['waiting','active','submitted'] && !request.resource.data.diff(resource.data).affectedKeys().hasAny(['score','total','attended','correct','failed','review','scoredAt']));
+        allow create: if isAuthenticated() && request.auth.uid == uid && validStaffParticipant(uid) && exists(/databases/$(database)/documents/staffExamProfiles/$(uid)) && request.resource.data.staffCode == get(/databases/$(database)/documents/staffExamProfiles/$(uid)).data.staffCode && request.resource.data.name == get(/databases/$(database)/documents/staffExamProfiles/$(uid)).data.displayName && request.resource.data.status == 'waiting' && request.resource.data.progress == 0 && request.resource.data.joinedAt == request.time && request.resource.data.updatedAt == request.time && get(/databases/$(database)/documents/staffExamSessions/$(examId)).data.status in ['lobby','running'];
+        allow update: if isExamController() || (isAuthenticated() && request.auth.uid == uid && validStaffParticipant(uid) && request.resource.data.uid == resource.data.uid && request.resource.data.staffCode == resource.data.staffCode && request.resource.data.name == resource.data.name && request.resource.data.shuffleSeed == resource.data.shuffleSeed && request.resource.data.joinedAt == resource.data.joinedAt && request.resource.data.updatedAt == request.time && !request.resource.data.diff(resource.data).affectedKeys().hasAny(['score','total','attended','correct','failed','review','scoredAt']) &&
+          ((resource.data.status == 'waiting' && request.resource.data.status == 'active' && request.resource.data.startedAt == request.time && get(/databases/$(database)/documents/staffExamSessions/$(examId)).data.status == 'running') ||
+           (resource.data.status == 'active' && request.resource.data.status == 'active' && request.resource.data.startedAt == resource.data.startedAt && get(/databases/$(database)/documents/staffExamSessions/$(examId)).data.status == 'running') ||
+           (resource.data.status == 'active' && request.resource.data.status == 'submitted' && request.resource.data.startedAt == resource.data.startedAt && request.resource.data.submittedAt == request.time && request.resource.data.timedOut is bool && get(/databases/$(database)/documents/staffExamSessions/$(examId)).data.status in ['running','ended'])));
         allow delete: if isExamController();
       }
     }
