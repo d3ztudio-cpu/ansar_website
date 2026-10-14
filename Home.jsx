@@ -146,14 +146,14 @@ function LeadershipProfile({ profile, reverse = false }) {
       whileInView={{ opacity: 1, y: 0 }}
       viewport={{ once: true, amount: 0.25 }}
       transition={{ duration: 0.65, ease: "easeOut" }}
-      className={`grid overflow-hidden rounded-[2rem] border border-emerald-100 bg-white shadow-xl lg:grid-cols-[18rem_1fr] ${reverse ? 'lg:grid-cols-[1fr_18rem]' : ''}`}
+      className={`grid overflow-hidden rounded-[1.5rem] border border-emerald-100 bg-white shadow-xl sm:rounded-[2rem] lg:grid-cols-[19rem_minmax(0,1fr)] ${reverse ? 'lg:grid-cols-[minmax(0,1fr)_19rem]' : ''}`}
     >
-      <div className={`relative min-h-[20rem] bg-emerald-950 ${reverse ? 'lg:order-2' : ''}`}>
+      <div className={`relative aspect-[4/3] overflow-hidden bg-slate-100 sm:aspect-[16/10] lg:aspect-auto ${reverse ? 'lg:order-2' : ''}`}>
         {imageUrl ? (
           <img
             src={imageUrl}
             alt={profile.name}
-            className="absolute inset-0 h-full w-full object-cover"
+            className="absolute inset-0 h-full w-full object-contain bg-slate-100"
             style={{ objectPosition: reverse ? '75% center' : 'center' }}
             loading="lazy"
           />
@@ -164,12 +164,12 @@ function LeadershipProfile({ profile, reverse = false }) {
         )}
         <div className={`pointer-events-none absolute inset-y-0 hidden w-8 lg:block ${reverse ? 'left-0 bg-gradient-to-r' : 'right-0 bg-gradient-to-l'} from-white/55 via-white/20 to-white/0`} />
       </div>
-      <div className="flex flex-col justify-center p-7 sm:p-10">
-        <p className="text-sm font-black uppercase tracking-widest text-emerald-600">{profile.role}</p>
-        <h3 className="mt-2 text-3xl font-extrabold text-emerald-950">{profile.name}</h3>
+      <div className="flex min-w-0 flex-col justify-center p-6 sm:p-10">
+        <p className="text-xs font-black uppercase tracking-widest text-emerald-600 sm:text-sm">{profile.role}</p>
+        <h3 className="mt-2 text-2xl font-extrabold leading-tight text-emerald-950 sm:text-3xl">{profile.name}</h3>
         {profile.qualifications && <p className="mt-2 font-bold text-amber-600">{profile.qualifications}</p>}
         {profile.message ? (
-          <p className="mt-6 whitespace-pre-wrap text-base leading-relaxed text-slate-600 sm:text-lg lg:text-base xl:text-lg">{profile.message}</p>
+          <p className="mt-5 whitespace-pre-wrap text-[15px] leading-7 text-slate-600 sm:mt-6 sm:text-lg sm:leading-relaxed lg:text-base xl:text-lg">{profile.message}</p>
         ) : (
           <p className="mt-6 text-base leading-relaxed text-slate-500">A message from this office will be updated soon.</p>
         )}
@@ -192,7 +192,7 @@ function JuniorPrincipalTile({ leader, index }) {
       whileInView={{ opacity: 1, y: 0 }}
       viewport={{ once: true, amount: 0.3 }}
       transition={{ duration: 0.5, delay: Math.min(index * 0.08, 0.32) }}
-      className="group overflow-hidden border border-emerald-100 bg-white shadow-lg shadow-slate-900/10 transition-all duration-300 hover:-translate-y-1 hover:shadow-2xl"
+      className="group h-full overflow-hidden border border-emerald-100 bg-white shadow-lg shadow-slate-900/10 transition-all duration-300 motion-safe:hover:-translate-y-1 hover:shadow-2xl"
       style={frameShape}
     >
       <div className="flex h-full flex-col">
@@ -205,9 +205,9 @@ function JuniorPrincipalTile({ leader, index }) {
             </div>
           )}
         </div>
-        <div className="flex flex-1 flex-col justify-center p-5 sm:p-6">
-          <p className="font-sans text-sm font-semibold normal-case leading-snug tracking-normal text-emerald-700">{role}</p>
-          <h4 className="mt-2 text-xl font-extrabold leading-tight text-emerald-950">{leader.name}</h4>
+        <div className="flex min-w-0 flex-1 flex-col justify-center p-4 sm:p-6">
+          <p className="font-sans text-xs font-semibold normal-case leading-snug tracking-normal text-emerald-700 sm:text-sm">{role}</p>
+          <h4 className="mt-2 text-lg font-extrabold leading-tight text-emerald-950 sm:text-xl">{leader.name}</h4>
           {qualification && <p className="mt-2 text-sm font-bold leading-snug text-amber-600">{qualification}</p>}
           {section && <p className="mt-2 text-sm font-bold text-slate-600">{section}</p>}
         </div>
@@ -218,8 +218,8 @@ function JuniorPrincipalTile({ leader, index }) {
 
 function getJuniorPrincipalGridClass(count) {
   return count === 7
-    ? 'grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-8'
-    : 'grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-5';
+    ? 'grid grid-cols-1 gap-4 min-[430px]:grid-cols-2 sm:gap-5 lg:grid-cols-8'
+    : 'grid grid-cols-1 gap-4 min-[430px]:grid-cols-2 sm:gap-5 lg:grid-cols-4 xl:grid-cols-5';
 }
 
 function getJuniorPrincipalItemClass(count, index) {
@@ -303,46 +303,46 @@ export default function Home() {
         imageAvifSrcSet="/home-hero-320.avif 320w, /home-hero-640.avif 640w"
       />
 
-      <AnimatedSection className="relative z-20 mx-auto -mt-8 grid max-w-6xl grid-cols-1 gap-4 px-3 sm:-mt-10 sm:grid-cols-3 sm:gap-5 sm:px-4 lg:-mt-12 lg:gap-6 lg:px-0">
-        <div className="rounded-3xl border border-b-4 border-slate-100 border-b-amber-400 bg-white p-7 text-center shadow-[0_10px_40px_-15px_rgba(0,0,0,0.1)] transition-transform duration-300 motion-safe:hover:-translate-y-2 lg:p-10">
-          <strong className="block text-5xl font-extrabold text-emerald-950 mb-2"><AnimatedCounter target={270} suffix="+" /></strong>
-          <span className="text-slate-500 font-bold tracking-widest uppercase text-xs">Experienced Staff</span>
+      <AnimatedSection className="relative z-20 mx-auto -mt-4 grid max-w-6xl grid-cols-3 gap-2 px-3 sm:-mt-8 sm:gap-5 sm:px-4 lg:-mt-10 lg:gap-6 lg:px-0">
+        <div className="flex min-h-24 flex-col items-center justify-center rounded-2xl border border-b-4 border-slate-100 border-b-amber-400 bg-white p-3 text-center shadow-[0_10px_40px_-15px_rgba(0,0,0,0.1)] transition-transform duration-300 motion-safe:hover:-translate-y-2 sm:min-h-32 sm:rounded-3xl sm:p-5 lg:p-10">
+          <strong className="mb-1 block text-2xl font-extrabold text-emerald-950 sm:mb-2 sm:text-4xl lg:text-5xl"><AnimatedCounter target={270} suffix="+" /></strong>
+          <span className="text-[10px] font-bold uppercase leading-tight tracking-wide text-slate-500 sm:text-xs sm:tracking-widest">Experienced Staff</span>
         </div>
-        <div className="rounded-3xl border border-b-4 border-slate-100 border-b-amber-400 bg-white p-7 text-center shadow-[0_10px_40px_-15px_rgba(0,0,0,0.1)] transition-transform duration-300 motion-safe:hover:-translate-y-2 lg:p-10">
-          <strong className="block text-5xl font-extrabold text-emerald-950 mb-2"><AnimatedCounter target={42} /></strong>
-          <span className="text-slate-500 font-bold tracking-widest uppercase text-xs">Successful Years</span>
+        <div className="flex min-h-24 flex-col items-center justify-center rounded-2xl border border-b-4 border-slate-100 border-b-amber-400 bg-white p-3 text-center shadow-[0_10px_40px_-15px_rgba(0,0,0,0.1)] transition-transform duration-300 motion-safe:hover:-translate-y-2 sm:min-h-32 sm:rounded-3xl sm:p-5 lg:p-10">
+          <strong className="mb-1 block text-2xl font-extrabold text-emerald-950 sm:mb-2 sm:text-4xl lg:text-5xl"><AnimatedCounter target={42} /></strong>
+          <span className="text-[10px] font-bold uppercase leading-tight tracking-wide text-slate-500 sm:text-xs sm:tracking-widest">Successful Years</span>
         </div>
-        <div className="rounded-3xl border border-b-4 border-slate-100 border-b-amber-400 bg-white p-7 text-center shadow-[0_10px_40px_-15px_rgba(0,0,0,0.1)] transition-transform duration-300 motion-safe:hover:-translate-y-2 lg:p-10">
-          <strong className="block text-5xl font-extrabold text-emerald-950 mb-2"><AnimatedCounter target={5000} suffix="+" /></strong>
-          <span className="text-slate-500 font-bold tracking-widest uppercase text-xs">Students Enrolled</span>
+        <div className="flex min-h-24 flex-col items-center justify-center rounded-2xl border border-b-4 border-slate-100 border-b-amber-400 bg-white p-3 text-center shadow-[0_10px_40px_-15px_rgba(0,0,0,0.1)] transition-transform duration-300 motion-safe:hover:-translate-y-2 sm:min-h-32 sm:rounded-3xl sm:p-5 lg:p-10">
+          <strong className="mb-1 block text-2xl font-extrabold text-emerald-950 sm:mb-2 sm:text-4xl lg:text-5xl"><AnimatedCounter target={5000} suffix="+" /></strong>
+          <span className="text-[10px] font-bold uppercase leading-tight tracking-wide text-slate-500 sm:text-xs sm:tracking-widest">Students Enrolled</span>
         </div>
       </AnimatedSection>
 
       <EventCountdown events={settings?.eventCountdowns || []} />
 
-      <AnimatedSection className="mt-32 grid grid-cols-1 lg:grid-cols-2 gap-16 items-stretch">
+      <AnimatedSection className="mt-16 grid grid-cols-1 items-stretch gap-9 sm:mt-24 sm:gap-12 lg:mt-32 lg:grid-cols-2 lg:gap-16">
         <div className="flex flex-col justify-center">
           <div className="inline-block w-16 h-1.5 bg-amber-400 rounded-full mb-6"></div>
           <p className="text-emerald-600 font-black uppercase tracking-widest text-sm mb-3">About us</p>
           <h2 className="text-4xl lg:text-5xl font-extrabold text-emerald-950 mb-6 leading-tight">Welcome to Ansar English School Perumpilavu</h2>
           <p className="text-slate-600 text-lg leading-relaxed mb-6 font-medium">Founded by Ansari Charitable Trust, Ansar English School is a CBSE-affiliated institution focused on academic growth, inclusive learning, and values-led leadership.</p>
         </div>
-        <div className="relative h-[400px] lg:h-[500px] rounded-[2.5rem] overflow-hidden shadow-2xl">
+        <div className="relative h-72 overflow-hidden rounded-[1.75rem] shadow-2xl sm:h-96 sm:rounded-[2.5rem] lg:h-[500px]">
            <VerticalCarousel images={settings?.premisesImages || []} onImageClick={setLightboxImage} />
         </div>
       </AnimatedSection>
 
-      <AnimatedSection className="mt-16 grid grid-cols-1 lg:grid-cols-2 gap-16 items-stretch">
-        <div className="bg-emerald-950 p-8 sm:p-12 md:p-16 rounded-[2.5rem] shadow-2xl text-white flex flex-col justify-center relative overflow-hidden group order-2 lg:order-1">
+      <AnimatedSection className="mt-12 grid grid-cols-1 items-stretch gap-9 sm:mt-16 sm:gap-12 lg:grid-cols-2 lg:gap-16">
+        <div className="relative order-2 flex flex-col justify-center overflow-hidden rounded-[1.75rem] bg-emerald-950 p-7 text-white shadow-2xl sm:rounded-[2.5rem] sm:p-12 md:p-16 lg:order-1">
           <div className="absolute top-0 right-0 w-64 h-64 bg-amber-500/10 rounded-full blur-3xl -mr-20 -mt-20 group-hover:bg-amber-500/20 transition-colors duration-700"></div>
           <VisionMissionLoop vision={settings?.visionText} mission={settings?.missionText} />
         </div>
-        <div className="relative h-[400px] lg:h-[500px] rounded-[2.5rem] overflow-hidden shadow-2xl order-1 lg:order-2">
+        <div className="relative order-1 h-72 overflow-hidden rounded-[1.75rem] shadow-2xl sm:h-96 sm:rounded-[2.5rem] lg:order-2 lg:h-[500px]">
            <VerticalCarousel images={settings?.kgImages || []} onImageClick={setLightboxImage} />
         </div>
       </AnimatedSection>
 
-      <AnimatedSection className="mt-16 bg-gradient-to-r from-emerald-50 to-teal-50 rounded-[2.5rem] p-10 lg:p-16 shadow-sm border border-emerald-100 flex flex-col md:flex-row items-center gap-10">
+      <AnimatedSection className="mt-12 flex flex-col items-center gap-7 rounded-[1.75rem] border border-emerald-100 bg-gradient-to-r from-emerald-50 to-teal-50 p-6 shadow-sm sm:mt-16 sm:gap-10 sm:rounded-[2.5rem] sm:p-10 md:flex-row lg:p-16">
          <div className="flex-1 text-center md:text-left">
             <h3 className="text-3xl lg:text-4xl font-extrabold text-emerald-950 mb-4 leading-tight">{settings?.sustainabilityTitle || 'Year of Sustainability 2026–2027'}</h3>
             <p className="text-lg text-slate-700 leading-relaxed">{settings?.sustainabilityDesc || 'At our school, the Year of Sustainability is dedicated to nurturing environmentally responsible and socially conscious learners. Through awareness, action, and innovation, we encourage students to embrace sustainable practices and become active contributors to a greener future.'}</p>

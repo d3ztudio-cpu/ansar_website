@@ -10,26 +10,26 @@ export default function Hero({ imageUrl, imageSrcSet, imageAvifSrcSet, title, ti
     <section aria-labelledby="home-hero-title" className="relative mt-4 w-full overflow-hidden rounded-2xl border border-emerald-900/50 bg-emerald-950 shadow-2xl md:rounded-[2.5rem] lg:mt-6">
       {/* Premium Cinematic Overlay & Glows */}
       <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_20%_20%,rgba(255,255,255,0.12),transparent_38%),linear-gradient(135deg,rgba(16,185,129,0.08),transparent_55%)]" />
-      <div className="absolute top-0 right-0 -mr-32 -mt-32 w-[600px] h-[600px] rounded-full bg-emerald-500/20 blur-[100px] pointer-events-none" />
-      <div className="absolute bottom-0 left-0 -ml-32 -mb-32 w-[400px] h-[400px] rounded-full bg-amber-500/10 blur-[80px] pointer-events-none" />
+      <div className="absolute top-0 right-0 -mr-24 -mt-24 w-[min(80vw,36rem)] h-[min(80vw,36rem)] rounded-full bg-emerald-500/20 blur-[100px] pointer-events-none" />
+      <div className="absolute bottom-0 left-0 -ml-24 -mb-24 w-[min(60vw,20rem)] h-[min(60vw,20rem)] rounded-full bg-amber-500/10 blur-[80px] pointer-events-none" />
 
-      <div className="relative z-10 grid items-center gap-10 px-6 pb-16 pt-12 sm:px-10 sm:py-16 lg:grid-cols-[minmax(0,3fr)_minmax(20rem,2fr)] lg:gap-10 lg:px-14 lg:pb-24 lg:pt-20 xl:px-16">
+      <div className="relative z-10 grid items-center gap-8 overflow-hidden px-5 py-9 sm:gap-10 sm:px-8 sm:py-14 lg:grid-cols-[minmax(0,1.06fr)_minmax(20rem,.94fr)] lg:gap-12 lg:px-14 lg:py-20 xl:px-16">
         
         {/* Left Side: Prominent Text */}
         <div className="flex min-w-0 flex-col items-center text-center lg:items-start lg:text-left">
-          <span className="inline-block py-1.5 px-5 rounded-full bg-gradient-to-r from-amber-400/20 to-amber-500/10 text-amber-400 text-sm font-bold tracking-[0.2em] uppercase mb-6 border border-amber-400/20 shadow-[0_0_20px_rgba(251,191,36,0.1)]">
+          <span className="inline-block rounded-full border border-amber-400/20 bg-gradient-to-r from-amber-400/20 to-amber-500/10 px-4 py-1.5 text-xs font-bold uppercase tracking-[0.16em] text-amber-300 shadow-[0_0_20px_rgba(251,191,36,0.1)] sm:px-5 sm:text-sm sm:tracking-[0.2em]">
             Ansar English School
           </span>
-          <h1 id="home-hero-title" className="mb-6 max-w-3xl text-4xl font-extrabold leading-[1.08] tracking-tight text-white sm:text-5xl lg:mb-8 lg:text-[3.25rem] xl:text-6xl">
+          <h1 id="home-hero-title" className="mb-5 mt-5 max-w-3xl text-[clamp(2rem,8vw,3rem)] font-extrabold leading-[1.08] tracking-tight text-white sm:mb-6 sm:text-5xl lg:mb-8 lg:mt-6 lg:text-[3.25rem] xl:text-6xl">
             <span className="block text-balance">{displayTitle}</span>
             {titleLine2 && <span className="mt-2 block text-2xl font-bold leading-tight text-emerald-50/90 sm:text-3xl lg:text-4xl">{titleLine2}</span>}
           </h1>
-          <p className="text-lg sm:text-xl text-emerald-50/80 max-w-2xl font-light leading-relaxed mb-10">
+          <p className="mb-7 max-w-2xl text-base font-light leading-relaxed text-emerald-50/85 sm:mb-10 sm:text-xl">
             {subtitle || "Nurturing creative and value-driven citizens in a rapidly changing world."}
           </p>
 
-          <div className="flex flex-wrap items-center justify-center lg:justify-start gap-4">
-            <a href="https://www.p4panorama.com/360-virtual-tour/ansar-school/" target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-2 bg-amber-400 text-emerald-950 font-bold py-4 px-8 rounded-full hover:bg-amber-300 hover:scale-105 transition-all duration-300 shadow-[0_0_30px_rgba(251,191,36,0.2)]">
+          <div className="flex flex-wrap items-center justify-center gap-4 lg:justify-start">
+            <a href="https://www.p4panorama.com/360-virtual-tour/ansar-school/" target="_blank" rel="noopener noreferrer" className="inline-flex min-h-12 items-center gap-2 rounded-full bg-amber-400 px-6 py-3 text-sm font-bold text-emerald-950 shadow-[0_0_30px_rgba(251,191,36,0.2)] transition-all duration-300 hover:bg-amber-300 motion-safe:hover:scale-105 sm:px-8 sm:text-base">
               <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z"></path></svg>
               360° Virtual Tour
             </a>
@@ -38,7 +38,7 @@ export default function Hero({ imageUrl, imageSrcSet, imageAvifSrcSet, title, ti
 
         {/* Right Side: Contained Featured Graphic */}
         <div className="flex min-w-0 w-full justify-center lg:justify-end">
-          <div className="group relative flex aspect-[640/401] w-full max-w-[30rem] items-center justify-center rounded-[2rem] border border-white/25 bg-white/15 p-3 shadow-2xl backdrop-blur-xl sm:p-4">
+          <div className="group relative flex aspect-[640/401] w-full max-w-[30rem] items-center justify-center rounded-[1.5rem] border border-white/25 bg-white/15 p-2 shadow-2xl backdrop-blur-xl sm:rounded-[2rem] sm:p-4">
             <div className="absolute inset-0 rounded-[2rem] bg-gradient-to-br from-white/25 via-white/10 to-white/5 opacity-80" />
             <div className="absolute -inset-4 rounded-[2.25rem] bg-white/10 blur-2xl transition-opacity duration-700 group-hover:opacity-90" />
             <picture className="relative z-10 block w-full">
