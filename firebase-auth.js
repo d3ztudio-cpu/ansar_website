@@ -13,5 +13,9 @@ export const auth = initializeAuth(app, {
   persistence: browserLocalPersistence,
   popupRedirectResolver: browserPopupRedirectResolver
 });
-export const authPersistenceReady = Promise.resolve();
+// initializeAuth completes persistence and popup/redirect resolver setup
+// asynchronously. Do not allow a sign-in attempt until that initial state is
+// settled, otherwise Firebase can throw auth/argument-error before opening
+// Google's account chooser.
+export const authPersistenceReady = auth.authStateReady();
 export { getRedirectResult, GoogleAuthProvider, onAuthStateChanged, signInWithEmailAndPassword, signInWithPopup, signInWithRedirect, signOut };
