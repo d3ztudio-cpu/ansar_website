@@ -1232,11 +1232,13 @@ function AdminLogin({ onDenied }) {
     try {
       const services = await ensureAuthServices();
       await services.authPersistenceReady;
-      // Redirect OAuth is dependable on mobile browsers, where sign-in popups
-      // are commonly blocked or discarded when the browser resumes.
-      try { window.sessionStorage.setItem(ADMIN_GOOGLE_REDIRECT_KEY, '1'); } catch {}
-      await services.signInWithRedirect(services.auth, new services.GoogleAuthProvider());
-      return;
+      // A popup keeps the sign-in result in this page and avoids depending on
+      // storage surviving a cross-site Google redirect. This is the most
+      // reliable route on desktop browsers.
+      const credential = await services.signInWithPopup(
+        services.auth,
+        new services.GoogleAuthProvider()
+      );
       const email = credential?.user?.email;
       if (!isAuthorizedAdmin(email)) {
         // Not an admin: end the session immediately and show the popup.
@@ -1246,9 +1248,24 @@ function AdminLogin({ onDenied }) {
       // Authorized admins need no extra step — onAuthStateChanged flips the
       // view to the dashboard the moment the session is established.
     } catch (err) {
-      try { window.sessionStorage.removeItem(ADMIN_GOOGLE_REDIRECT_KEY); } catch {}
-      console.error('Google sign-in failed:', err);
-      setError(describeAuthError(err));
+      // Some mobile/in-app browsers block all popups. Redirect is retained
+      // only for that case, and its completion is handled on app startup.
+      if (err?.code === 'auth/popup-blocked') {
+        try {
+          window.sessionStorage.setItem(ADMIN_GOOGLE_REDIRECT_KEY, '1');
+          const services = await ensureAuthServices();
+          await services.signInWithRedirect(services.auth, new services.GoogleAuthProvider());
+          return;
+        } catch (redirectError) {
+          try { window.sessionStorage.removeItem(ADMIN_GOOGLE_REDIRECT_KEY); } catch {}
+          console.error('Google redirect sign-in failed:', redirectError);
+          setError(describeAuthError(redirectError));
+        }
+      } else {
+        try { window.sessionStorage.removeItem(ADMIN_GOOGLE_REDIRECT_KEY); } catch {}
+        console.error('Google sign-in failed:', err);
+        setError(describeAuthError(err));
+      }
     }
     setLoading(false);
   };
