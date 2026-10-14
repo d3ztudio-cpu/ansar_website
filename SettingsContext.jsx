@@ -80,31 +80,53 @@ export const SettingsProvider = ({ children }) => {
     _isLoaded: false
   });
 
+  // Hydrate from Firestore once the connection is ready, but never block the
+  // initial render on it. Defaults are already present in state, so the homepage
+  // can paint immediately even on a slow/flaky mobile session or before the first
+  // snapshot arrives.
   useEffect(() => {
-    const unsubscribe = onSnapshot(doc(db, 'settings', 'global'), (docSnap) => {
-      if (docSnap.exists()) {
-        const savedSettings = docSnap.data();
-        setSettings(prev => ({
-          ...prev,
-          ...savedSettings,
-          feeStructureTitle: savedSettings.feeStructureTitle || prev.feeStructureTitle,
-          feeStructurePdfUrl: savedSettings.feeStructurePdfUrl || prev.feeStructurePdfUrl,
-          sportsPageTitle: savedSettings.sportsPageTitle || prev.sportsPageTitle,
-          sportsPageDescription: savedSettings.sportsPageDescription || prev.sportsPageDescription,
-          sportsItems: mergeListWithDefaults(savedSettings.sportsItems, DEFAULT_SPORTS_PAGE.items),
-          academicSections: mergeListWithDefaults(savedSettings.academicSections, DEFAULT_ACADEMIC_SECTIONS),
-          academicsPage: {
-            ...DEFAULT_ACADEMICS_PAGE,
-            ...(savedSettings.academicsPage || {}),
-            beyondItems: mergeListWithDefaults(savedSettings.academicsPage?.beyondItems, DEFAULT_ACADEMICS_PAGE.beyondItems)
-          },
-          _isLoaded: true
-        }));
-      } else {
-        setSettings(prev => ({ ...prev, _isLoaded: true }));
+    let cancelled = false;
+
+    const unsubscribe = onSnapshot(
+      doc(db, 'settings', 'global'),
+      (docSnap) => {
+        if (cancelled) return;
+        if (docSnap.exists()) {
+          const saved = docSnap.data();
+          setSettings((prev) => ({
+            ...prev,
+            ...saved,
+            feeStructureTitle: saved.feeStructureTitle || prev.feeStructureTitle,
+            feeStructurePdfUrl: saved.feeStructurePdfUrl || prev.feeStructurePdfUrl,
+            sportsPageTitle: saved.sportsPageTitle || prev.sportsPageTitle,
+            sportsPageDescription: saved.sportsPageDescription || prev.sportsPageDescription,
+            sportsItems: mergeListWithDefaults(saved.sportsItems, DEFAULT_SPORTS_PAGE.items),
+            academicSections: mergeListWithDefaults(saved.academicSections, DEFAULT_ACADEMIC_SECTIONS),
+            academicsPage: {
+              ...DEFAULT_ACADEMICS_PAGE,
+              ...(saved.academicsPage || {}),
+              beyondItems: mergeListWithDefaults(saved.academicsPage?.beyondItems, DEFAULT_ACADEMICS_PAGE.beyondItems),
+            },
+            _isLoaded: true,
+          }));
+        } else {
+          setSettings((prev) => ({ ...prev, _isLoaded: true }));
+        }
+      },
+      // Firestore errors must never keep the homepage blank. The UI keeps the
+      // last known/default settings and continues to render normally.
+      (error) => {
+        console.warn('Settings snapshot failed; continuing with cached defaults.', error);
+        if (!cancelled) {
+          setSettings((prev) => ({ ...prev, _isLoaded: true }));
+        }
       }
-    });
-    return () => unsubscribe();
+    );
+
+    return () => {
+      cancelled = true;
+      unsubscribe();
+    };
   }, []);
 
   return (

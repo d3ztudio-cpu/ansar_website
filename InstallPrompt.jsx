@@ -1,5 +1,4 @@
 import React, { useEffect, useState } from 'react';
-import { AnimatePresence, motion } from 'framer-motion';
 
 const INSTALL_PROMPT_DISMISSED_KEY = 'ansar-install-prompt-dismissed-at';
 const INSTALL_PROMPT_DELAY_MS = 20000;
@@ -71,14 +70,9 @@ export default function InstallPrompt() {
   };
 
   return (
-    <AnimatePresence>
-      {showPrompt && (
-        <motion.div
-          initial={{ opacity: 0, y: 24 }}
-          animate={{ opacity: 1, y: 0 }}
-          exit={{ opacity: 0, y: 24 }}
-          transition={{ duration: 0.25, ease: 'easeOut' }}
-          className="fixed inset-x-4 bottom-4 z-[9998] mx-auto max-w-md overflow-hidden rounded-2xl border border-white/70 bg-white shadow-2xl shadow-emerald-950/20 ring-1 ring-black/5"
+    showPrompt && (
+        <div
+          className="fixed inset-x-4 bottom-4 z-[9998] mx-auto max-w-md overflow-hidden rounded-2xl border border-white/70 bg-white shadow-2xl shadow-emerald-950/20 ring-1 ring-black/5 motion-safe:animate-[flow-rise_250ms_ease-out]"
           role="dialog"
           aria-label="Install Ansar English School website"
         >
@@ -108,8 +102,7 @@ export default function InstallPrompt() {
               Add Now
             </button>
           </div>
-        </motion.div>
-      )}
-    </AnimatePresence>
+        </div>
+      )
   );
 }

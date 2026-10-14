@@ -172,12 +172,12 @@ function AnsarTimeline() {
         </div>
       </div>
 
-      <div className="relative space-y-6 lg:hidden">
-        <div className="absolute bottom-4 left-4 top-4 w-1 rounded-full bg-slate-800" />
+      <div className="relative space-y-5 lg:hidden">
+        <div className="absolute left-4 top-0 bottom-0 w-0.5 bg-slate-800" aria-hidden="true" />
         {ANSAR_MILESTONES.map((milestone) => (
-          <div key={`${milestone.year}-${milestone.title}-mobile`} className="relative flex gap-5 pl-0.5">
-            <span className={`relative z-10 mt-2 h-8 w-8 flex-none rounded-full ${milestone.color} ring-8 ${milestone.ring} shadow-md`} />
-            <div className="min-w-0 rounded-xl border border-slate-100 bg-slate-50 p-4">
+          <div key={`${milestone.year}-${milestone.title}-mobile`} className="relative flex gap-4 pl-5">
+            <span className={`relative z-10 mt-1 h-7 w-7 flex-none rounded-full ${milestone.color} ring-4 ${milestone.ring} shadow-sm`} />
+            <div className="min-w-0 rounded-xl border border-slate-100 bg-slate-50 p-3 sm:p-4">
               <p className="text-2xl font-black text-slate-950">{milestone.year}</p>
               <h3 className="mt-1 text-base font-extrabold text-slate-700">{milestone.title}</h3>
             </div>

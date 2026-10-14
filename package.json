@@ -14,6 +14,7 @@
     "autoprefixer": "^10.5.0",
     "firebase": "^12.14.0",
     "firebase-tools": "^15.20.0",
+    "playwright": "^1.64.0",
     "png-to-ico": "^3.0.2",
     "postcss": "^8.5.15",
     "puppeteer-core": "^25.11.0",

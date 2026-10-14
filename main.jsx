@@ -14,25 +14,27 @@ class AppErrorBoundary extends React.Component {
   }
 
   componentDidCatch(error) {
-    console.error('Application render failed:', error);
-    // A mobile browser can briefly restore an old module while a newer
-    // service worker is taking control. Retry the render once, but never
-    // replace the page with an empty root while recovery is in progress.
+    // Log the error for debugging without exposing credentials or user data.
+    console.error('Application render error:', error?.constructor?.name || 'error', error?.message || '');
+    // A phone can briefly combine an old cached module with the newest entry
+    // during a normal refresh. Retry React once, but never clear the root
+    // while doing so.
     if (this.state.retry === 0) {
       window.setTimeout(() => this.setState({ hasError: false, retry: 1 }), 0);
-      return;
     }
-    reloadForStaleAsset();
   }
 
   render() {
     if (this.state.hasError) {
+      // React replaces the static startup markup in #root. Returning null here
+      // therefore creates a true white screen. Keep a visible, accessible
+      // recovery view if the retry cannot restore the page.
       return (
         <main style={{ minHeight: '100vh', display: 'grid', placeItems: 'center', padding: 24, boxSizing: 'border-box', background: '#f8fafc', color: '#0f172a', fontFamily: 'ui-sans-serif, system-ui, sans-serif', textAlign: 'center' }}>
           <section style={{ maxWidth: 360 }}>
             <p style={{ margin: 0, color: '#047857', fontWeight: 800, fontSize: 14, letterSpacing: '.08em', textTransform: 'uppercase' }}>Ansar English School</p>
-            <h1 style={{ margin: '14px 0 0', fontSize: 24 }}>Updating the website</h1>
-            <p style={{ margin: '12px 0 0', color: '#475569', lineHeight: 1.5 }}>The latest page is taking longer than expected to load. Please refresh once to continue.</p>
+            <h1 style={{ margin: '14px 0 0', fontSize: 24 }}>We are restoring this page</h1>
+            <p style={{ margin: '12px 0 0', color: '#475569', lineHeight: 1.5 }}>Please refresh once to continue.</p>
             <button type="button" onClick={() => window.location.reload()} style={{ marginTop: 22, border: 0, borderRadius: 12, padding: '12px 18px', background: '#047857', color: '#fff', fontWeight: 700, fontSize: 16 }}>Refresh website</button>
           </section>
         </main>
@@ -125,7 +127,6 @@ if ('serviceWorker' in navigator) {
 window.addEventListener('load', checkForAppUpdate);
 window.setInterval(checkForAppUpdate, 5 * 60 * 1000);
 
-// This mounts the React application into the <div id="root"></div> in your index.html
 const rootElement = document.getElementById('root');
 ReactDOM.createRoot(rootElement).render(
   <React.StrictMode>

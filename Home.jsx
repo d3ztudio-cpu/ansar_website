@@ -5,7 +5,6 @@ import NewsCard from './NewsCard';
 import AchievementsTicker from './AchievementsTicker';
 import { useSettings } from './SettingsContext';
 import { useContentCollection } from './useContentCollection';
-import { motion, AnimatePresence } from 'framer-motion';
 import { Link } from 'react-router-dom';
 import { compareByUploadOrder, compareContentNewestFirst, getDisplayYear, isYearOnly } from './dateUtils';
 import EventCountdown from './EventCountdown';
@@ -87,20 +86,16 @@ function VerticalCarousel({ images, onImageClick }) {
 
   return (
     <div className="relative w-full h-full bg-slate-900 group">
-      <AnimatePresence initial={false}>
-        <motion.img
+      <div className="absolute inset-0 motion-safe:animate-[flow-fade_420ms_ease-out]">
+        <img
           key={index}
           src={validImages[index]}
-          initial={{ opacity: 0, y: 50 }}
-          animate={{ opacity: 1, y: 0 }}
-          exit={{ opacity: 0, y: -50 }}
-          transition={{ duration: 0.55, ease: "easeOut" }}
           className="absolute inset-0 w-full h-full object-cover cursor-pointer opacity-80 group-hover:opacity-100 transition-opacity motion-reduce:transition-none"
           loading="lazy"
           decoding="async"
           onClick={() => onImageClick(validImages[index])}
         />
-      </AnimatePresence>
+      </div>
       {validImages.length > 1 && (
         <div className="absolute right-4 top-1/2 -translate-y-1/2 flex flex-col gap-2 z-10">
           {validImages.map((_, i) => (
@@ -121,19 +116,17 @@ function VisionMissionLoop({ vision, mission }) {
   const panelClassName = "absolute inset-0 flex flex-col justify-center";
   return (
     <div className="relative w-full h-[22rem] sm:h-64 overflow-hidden">
-      <AnimatePresence mode="wait">
-        {showVision ? (
-          <motion.div key="vision" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -20 }} className={panelClassName}>
+      {showVision ? (
+          <div className={`${panelClassName} motion-safe:animate-[flow-fade_350ms_ease-out]`}>
             <h3 className="text-2xl sm:text-3xl font-extrabold mb-4">Our Vision</h3>
             <p className="text-emerald-50/80 text-base sm:text-xl leading-relaxed font-light border-l-4 border-amber-400 pl-4 sm:pl-6 whitespace-pre-wrap">{vision}</p>
-          </motion.div>
+          </div>
         ) : (
-          <motion.div key="mission" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -20 }} className={panelClassName}>
+          <div className={`${panelClassName} motion-safe:animate-[flow-fade_350ms_ease-out]`}>
             <h3 className="text-2xl sm:text-3xl font-extrabold mb-4">Our Mission</h3>
             <p className="text-emerald-50/80 text-base sm:text-lg leading-relaxed font-light border-l-4 border-amber-400 pl-4 sm:pl-6 whitespace-pre-wrap">{mission}</p>
-          </motion.div>
+          </div>
         )}
-      </AnimatePresence>
     </div>
   );
 }
@@ -141,11 +134,7 @@ function VisionMissionLoop({ vision, mission }) {
 function LeadershipProfile({ profile, reverse = false }) {
   const imageUrl = profile.imageUrl || '';
   return (
-    <motion.article
-      initial={{ opacity: 0, y: 36 }}
-      whileInView={{ opacity: 1, y: 0 }}
-      viewport={{ once: true, amount: 0.25 }}
-      transition={{ duration: 0.65, ease: "easeOut" }}
+    <article
       className={`grid overflow-hidden rounded-[1.5rem] border border-emerald-100 bg-white shadow-xl sm:rounded-[2rem] lg:grid-cols-[19rem_minmax(0,1fr)] ${reverse ? 'lg:grid-cols-[minmax(0,1fr)_19rem]' : ''}`}
     >
       <div className={`relative aspect-[4/3] overflow-hidden bg-slate-100 sm:aspect-[16/10] lg:aspect-auto ${reverse ? 'lg:order-2' : ''}`}>
@@ -174,7 +163,7 @@ function LeadershipProfile({ profile, reverse = false }) {
           <p className="mt-6 text-base leading-relaxed text-slate-500">A message from this office will be updated soon.</p>
         )}
       </div>
-    </motion.article>
+    </article>
   );
 }
 
@@ -187,11 +176,7 @@ function JuniorPrincipalTile({ leader, index }) {
   };
 
   return (
-    <motion.article
-      initial={{ opacity: 0, y: 24 }}
-      whileInView={{ opacity: 1, y: 0 }}
-      viewport={{ once: true, amount: 0.3 }}
-      transition={{ duration: 0.5, delay: Math.min(index * 0.08, 0.32) }}
+    <article
       className="group h-full overflow-hidden border border-emerald-100 bg-white shadow-lg shadow-slate-900/10 transition-all duration-300 motion-safe:hover:-translate-y-1 hover:shadow-2xl"
       style={frameShape}
     >
@@ -212,7 +197,7 @@ function JuniorPrincipalTile({ leader, index }) {
           {section && <p className="mt-2 text-sm font-bold text-slate-600">{section}</p>}
         </div>
       </div>
-    </motion.article>
+    </article>
   );
 }
 
@@ -522,13 +507,9 @@ export default function Home() {
         </div>
       </AnimatedSection>
 
-      <AnimatePresence>
-        {lightboxImage && (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            className="fixed inset-0 z-[9999] bg-black/95 flex flex-col items-center justify-center p-4 sm:p-8"
+      {lightboxImage && (
+          <div
+            className="fixed inset-0 z-[9999] flex flex-col items-center justify-center bg-black/95 p-4 motion-safe:animate-[flow-fade_220ms_ease-out] sm:p-8"
             onClick={() => setLightboxImage(null)}
           >
             <button 
@@ -537,19 +518,14 @@ export default function Home() {
             >
               <svg className="w-6 h-6 sm:w-8 sm:h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12"></path></svg>
             </button>
-            <motion.img 
-              initial={{ scale: 0.9, opacity: 0 }}
-              animate={{ scale: 1, opacity: 1 }}
-              exit={{ scale: 0.9, opacity: 0 }}
-              transition={{ type: "spring", damping: 25, stiffness: 300 }}
+            <img
               src={lightboxImage}
               alt="Fullscreen View"
               className="max-w-full max-h-[85vh] object-contain rounded-lg shadow-2xl"
               onClick={(e) => e.stopPropagation()}
             />
-          </motion.div>
+          </div>
         )}
-      </AnimatePresence>
     </Layout>
   );
 }

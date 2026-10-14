@@ -1,7 +1,16 @@
 import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
 
-const buildId = new Date().toISOString();
+import { readFileSync, writeFileSync } from 'fs';
+import { join } from 'path';
+
+const versionFile = join(process.cwd(), 'dist', 'version.json');
+let buildId;
+try {
+  buildId = JSON.parse(readFileSync(versionFile, 'utf8')).buildId || new Date().toISOString();
+} catch {
+  buildId = new Date().toISOString();
+}
 
 // https://vitejs.dev/config/
 export default defineConfig({
@@ -13,6 +22,11 @@ export default defineConfig({
     {
       name: 'app-version-file',
       generateBundle() {
+        // Write version.json to disk so the build-id heuristic in main.jsx can
+        // read it back during development. The emitted copy goes to dist/.
+        try {
+          writeFileSync(versionFile, JSON.stringify({ buildId }));
+        } catch {}
         this.emitFile({
           type: 'asset',
           fileName: 'version.json',
@@ -30,10 +44,6 @@ export default defineConfig({
           // by the private admin/quiz paths and is intentionally left out of
           // this initial public chunk.
           firebase: ['firebase/app', 'firebase/firestore'],
-          // Animation library is shared by several lazy routes; keeping it in
-          // its own immutable chunk lets repeat visits reuse it from cache
-          // without re-downloading it alongside route code.
-          motion: ['framer-motion']
         }
       }
     }

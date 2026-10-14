@@ -1,5 +1,4 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { AnimatePresence, motion } from 'framer-motion';
 
 const IST_OFFSET = '+05:30';
 const UNITS = [['days', 'Days'], ['hours', 'Hours'], ['minutes', 'Minutes'], ['seconds', 'Seconds']];
@@ -49,11 +48,8 @@ function CountdownCard({ event, onExpire }) {
   const announcement = `${remaining.days} days, ${remaining.hours} hours, ${remaining.minutes} minutes and ${remaining.seconds} seconds remaining`;
 
   return (
-    <AnimatePresence>
-      {remaining.total > 0 && (
-        <motion.article
-          initial={{ opacity: 0, y: 28, scale: 0.98 }} animate={{ opacity: 1, y: 0, scale: 1 }}
-          exit={{ opacity: 0, height: 0, scale: 0.96 }} transition={{ duration: 0.55, ease: 'easeOut' }}
+    remaining.total > 0 && (
+        <article
           className="relative overflow-hidden rounded-[2rem] bg-gradient-to-br from-emerald-950 via-emerald-900 to-teal-800 px-5 py-8 text-white shadow-2xl sm:px-10"
           aria-label={`Countdown to ${event.title}`}
         >
@@ -67,17 +63,16 @@ function CountdownCard({ event, onExpire }) {
             <div className="mx-auto mt-7 grid max-w-3xl grid-cols-4 gap-2 sm:gap-4">
               {UNITS.map(([key, label]) => (
                 <div key={key} className="rounded-2xl border border-white/15 bg-white/10 px-1 py-4 shadow-inner backdrop-blur-sm sm:px-4 sm:py-5">
-                  <motion.strong key={remaining[key]} initial={{ opacity: 0, y: -8 }} animate={{ opacity: 1, y: 0 }} className="block tabular-nums text-2xl font-black tracking-tight sm:text-5xl">
+                  <strong className="block tabular-nums text-2xl font-black tracking-tight sm:text-5xl">
                     {String(remaining[key]).padStart(2, '0')}
-                  </motion.strong>
+                  </strong>
                   <span className="mt-1 block text-[0.6rem] font-bold uppercase tracking-wider text-emerald-100 sm:text-xs">{label}</span>
                 </div>
               ))}
             </div>
           </div>
-        </motion.article>
-      )}
-    </AnimatePresence>
+        </article>
+      )
   );
 }
 

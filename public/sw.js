@@ -1,16 +1,14 @@
 /* Ansar English School service worker.
- *
- * Strategies:
- *  - Navigations (HTML): network-first with cache fallback, so deploys appear
- *    immediately while offline visitors still get the last known page.
- *  - Hashed build assets (/assets/**): cache-first — they are immutable, so a
- *    cached copy is always correct and repeat visits load instantly.
- *  - Images (avif/webp/png/jpg/svg + popular image CDNs): cache-first with a
- *    capped LRU-ish trim, making repeat gallery/hero views dramatically faster.
- *  - Everything else: network only.
+
+Strategies:
+ * Navigations (HTML): network-first with cache fallback, so deploys appear
+   immediately while offline visitors still get the last known page.
+ * Hashed build assets (/assets/**): cache-first — they are immutable, so a
+   cached copy is always correct and repeat visits load instantly.
+ * Images (avif/webp/png/jpg/svg + popular image CDNs): cache-first with a
+   capped LRU-ish trim, making repeat gallery/hero views dramatically faster.
+ * Everything else: network only.
  */
-// Increment on each recovery deployment so clients immediately discard stale
-// HTML and asset caches from an earlier version.
 const VERSION = 'v13';
 const PAGE_CACHE = `pages-${VERSION}`;
 const ASSET_CACHE = `assets-${VERSION}`;
@@ -92,10 +90,15 @@ async function networkFirstPage(request) {
     if (response && response.ok) await cache.put(request, response.clone());
     return response;
   } catch (error) {
+    // Only serve a cached response for the exact navigation URL. Do not fall
+    // back to a generic /index.html cache entry, because that entry may
+    // reference JavaScript chunks from an older build that no longer exist.
+    // Serving such a stale shell would trap mobile visitors on a recovery
+    // screen while the missing chunks fail to load.
     const cached = await cache.match(request, { ignoreSearch: true });
     if (cached) return cached;
-    const fallback = await caches.match('/index.html');
-    if (fallback) return fallback;
+    // No suitable cached response exists. Let the request fail so the browser
+    // can show its own offline indicator rather than a broken app shell.
     throw error;
   }
 }
@@ -130,37 +133,10 @@ self.addEventListener('fetch', (event) => {
   if (isImageRequest(url) && (url.origin === self.location.origin || IMAGE_HOSTS.includes(url.hostname))) {
     event.respondWith(cacheFirst(request, IMAGE_CACHE));
   }
-});
+});// Push notifications are handled by a separate message-service worker so the
+// main service worker stays small and does not depend on the Firebase SDK.
+// If the site later adds a dedicated /message-sw.js, point the clients here.
 
-// Firebase Messaging must run inside the same service worker used by the site.
-// It receives FCM alerts even when no Ansar School page is currently open.
-try {
-  importScripts('https://www.gstatic.com/firebasejs/12.14.0/firebase-app-compat.js');
-  importScripts('https://www.gstatic.com/firebasejs/12.14.0/firebase-messaging-compat.js');
-  firebase.initializeApp({
-    apiKey: 'AIzaSyApBeUtd8i7VC6wpOSxjD1PPYjQEQBGQ4Y',
-    authDomain: 'ansar-english-school.firebaseapp.com',
-    projectId: 'ansar-english-school',
-    storageBucket: 'ansar-english-school.firebasestorage.app',
-    messagingSenderId: '729617648651',
-    appId: '1:729617648651:web:f5d90b86b9b387d86b0b0e'
-  });
-  const messaging = firebase.messaging();
-  messaging.onBackgroundMessage((payload) => {
-    const notification = payload.notification || {};
-    const data = payload.data || {};
-    return self.registration.showNotification(notification.title || 'Ansar English School', {
-      body: notification.body || 'There is a new school update.',
-      icon: notification.icon || '/icon-192.png',
-      badge: '/icon-192.png',
-      data: { url: payload.fcmOptions?.link || data.url || '/' }
-    });
-  });
-} catch (error) {
-  // Caching and offline support remain available if the Messaging SDK cannot
-  // be loaded, for example while a visitor is offline for the first install.
-  console.warn('Firebase Messaging service worker setup failed.', error);
-}
 
 self.addEventListener('notificationclick', (event) => {
   event.notification.close();

@@ -67,7 +67,7 @@ export default function AdminLayout({ children, user, onLogout, sproutsOnly = fa
       )}
 
       {/* Sidebar Navigation */}
-      <aside className={`fixed inset-y-0 left-0 z-50 flex w-72 flex-col bg-slate-900 text-white transform transition-transform duration-300 ease-in-out lg:static lg:translate-x-0 ${isSidebarOpen ? 'translate-x-0 shadow-2xl' : '-translate-x-full'}`}>
+      <aside className={`fixed inset-y-0 left-0 z-50 flex w-72 flex-col bg-slate-900 text-white transform transition-transform duration-300 ease-in-out lg:static lg:translate-x-0 ${isSidebarOpen ? 'translate-x-0 shadow-2xl' : '-translate-x-full'}`} style={{ width: 'min(85vw, 288px)' }}>
         <div className="h-20 flex items-center justify-between px-6 border-b border-slate-800">
           <h2 className="text-xl font-bold tracking-wide text-emerald-400">Admin Portal</h2>
           <button className="lg:hidden text-slate-400 hover:text-white" onClick={() => setSidebarOpen(false)}>

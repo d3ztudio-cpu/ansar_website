@@ -162,7 +162,10 @@ for (const [route, [title, description, h1, body]] of Object.entries(pages)) {
   const { head } = buildHead(route, title, description);
   const isHome = route === '/';
   const html = `<!doctype html><html lang="en-IN"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">${head}${bootSplashCss}</head><body><div id="root"><div id="boot-splash" aria-hidden="true"></div><main class="seo-static"><header><nav aria-label="Main navigation"><ul>${renderLinks(navLinks)}</ul></nav></header><article><h1>${esc(h1)}</h1><p>${esc(body)}</p>${isHome ? `<h2>CBSE facilities that support every school day</h2><ul>${renderLinks(facilityLinks)}</ul><h2>Explore school life</h2><ul>${renderLinks(sectionLinks)}</ul>` : ''}</article><nav aria-label="More pages"><ul>${renderLinks(isHome ? [...navLinks.slice(1), ...sectionLinks] : sectionLinks)}</ul></nav></main></div><script type="module" src="${entry}"></script></body></html>`;
-  const output = isHome ? path.join(dist, 'index.html') : path.join(dist, 'seo', `${route.slice(1)}.html`);
+  // Root "/" is the real SPA entry document produced by Vite; do NOT overwrite it with
+  // a crawl shell. Only route-specific SEO shells live under dist/seo/ so Firebase serves
+  // the real index.html for visitors and crawlers still get route-specific static HTML.
+  const output = path.join(dist, 'seo', `${route.slice(1)}.html`);
   await mkdir(path.dirname(output), { recursive: true });
   await writeFile(output, html);
 }
@@ -176,4 +179,4 @@ const sitemapEntries = Object.keys(pages).map((route) => {
 const sitemap = `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9" xmlns:image="http://www.google.com/schemas/sitemap-image/1.1">\n${sitemapEntries.join('\n')}\n</urlset>\n`;
 await writeFile(path.join(dist, 'sitemap.xml'), sitemap);
 
-console.log(`Prerendered ${Object.keys(pages).length} SEO shells and regenerated dist/sitemap.xml (lastmod ${today}).`);
+console.log(`Prerendered ${Object.keys(pages).length} SEO shells into dist/seo/ and regenerated dist/sitemap.xml (lastmod ${today}). Root dist/index.html left untouched.`);

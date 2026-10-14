@@ -23,6 +23,7 @@
   <meta name="DC.language" content="en-IN">
   <meta name="twitter:image:alt" content="Ansar English School logo">
   <meta name="theme-color" content="#047857">
+  <meta name="mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <style>
@@ -83,30 +84,6 @@
       heroPreload.setAttribute('fetchpriority', 'high');
       document.head.appendChild(heroPreload);
     }
-  </script>
-  <script>
-    // Failsafe for a stale mobile app shell. Refresh once in the background;
-    // do not expose a visitor-facing update/error page.
-    window.setTimeout(function () {
-      if (!document.documentElement.dataset.appReady) {
-        try {
-          var reloadKey = 'ansar:bootstrap-reload';
-          if (!window.sessionStorage.getItem(reloadKey)) {
-            window.sessionStorage.setItem(reloadKey, '1');
-            window.location.replace(window.location.href);
-            return;
-          }
-        } catch (error) {
-          window.location.replace(window.location.href);
-          return;
-        }
-      }
-      var bar = document.getElementById('boot-splash');
-      if (bar && !bar.classList.contains('is-hidden')) {
-        bar.classList.add('is-hidden');
-        window.setTimeout(function () { bar.remove(); }, 300);
-      }
-    }, 8000);
   </script>
   <meta property="og:type" content="website">
   <meta property="og:site_name" content="Ansar English School">
@@ -220,7 +197,7 @@
 </head>
 <body>
   <div id="boot-splash" aria-hidden="true"></div>
-  <div id="root"><div id="app-startup"><div><div class="startup-mark"></div><strong>Loading Ansar English School</strong><p>Please wait while the latest website update loads.</p></div></div></div>
+  <div id="root"><div id="app-startup"><div><strong>Ansar English School</strong><p>Loading…</p></div></div></div>
   <noscript>This website requires JavaScript to display Ansar English School content.</noscript>
   <script type="module" src="/main.jsx"></script>
 </body>

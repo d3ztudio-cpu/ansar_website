@@ -43,7 +43,7 @@ export default function FloatingSocials() {
 
   return (
     <>
-      <div className={`fixed bottom-4 right-4 z-40 flex flex-col items-end gap-2 transition-all duration-500 ease-in-out md:bottom-auto md:right-0 md:top-1/2 md:block md:-translate-y-1/2 md:translate-x-0 ${isScrolledPast ? 'md:pointer-events-none md:translate-x-full md:opacity-0' : 'opacity-100 md:translate-x-0'}`}>
+      <div className={`fixed bottom-6 right-4 z-40 flex flex-col items-end gap-2 transition-all duration-500 ease-in-out md:bottom-auto md:right-0 md:top-1/2 md:block md:-translate-y-1/2 md:translate-x-0 ${isScrolledPast ? 'md:pointer-events-none md:translate-x-full md:opacity-0' : 'opacity-100 md:translate-x-0'}`}>
         {/* Prevent inner rendering until settings are fully loaded to eliminate icon layout glitching & FOUC */}
         {settings?._isLoaded && (
           <div className={`floating-panel-container ${isMobileOpen ? 'grid' : 'hidden'} grid-cols-3 items-center justify-center gap-2 rounded-2xl border border-emerald-100 bg-white p-2 shadow-[0_10px_40px_-15px_rgba(0,0,0,0.3)] md:flex md:flex-col md:gap-3 md:rounded-l-2xl md:rounded-r-none md:border-r-0 md:p-3`}>
@@ -78,7 +78,7 @@ export default function FloatingSocials() {
         <button
           type="button"
           onClick={() => setIsMobileOpen(open => !open)}
-          className="flex h-12 w-12 items-center justify-center rounded-full border-2 border-white bg-emerald-800 text-white shadow-xl transition hover:bg-emerald-700 md:hidden"
+          className="flex h-11 w-11 items-center justify-center rounded-full border-2 border-white bg-emerald-800 text-white shadow-xl transition hover:bg-emerald-700 md:hidden"
           aria-label={isMobileOpen ? 'Close social links' : 'Open social links'}
           aria-expanded={isMobileOpen}
         >

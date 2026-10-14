@@ -7,7 +7,6 @@ import { useContentCollection } from './useContentCollection';
 import Layout from './Layout';
 import Home from './Home';
 import ContentPageLayout from './ContentPageLayout';
-import LearningLabsSection from './LearningLabsSection';
 import { SettingsProvider, useSettings } from './SettingsContext';
 import { DEFAULT_SPORTS_PAGE, mergeListWithDefaults } from './contentDefaults';
 import { compareByUploadOrder, compareContentNewestFirst, formatDisplayDate, getDisplayYear, isYearOnly } from './dateUtils';
@@ -17,6 +16,7 @@ import { LEARNING_FEATURES_DOCUMENT_CONTENT, resolveLearningFeatureImage } from 
 // Keep the first visit small: secondary pages and all admin modules are fetched only
 // when their route is opened instead of delaying the homepage on mobile networks.
 const About = lazy(() => import('./About'));
+const LearningLabsSection = lazy(() => import('./LearningLabsSection'));
 const Academics = lazy(() => import('./Academics'));
 const Admission = lazy(() => import('./Admission'));
 const News = lazy(() => import('./News'));
@@ -319,12 +319,34 @@ function SiteSeo() {
 
   useEffect(() => {
     const fallback = getSeoForPath(pathname);
-    // SEO values become public HTML metadata, so publish an admin save live.
+    // Make the initial metadata available immediately, before Firestore replies.
+    // This keeps the document head indexable and avoids a transient blank/missing
+    // title while the listener is connecting on slow networks.
+    applySeoMetadata({
+      ...fallback,
+      keywords: fallback.keywords || DEFAULT_SEO.keywords
+    }, pathname);
+
+    let cancelled = false;
     const seoRef = doc(db, 'seoPages', encodeURIComponent(pathname));
-    return onSnapshot(seoRef, (snapshot) => {
-      const saved = snapshot.exists() ? snapshot.data() : {};
-      applySeoMetadata({ ...fallback, ...saved, keywords: saved.keywords || fallback.keywords || DEFAULT_SEO.keywords }, pathname);
-    }, () => applySeoMetadata({ ...fallback, keywords: fallback.keywords || DEFAULT_SEO.keywords }, pathname));
+    const unsubscribe = onSnapshot(
+      seoRef,
+      (snapshot) => {
+        if (cancelled) return;
+        const saved = snapshot.exists() ? snapshot.data() : {};
+        applySeoMetadata(
+          { ...fallback, ...saved, keywords: saved.keywords || fallback.keywords || DEFAULT_SEO.keywords },
+          pathname
+        );
+      },
+      // Keep the page usable even if the saved SEO document cannot be read.
+      () => applySeoMetadata({ ...fallback, keywords: fallback.keywords || DEFAULT_SEO.keywords }, pathname)
+    );
+
+    return () => {
+      cancelled = true;
+      unsubscribe();
+    };
   }, [pathname]);
 
   return null;
@@ -1427,7 +1449,7 @@ function AdminDashboard() {
 
 export default function App() {
   const [user, setUser] = useState(null);
-  const [authLoading, setAuthLoading] = useState(true);
+  const [authLoading, setAuthLoading] = useState(false);
   const [isAdminRoute, setIsAdminRoute] = useState(() => window.location.pathname.startsWith('/admin'));
   const [deniedEmail, setDeniedEmail] = useState(null);
   const isSproutsAdmin = String(user?.email || '').toLowerCase() === SPROUTS_ADMIN_EMAIL;
@@ -1437,7 +1459,8 @@ export default function App() {
     setIsAdminRoute(previousIsAdminRoute => {
       if (previousIsAdminRoute === nextIsAdminRoute) return previousIsAdminRoute;
       if (nextIsAdminRoute) {
-        // Do not let a prior public route's null state decide the admin view.
+        // Entering /admin requires a fresh auth check, so briefly hold the admin
+        // shell on the auth spinner. Public routes never wait on auth.
         setAuthLoading(true);
       }
       return nextIsAdminRoute;
@@ -1452,57 +1475,71 @@ export default function App() {
   }, [authLoading]);
 
   useEffect(() => {
-    // Public routes do not use authentication. Avoid an Auth round trip and a
-    // user-document write during their critical rendering path; the listener
-    // starts whenever an administrator opens /admin. SPA navigation inside
+    // Public routes do not use authentication. Keep them responsive from the first
+    // paint and never wait on Firebase Auth during the critical rendering path. The
+    // listener starts only when an administrator opens /admin. SPA navigation inside
     // /admin does not change isAdminRoute, so the session listener persists.
     if (!isAdminRoute) {
-      setAuthLoading(false);
+      // For public pages, resolve auth immediately so the shell is fully interactive.
+      if (typeof window !== 'undefined') {
+        setUser(null);
+      }
       return undefined;
     }
 
     // Sync Firebase Auth only for the private administration application.
+    // Any failure resolves auth immediately so the admin UI never stays stuck on
+
+    // a spinner if Firebase Auth is misconfigured, the SDK chunk is missing, or the
+    // network is unavailable.
     let unsubscribe = () => {};
     let active = true;
-    ensureAuthServices().then((services) => {
-      // Finalize a Google redirect before reading the auth state. Without this
-      // call, the OAuth account chooser can return to /admin but leave the
-      // page looking signed out because the redirect credential was never
-      // consumed by the Firebase SDK.
-      return services.authPersistenceReady
-        .then(() => services.getRedirectResult(services.auth).catch((error) => {
-          console.warn('Google redirect result could not be completed:', error);
-          return null;
-        }))
-        .then(() => services);
-    }).then((services) => {
-      if (!active) return;
-      unsubscribe = services.onAuthStateChanged(services.auth, async (currentUser) => {
-      setUser(currentUser);
-      // Release the UI immediately — never wait on the Firestore write so a
-      // slow/failed write can never hang the admin panel on a spinner.
-      setAuthLoading(false);
-      if (currentUser) {
-        setDoc(doc(db, 'users', currentUser.uid), {
-          email: currentUser.email,
-          createdAt: currentUser.metadata.creationTime,
-          lastLogin: serverTimestamp()
-        }, { merge: true }).catch((error) => console.error("Error updating user tracking:", error));
-        // Complete a successful Google redirect on the dashboard.
-        try {
-          if (window.sessionStorage.getItem(ADMIN_GOOGLE_REDIRECT_KEY) && isAuthorizedAdmin(currentUser.email)) {
-            window.sessionStorage.removeItem(ADMIN_GOOGLE_REDIRECT_KEY);
-            if (window.location.pathname !== '/admin/dashboard') {
-              window.location.replace('/admin/dashboard');
-            }
+    ensureAuthServices()
+      .then((services) => {
+        // Finalize a Google redirect before reading the auth state. Without this
+        // call, the OAuth account chooser can return to /admin but leave the
+        // page looking signed out because the redirect credential was never
+
+        // consumed by the Firebase SDK.
+        return services.authPersistenceReady
+          .then(() => services.getRedirectResult(services.auth).catch((error) => {
+            console.warn('Google redirect result could not be completed:', error);
+            return null;
+          }))
+          .then(() => services);
+      })
+      .then((services) => {
+        if (!active) return;
+        unsubscribe = services.onAuthStateChanged(services.auth, async (currentUser) => {
+          setUser(currentUser);
+
+          // Release the UI immediately — never wait on the Firestore write so a
+          // slow/failed write can never hang the admin panel on a spinner.
+          setAuthLoading(false);
+          if (currentUser) {
+            setDoc(doc(db, 'users', currentUser.uid), {
+              email: currentUser.email,
+              createdAt: currentUser.metadata.creationTime,
+              lastLogin: serverTimestamp(),
+            }, { merge: true }).catch((error) => console.error('Error updating user tracking:', error));
+
+            // Complete a successful Google redirect on the dashboard.
+            try {
+              if (window.sessionStorage.getItem(ADMIN_GOOGLE_REDIRECT_KEY) && isAuthorizedAdmin(currentUser.email)) {
+                window.sessionStorage.removeItem(ADMIN_GOOGLE_REDIRECT_KEY);
+                if (window.location.pathname !== '/admin/dashboard') {
+                  window.location.replace('/admin/dashboard');
+                }
+              }
+            } catch {}
           }
-        } catch {}
-      }
+        });
+      })
+      .catch((error) => {
+        console.error('Firebase Auth failed to initialize:', error);
+        if (active) setAuthLoading(false);
       });
-    }).catch((error) => {
-      console.error('Firebase Auth failed to initialize:', error);
-      if (active) setAuthLoading(false);
-    });
+
     return () => { active = false; unsubscribe(); };
   }, [isAdminRoute]);
 

@@ -5,8 +5,8 @@ import { db } from './firebase-init';
 import { registerForSchoolPushNotifications } from './pushNotifications';
 
 // Starts Firestore subscriptions only once the page has settled (idle) so the
-// bell's four listeners never compete with the page's own content for the
-// network and main thread during first paint.
+// bell's listeners never compete with the page's own content for the network
+// and main thread during first paint.
 function useIdleReady(fallbackDelay = 3500) {
   const [ready, setReady] = useState(false);
 
@@ -52,6 +52,52 @@ function relativeTime(millis) {
 }
 
 const LAST_SEEN_KEY = 'ansar:lastSeenNotification';
+
+// The bell subscribes to four collections; see the subscription effect.
+const SUBSCRIBED_COLLECTIONS = 4;
+
+/**
+ * Show one local "new content" alert without ever throwing out of React.
+ *
+ * Android Chrome does not support the Notification *constructor*: any
+ * `new Notification(...)` call there throws "Illegal constructor". Because
+ * this runs inside an effect, an uncaught throw unmounts the whole app and
+ * strands mobile visitors on the recovery screen. Desktop keeps the original
+ * page-notification path; Android falls back to the service worker, which
+ * already owns push alerts and notification clicks on that platform.
+ */
+async function showSiteUpdateAlert(item) {
+  const options = {
+    body: `New ${item.type}: ${item.title}`,
+    icon: '/icon-192.png',
+    tag: `ansar-${item.type}-${item.id}`,
+    // notificationclick in the service worker navigates to this URL.
+    data: { url: item.href }
+  };
+
+  if ('serviceWorker' in navigator) {
+    try {
+      const registration = await navigator.serviceWorker.getRegistration();
+      if (registration?.active) {
+        await registration.showNotification('Ansar English School', options);
+        return;
+      }
+    } catch (error) {
+      // Fall through to the page constructor below.
+    }
+  }
+
+  try {
+    const alert = new Notification('Ansar English School', options);
+    alert.onclick = () => {
+      window.focus();
+      window.location.assign(options.data.url);
+    };
+  } catch (error) {
+    // A non-constructible Notification implementation must never break the page.
+    console.warn('Local site update alert could not be displayed:', error);
+  }
+}
 const PROMPT_DISMISSED_UNTIL_KEY = 'ansar:notificationPromptDismissedUntil';
 
 export default function NotificationsBell() {
@@ -73,6 +119,10 @@ export default function NotificationsBell() {
   const [ansarTimesEditions, setAnsarTimesEditions] = useState([]);
   const [showPermissionPrompt, setShowPermissionPrompt] = useState(false);
   const knownNotificationKeys = useRef(null);
+  // Counts how many of the four subscriptions have delivered at least one
+  // snapshot (empty ones count too). Until this reaches all collections the
+  // key set is not a valid baseline.
+  const snapshotDeliveriesRef = useRef(0);
   const idleReady = useIdleReady();
 
   useEffect(() => {
@@ -97,18 +147,22 @@ export default function NotificationsBell() {
     const ansarTimesQuery = collection(db, 'ansarTimes');
 
     const unsubscribeUpdates = onSnapshot(updatesQuery, (snapshot) => {
+      snapshotDeliveriesRef.current += 1;
       setUpdates(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })));
     }, (error) => console.error('Unable to load notifications:', error));
 
     const unsubscribeAchievements = onSnapshot(achievementsQuery, (snapshot) => {
+      snapshotDeliveriesRef.current += 1;
       setAchievements(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })));
     }, (error) => console.error('Unable to load achievement notifications:', error));
 
     const unsubscribeMagazines = onSnapshot(magazinesQuery, (snapshot) => {
+      snapshotDeliveriesRef.current += 1;
       setMagazines(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })));
     }, (error) => console.error('Unable to load magazine notifications:', error));
 
     const unsubscribeAnsarTimes = onSnapshot(ansarTimesQuery, (snapshot) => {
+      snapshotDeliveriesRef.current += 1;
       setAnsarTimesEditions(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })));
     }, (error) => console.error('Unable to load Ansar Times notifications:', error));
 
@@ -218,9 +272,18 @@ export default function NotificationsBell() {
   };
 
   useEffect(() => {
+    // The baseline must come from the first *delivered Firestore data*, never
+    // from the mount-time render. The subscription effect attaches after the
+    // page is idle, so React runs this effect once while every collection is
+    // still empty; treating that empty list as history would flag every
+    // existing item as new on every single visit — and on Android Chrome the
+    // resulting `new Notification(...)` calls throw and crash the whole app
+    // into the persistent recovery loop. Wait until all four subscriptions
+    // have delivered before recording history.
+    if (snapshotDeliveriesRef.current < SUBSCRIBED_COLLECTIONS) return;
+
     const currentKeys = new Set(notifications.map(item => `${item.type}-${item.id}`));
     if (knownNotificationKeys.current === null) {
-      // The first Firestore snapshot is existing history, not a new alert.
       knownNotificationKeys.current = currentKeys;
       return;
     }
@@ -229,16 +292,11 @@ export default function NotificationsBell() {
     knownNotificationKeys.current = currentKeys;
     if (permission !== 'granted' || typeof Notification === 'undefined') return;
 
+    // Alert delivery is fully isolated so a browser-side failure (e.g. an
+    // Android-like "Illegal constructor" implementation) can never unmount
+    // the page.
     newItems.slice(0, 3).forEach((item) => {
-      const alert = new Notification('Ansar English School', {
-        body: `New ${item.type}: ${item.title}`,
-        icon: '/icon-192.png',
-        tag: `ansar-${item.type}-${item.id}`
-      });
-      alert.onclick = () => {
-        window.focus();
-        window.location.assign(item.href);
-      };
+      showSiteUpdateAlert(item);
     });
   }, [notifications, permission]);
 
@@ -257,7 +315,7 @@ export default function NotificationsBell() {
       <button
         type="button"
         onClick={toggleOpen}
-        className="relative flex h-10 w-10 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-700 shadow-sm transition-colors hover:bg-emerald-50 hover:text-emerald-700"
+        className="relative flex h-10 w-10 items-center justify-center rounded-full border border-emerald-200 bg-white text-emerald-700 shadow-sm transition-colors hover:bg-emerald-50 hover:text-emerald-700"
         aria-label="Open notifications"
       >
         <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -267,8 +325,8 @@ export default function NotificationsBell() {
       </button>
 
       {isOpen && (
-        <div className="absolute right-0 z-50 mt-3 w-80 max-w-[calc(100vw-2rem)] overflow-hidden rounded-2xl border border-slate-100 bg-white shadow-2xl ring-1 ring-black/5">
-          <div className="flex items-center justify-between border-b border-slate-100 px-4 py-3">
+        <div className="absolute right-0 z-50 mt-3 w-80 max-w-[calc(100vw-2rem)] overflow-hidden rounded-2xl border border-emerald-100 bg-white shadow-2xl ring-1 ring-black/5">
+          <div className="flex items-center justify-between border-b border-emerald-100 px-4 py-3">
             <h3 className="text-sm font-extrabold text-slate-900">Notifications</h3>
             <span className="rounded-full bg-emerald-50 px-2 py-1 text-xs font-bold text-emerald-700">{notifications.length}</span>
           </div>
@@ -287,10 +345,10 @@ export default function NotificationsBell() {
                   markSeen();
                   setIsOpen(false);
                 }}
-                className="block border-b border-slate-50 px-4 py-3 transition-colors hover:bg-emerald-50"
+                className="block border-b border-emerald-100 px-4 py-3 transition-colors hover:bg-emerald-50"
               >
                 <div className="flex items-center justify-between gap-3">
-                  <span className="rounded-full bg-slate-100 px-2 py-0.5 text-[10px] font-extrabold uppercase tracking-wide text-slate-600">{item.type}</span>
+                  <span className="rounded-full bg-emerald-100 px-2 py-0.5 text-[10px] font-extrabold uppercase tracking-wide text-emerald-700">{item.type}</span>
                   <span className="text-xs font-semibold text-slate-400">{relativeTime(item.millis)}</span>
                 </div>
                 <p className="mt-2 line-clamp-2 text-sm font-bold leading-snug text-slate-800">{item.title}</p>
@@ -304,3 +362,4 @@ export default function NotificationsBell() {
     </div>
   );
 }
+

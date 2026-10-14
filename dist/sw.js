@@ -90,10 +90,15 @@ async function networkFirstPage(request) {
     if (response && response.ok) await cache.put(request, response.clone());
     return response;
   } catch (error) {
+    // Only serve a cached response for the exact navigation URL. Do not fall
+    // back to a generic /index.html cache entry, because that entry may
+    // reference JavaScript chunks from an older build that no longer exist.
+    // Serving such a stale shell would trap mobile visitors on a recovery
+    // screen while the missing chunks fail to load.
     const cached = await cache.match(request, { ignoreSearch: true });
     if (cached) return cached;
-    const fallback = await caches.match('/index.html');
-    if (fallback) return fallback;
+    // No suitable cached response exists. Let the request fail so the browser
+    // can show its own offline indicator rather than a broken app shell.
     throw error;
   }
 }
