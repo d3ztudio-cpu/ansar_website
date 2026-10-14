@@ -72,34 +72,6 @@
     document.documentElement.classList.add('js');
   </script>
   <script>
-    // Emergency one-time repair for phones that retained an older worker
-    // cache from previous deployments. It happens silently before the app
-    // starts, then normal background updating resumes with the fresh build.
-    (function () {
-      var isMobile = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent || '');
-      var resetKey = 'ansar:mobile-cache-reset-v2';
-      if (!isMobile || !('serviceWorker' in navigator)) return;
-      try {
-        if (sessionStorage.getItem(resetKey)) return;
-        sessionStorage.setItem(resetKey, '1');
-      } catch (error) {
-        return;
-      }
-      Promise.all([
-        navigator.serviceWorker.getRegistrations().then(function (registrations) {
-          return Promise.all(registrations.map(function (registration) { return registration.unregister(); }));
-        }),
-        ('caches' in window) ? caches.keys().then(function (keys) {
-          return Promise.all(keys.filter(function (key) {
-            return /^(pages|assets|images)-/.test(key);
-          }).map(function (key) { return caches.delete(key); }));
-        }) : Promise.resolve()
-      ]).finally(function () {
-        window.location.replace(window.location.href);
-      });
-    }());
-  </script>
-  <script>
     if (window.location.pathname === '/') {
       const heroPreload = document.createElement('link');
       heroPreload.rel = 'preload';
