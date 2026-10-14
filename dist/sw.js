@@ -1,16 +1,14 @@
 /* Ansar English School service worker.
- *
- * Strategies:
- *  - Navigations (HTML): network-first with cache fallback, so deploys appear
- *    immediately while offline visitors still get the last known page.
- *  - Hashed build assets (/assets/**): cache-first — they are immutable, so a
- *    cached copy is always correct and repeat visits load instantly.
- *  - Images (avif/webp/png/jpg/svg + popular image CDNs): cache-first with a
- *    capped LRU-ish trim, making repeat gallery/hero views dramatically faster.
- *  - Everything else: network only.
+
+Strategies:
+ * Navigations (HTML): network-first with cache fallback, so deploys appear
+   immediately while offline visitors still get the last known page.
+ * Hashed build assets (/assets/**): cache-first — they are immutable, so a
+   cached copy is always correct and repeat visits load instantly.
+ * Images (avif/webp/png/jpg/svg + popular image CDNs): cache-first with a
+   capped LRU-ish trim, making repeat gallery/hero views dramatically faster.
+ * Everything else: network only.
  */
-// Increment on each recovery deployment so clients immediately discard stale
-// HTML and asset caches from an earlier version.
 const VERSION = 'v13';
 const PAGE_CACHE = `pages-${VERSION}`;
 const ASSET_CACHE = `assets-${VERSION}`;
@@ -146,7 +144,8 @@ try {
     appId: '1:729617648651:web:f5d90b86b9b387d86b0b0e'
   });
   const messaging = firebase.messaging();
-  messaging.onBackgroundMessage((payload) => {
+  if (typeof messaging?.onBackgroundMessage === 'function') {
+    messaging.onBackgroundMessage((payload) => {
     const notification = payload.notification || {};
     const data = payload.data || {};
     return self.registration.showNotification(notification.title || 'Ansar English School', {
@@ -156,10 +155,11 @@ try {
       data: { url: payload.fcmOptions?.link || data.url || '/' }
     });
   });
+  }
 } catch (error) {
   // Caching and offline support remain available if the Messaging SDK cannot
   // be loaded, for example while a visitor is offline for the first install.
-  console.warn('Firebase Messaging service worker setup failed.', error);
+  console.warn('Firebase Messaging service worker setup failed.', error?.message || error);
 }
 
 self.addEventListener('notificationclick', (event) => {

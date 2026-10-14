@@ -1448,7 +1448,16 @@ export default function App() {
     let unsubscribe = () => {};
     let active = true;
     ensureAuthServices().then((services) => {
-      return services.authPersistenceReady.then(() => services);
+      // Finalize a Google redirect before reading the auth state. Without this
+      // call, the OAuth account chooser can return to /admin but leave the
+      // page looking signed out because the redirect credential was never
+      // consumed by the Firebase SDK.
+      return services.authPersistenceReady
+        .then(() => services.getRedirectResult(services.auth).catch((error) => {
+          console.warn('Google redirect result could not be completed:', error);
+          return null;
+        }))
+        .then(() => services);
     }).then((services) => {
       if (!active) return;
       unsubscribe = services.onAuthStateChanged(services.auth, async (currentUser) => {

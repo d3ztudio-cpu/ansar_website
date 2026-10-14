@@ -1,6 +1,6 @@
 // Auth is private-admin functionality. Keeping it in a separate module lets
 // public visitors avoid downloading and initializing the Firebase Auth SDK.
-import { browserLocalPersistence, browserPopupRedirectResolver, GoogleAuthProvider, initializeAuth, onAuthStateChanged, signInWithEmailAndPassword, signInWithPopup, signInWithRedirect, signOut } from 'firebase/auth';
+import { browserLocalPersistence, browserPopupRedirectResolver, getRedirectResult, GoogleAuthProvider, initializeAuth, onAuthStateChanged, signInWithEmailAndPassword, signInWithPopup, signInWithRedirect, signOut } from 'firebase/auth';
 import { app } from './firebase-init';
 
 // Configure persistence when Auth is created. Switching persistence after Auth
@@ -14,4 +14,4 @@ export const auth = initializeAuth(app, {
   popupRedirectResolver: browserPopupRedirectResolver
 });
 export const authPersistenceReady = Promise.resolve();
-export { GoogleAuthProvider, onAuthStateChanged, signInWithEmailAndPassword, signInWithPopup, signInWithRedirect, signOut };
+export { getRedirectResult, GoogleAuthProvider, onAuthStateChanged, signInWithEmailAndPassword, signInWithPopup, signInWithRedirect, signOut };
