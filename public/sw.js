@@ -11,7 +11,7 @@
  */
 // Increment on each recovery deployment so clients immediately discard stale
 // HTML and asset caches from an earlier version.
-const VERSION = 'v12';
+const VERSION = 'v13';
 const PAGE_CACHE = `pages-${VERSION}`;
 const ASSET_CACHE = `assets-${VERSION}`;
 const IMAGE_CACHE = `images-${VERSION}`;
@@ -120,9 +120,9 @@ self.addEventListener('fetch', (event) => {
 
   // Immutable hashed build output.
   if (url.origin === self.location.origin && url.pathname.startsWith('/assets/')) {
-    // Prefer the network even for hashed files. This prevents a restored
-    // mobile tab from pairing an old app shell with a deleted lazy chunk.
-    event.respondWith(networkFirstAsset(request));
+    // Hashed build files are immutable, so the versioned cache is safe and
+    // avoids the mobile tab briefly re-requesting a deleted chunk on reload.
+    event.respondWith(cacheFirst(request, ASSET_CACHE));
     return;
   }
 

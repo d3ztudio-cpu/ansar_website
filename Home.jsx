@@ -1,4 +1,4 @@
-import React, { lazy, Suspense, useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import Layout from './Layout';
 import Hero from './Hero';
 import NewsCard from './NewsCard';
@@ -9,45 +9,6 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { Link } from 'react-router-dom';
 import { compareByUploadOrder, compareContentNewestFirst, getDisplayYear, isYearOnly } from './dateUtils';
 import EventCountdown from './EventCountdown';
-
-const NoticePopup = lazy(() => import('./NoticePopup'));
-const SchoolChatbot = lazy(() => import('./SchoolChatbot'));
-
-// Notices and the optional AI assistant must never be allowed to take down
-// the homepage. They load after the core page, frequently on slower mobile
-// connections, so any unexpected third-party/image/AI failure is contained to
-// that widget rather than reaching the application-wide error boundary.
-class OptionalHomeWidgetBoundary extends React.Component {
-  state = { hasError: false };
-
-  static getDerivedStateFromError() {
-    return { hasError: true };
-  }
-
-  componentDidCatch(error) {
-    console.warn('Optional homepage widget was disabled after an error:', error);
-  }
-
-  render() {
-    return this.state.hasError ? null : this.props.children;
-  }
-}
-
-function DeferredSchoolChatbot() {
-  const [ready, setReady] = useState(false);
-
-  useEffect(() => {
-    const activate = () => setReady(true);
-    if ('requestIdleCallback' in window) {
-      const idleId = window.requestIdleCallback(activate, { timeout: 3000 });
-      return () => window.cancelIdleCallback(idleId);
-    }
-    const timer = window.setTimeout(activate, 2500);
-    return () => window.clearTimeout(timer);
-  }, []);
-
-  return ready ? <Suspense fallback={null}><SchoolChatbot /></Suspense> : null;
-}
 
 // Transformed into a Bento Layout configuration using Lucide-style SVG icons
 const FALLBACK_FEATURES = [
@@ -334,12 +295,6 @@ export default function Home() {
 
   return (
     <Layout isHome={true}>
-      <OptionalHomeWidgetBoundary>
-        <Suspense fallback={null}><NoticePopup /></Suspense>
-      </OptionalHomeWidgetBoundary>
-      <OptionalHomeWidgetBoundary>
-        <DeferredSchoolChatbot />
-      </OptionalHomeWidgetBoundary>
       <Hero 
         title="Ansar English School – CBSE School in Thrissur"
         subtitle="A NABET-accredited CBSE Senior Secondary School in Perumpilavu, Thrissur, nurturing curious learners, ethical leaders, and responsible global citizens."
