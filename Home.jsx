@@ -153,7 +153,7 @@ function LeadershipProfile({ profile, reverse = false }) {
           <img
             src={imageUrl}
             alt={profile.name}
-            className="absolute inset-0 h-full w-full object-contain bg-slate-100"
+            className="absolute inset-0 h-full w-full object-cover"
             style={{ objectPosition: reverse ? '75% center' : 'center' }}
             loading="lazy"
           />
