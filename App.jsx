@@ -93,6 +93,7 @@ const ADMIN_EMAILS = [
   'aesmedia2025@gmail.com'
 ];
 const SPROUTS_ADMIN_EMAIL = 'sprouts@ansar.in';
+const ADMIN_GOOGLE_REDIRECT_KEY = 'ansar:admin-google-redirect';
 let authServices = null;
 let authServicesPromise = null;
 
@@ -1231,7 +1232,11 @@ function AdminLogin({ onDenied }) {
     try {
       const services = await ensureAuthServices();
       await services.authPersistenceReady;
-      const credential = await services.signInWithPopup(services.auth, new services.GoogleAuthProvider());
+      // Redirect OAuth is dependable on mobile browsers, where sign-in popups
+      // are commonly blocked or discarded when the browser resumes.
+      try { window.sessionStorage.setItem(ADMIN_GOOGLE_REDIRECT_KEY, '1'); } catch {}
+      await services.signInWithRedirect(services.auth, new services.GoogleAuthProvider());
+      return;
       const email = credential?.user?.email;
       if (!isAuthorizedAdmin(email)) {
         // Not an admin: end the session immediately and show the popup.
@@ -1241,6 +1246,7 @@ function AdminLogin({ onDenied }) {
       // Authorized admins need no extra step — onAuthStateChanged flips the
       // view to the dashboard the moment the session is established.
     } catch (err) {
+      try { window.sessionStorage.removeItem(ADMIN_GOOGLE_REDIRECT_KEY); } catch {}
       console.error('Google sign-in failed:', err);
       setError(describeAuthError(err));
     }
@@ -1456,6 +1462,15 @@ export default function App() {
           createdAt: currentUser.metadata.creationTime,
           lastLogin: serverTimestamp()
         }, { merge: true }).catch((error) => console.error("Error updating user tracking:", error));
+        // Complete a successful Google redirect on the dashboard.
+        try {
+          if (window.sessionStorage.getItem(ADMIN_GOOGLE_REDIRECT_KEY) && isAuthorizedAdmin(currentUser.email)) {
+            window.sessionStorage.removeItem(ADMIN_GOOGLE_REDIRECT_KEY);
+            if (window.location.pathname !== '/admin/dashboard') {
+              window.location.replace('/admin/dashboard');
+            }
+          }
+        } catch {}
       }
       });
     }).catch((error) => {
