@@ -2,6 +2,7 @@ import React, { useEffect, useMemo, useState } from 'react';
 import { clearGoogleSheetsCache, useContentCollection } from './useContentCollection';
 import { saveSheetRecord } from './googleSheetsAdminApi';
 import ImgBbUrlImporter from './ImgBbUrlImporter';
+import AdminTransportStaff from './AdminTransportStaff';
 import { LEARNING_FEATURES_DOCUMENT_CONTENT, resolveLearningFeatureImage } from './learningFeaturesDocumentContent';
 
 const MAX_GALLERY_IMAGES = 30;
@@ -151,6 +152,7 @@ function createFormState(feature) {
 }
 
 export default function AdminLearningFeatures() {
+  const [activeTab, setActiveTab] = useState('pages');
   const [selectedSlug, setSelectedSlug] = useState(DEFAULT_FEATURES[0].slug);
   const [refreshKey, setRefreshKey] = useState(0);
   const { data: sheetRows, loading } = useContentCollection('learningFeatures', null, 'asc', { sheetsOnly: true, refreshKey });
@@ -267,8 +269,14 @@ export default function AdminLearningFeatures() {
     <div className="space-y-6">
       <div className="rounded-2xl border border-slate-100 bg-white p-6 shadow-sm">
         <p className="text-xs font-black uppercase tracking-widest text-emerald-600">Student-Centric Learning</p>
-        <h2 className="mt-2 text-2xl font-extrabold text-slate-900">Page content and carousel images</h2>
+        <h2 className="mt-2 text-2xl font-extrabold text-slate-900">Content and transport management</h2>
+        <div className="mt-5 flex flex-wrap gap-2">
+          <button type="button" onClick={() => setActiveTab('pages')} className={`rounded-xl px-4 py-2.5 text-sm font-extrabold ${activeTab === 'pages' ? 'bg-emerald-700 text-white' : 'bg-slate-100 text-slate-700 hover:bg-emerald-50'}`}>Learning Pages</button>
+          <button type="button" onClick={() => setActiveTab('transport')} className={`rounded-xl px-4 py-2.5 text-sm font-extrabold ${activeTab === 'transport' ? 'bg-emerald-700 text-white' : 'bg-slate-100 text-slate-700 hover:bg-emerald-50'}`}>Transport Staff</button>
+        </div>
       </div>
+
+      {activeTab === 'transport' ? <AdminTransportStaff /> : <>
 
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-[20rem_1fr]">
         <aside className="rounded-2xl border border-slate-100 bg-white p-4 shadow-sm">
@@ -395,6 +403,7 @@ export default function AdminLearningFeatures() {
           </div>
         </form>
       </div>
+      </>}
     </div>
   );
 }

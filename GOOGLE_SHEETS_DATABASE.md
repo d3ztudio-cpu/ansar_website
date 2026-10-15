@@ -8,7 +8,7 @@ The website merges this Sheet with existing Firestore content, so older Firestor
 
 ## Admin panel writes to Sheets
 
-News, Events, and Achievements can be saved from the website admin panel into Google Sheets by using a Google Apps Script Web App.
+The Student-Centric Learning transport directory, as well as News, Events, and Achievements, can be saved from the website admin panel into Google Sheets by using a Google Apps Script Web App.
 
 ### 1. Add the Apps Script
 
@@ -33,6 +33,7 @@ Approve the permission request. This creates or updates these tabs:
 - `updates`
 - `achievements`
 - `publicDisclosure`
+- `transportStaff`
 
 The admin panel stores News and Events together in the `updates` tab. Event rows use `category` = `Events`; news rows use `category` = `News`.
 
@@ -79,7 +80,7 @@ If you used `WRITE_TOKEN`, also set:
 writeToken: 'your-long-private-text',
 ```
 
-After this, admin panel saves, edits, and deletes for News, Events, and Achievements go to Google Sheets.
+After this, admin panel saves, edits, and deletes for News, Events, Achievements, and Transport Staff go to Google Sheets.
 
 ## Required sharing
 
@@ -92,6 +93,7 @@ Use these tab names for content:
 - `publicDisclosure`
 - `updates`
 - `achievements`
+- `transportStaff` — `id`, `busNumber`, `driverName`, `driverPhone`, `conductorName`, `conductorPhone`, `order`, `published`
 
 For mandatory disclosure only, the site also checks the first spreadsheet tab, then `MandatoryDisclosure`, then `PublicDisclosure`.
 

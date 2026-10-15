@@ -10,6 +10,7 @@ export const GOOGLE_SHEETS_DATABASE = {
     achievements: ['achievements', 'Achievements'],
     sportsAchievements: ['sportsAchievements', 'SportsAchievements', 'Sports Achievements'],
     learningFeatures: ['learningFeatures', 'LearningFeatures', 'Learning Features'],
+    transportStaff: ['transportStaff', 'TransportStaff', 'Transport Staff'],
     sproutsActivities: ['sproutsActivities', 'SproutsActivities', 'Sprouts Activities'],
     contactSubmissions: ['contactSubmissions', 'ContactSubmissions', 'Contact Submissions'],
     ansarTimes: ['ansarTimes', 'AnsarTimes', 'Ansar Times'],

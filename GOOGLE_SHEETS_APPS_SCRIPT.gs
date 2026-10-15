@@ -63,6 +63,16 @@ const SHEET_COLUMNS = {
     'order',
     'published'
   ],
+  transportStaff: [
+    'id',
+    'busNumber',
+    'driverName',
+    'driverPhone',
+    'conductorName',
+    'conductorPhone',
+    'order',
+    'published'
+  ],
   sproutsActivities: [
     'id',
     'title',

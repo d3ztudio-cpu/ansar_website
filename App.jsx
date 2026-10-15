@@ -12,6 +12,7 @@ import { DEFAULT_SPORTS_PAGE, mergeListWithDefaults } from './contentDefaults';
 import { compareByUploadOrder, compareContentNewestFirst, formatDisplayDate, getDisplayYear, isYearOnly } from './dateUtils';
 import { applySeoMetadata, createMetaDescription } from './seoUtils';
 import { LEARNING_FEATURES_DOCUMENT_CONTENT, resolveLearningFeatureImage } from './learningFeaturesDocumentContent';
+import { mergeTransportStaff } from './transportStaffData';
 
 // Keep the first visit small: secondary pages and all admin modules are fetched only
 // when their route is opened instead of delaying the homepage on mobile networks.
@@ -49,6 +50,7 @@ const AdminAnsarTimes = lazy(() => import('./AdminAnsarTimes'));
 const AdminGallery = lazy(() => import('./AdminGallery'));
 const AdminSportsAchievements = lazy(() => import('./AdminSportsAchievements'));
 const AdminLearningFeatures = lazy(() => import('./AdminLearningFeatures'));
+const AdminTransportStaff = lazy(() => import('./AdminTransportStaff'));
 const AdminLifeAtAnsar = lazy(() => import('./AdminLifeAtAnsar'));
 const AdminLearningLabs = lazy(() => import('./AdminLearningLabs'));
 const AdminAnsarSprouts = lazy(() => import('./AdminAnsarSprouts'));
@@ -863,6 +865,7 @@ function AnsarMediaProductionPage() {
 function LearningFeaturePage() {
   const { slug } = useParams();
   const { data: learningFeatureRows } = useContentCollection('learningFeatures', null, 'asc', { sheetsOnly: true });
+  const { data: transportStaffRows } = useContentCollection('transportStaff', 'order', 'asc', { sheetsOnly: true });
   const sheetFeature = learningFeatureRows.find(item => item.slug === slug && item.published !== false);
   const defaultFeature = LEARNING_FEATURES[slug];
   const feature = defaultFeature ? {
@@ -981,9 +984,36 @@ function LearningFeaturePage() {
           </div>
         </section>}
         {slug === 'advanced-labs' && <LearningLabsSection />}
+        {slug === 'safe-school-transport' && <TransportStaffDirectory rows={transportStaffRows} />}
       </main>
     </Layout>
   );
+}
+
+function TransportStaffDirectory({ rows }) {
+  const staff = mergeTransportStaff(rows);
+  return <section className="mt-16 rounded-3xl border border-emerald-100 bg-gradient-to-br from-emerald-50 via-white to-amber-50 p-6 shadow-sm sm:p-10">
+    <div className="max-w-3xl">
+      <p className="text-sm font-black uppercase tracking-widest text-emerald-700">Transport staff directory</p>
+      <h2 className="mt-3 text-3xl font-extrabold text-emerald-950 lg:text-4xl">Your child’s journey has a dedicated care team</h2>
+      <p className="mt-4 text-base leading-relaxed text-slate-600">Find the driver and attendant assigned to each school bus. Tap a phone number to call the relevant staff member.</p>
+    </div>
+    <div className="mt-8 grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
+      {staff.map(record => <article key={record.id} className="overflow-hidden rounded-2xl border border-emerald-100 bg-white shadow-sm">
+        <div className="flex items-center justify-between bg-emerald-900 px-5 py-3 text-white"><span className="text-xs font-black uppercase tracking-widest text-emerald-100">School Bus</span><span className="rounded-lg bg-amber-400 px-3 py-1 text-sm font-black text-emerald-950">{record.busNumber}</span></div>
+        <div className="space-y-4 p-5">
+          <StaffContact role="Driver" name={record.driverName} phone={record.driverPhone} />
+          <div className="border-t border-slate-100" />
+          <StaffContact role="Bus Attendant" name={record.conductorName} phone={record.conductorPhone} />
+        </div>
+      </article>)}
+    </div>
+  </section>;
+}
+
+function StaffContact({ role, name, phone }) {
+  const digits = String(phone || '').replace(/\D/g, '');
+  return <div><p className="text-xs font-black uppercase tracking-widest text-emerald-700">{role}</p><p className="mt-1 text-lg font-extrabold text-slate-900">{name || 'Not assigned'}</p>{digits && <a href={`tel:+91${digits}`} className="mt-1 inline-block text-sm font-bold text-slate-600 hover:text-emerald-700">+91 {digits}</a>}</div>;
 }
 
 function DynamicPage({ slug: propSlug }) {
@@ -1616,6 +1646,7 @@ export default function App() {
                   <Route path="/sports-achievements" element={<AdminSportsAchievements />} />
                   <Route path="/atl" element={<AdminAtl />} />
                   <Route path="/learning-features" element={<AdminLearningFeatures />} />
+                  <Route path="/transport-staff" element={<AdminTransportStaff />} />
                   <Route path="/life-at-ansar" element={<AdminLifeAtAnsar />} />
                   <Route path="/learning-labs" element={<AdminLearningLabs />} />
                   <Route path="/ansar-sprouts" element={<AdminAnsarSprouts />} />

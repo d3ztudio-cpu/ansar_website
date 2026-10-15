@@ -179,7 +179,10 @@ function hasDisplayableContent(item) {
     'studentName',
     'eventImages',
     'imageUrls',
-    'galleryImages'
+    'galleryImages',
+    'busNumber',
+    'driverName',
+    'conductorName'
   ];
 
   return contentKeys.some((key) => {
