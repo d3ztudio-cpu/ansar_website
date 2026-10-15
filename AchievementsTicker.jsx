@@ -1,6 +1,7 @@
-import React, { useMemo, useRef } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { useContentCollection } from './useContentCollection';
+import { subscribeGoogleSheetsRefresh, useContentCollection } from './useContentCollection';
+import { compareContentNewestFirst } from './dateUtils';
 
 // Achievements display in upload order (FIFO): newest uploads first.
 function getUploadTime(item) {
@@ -12,7 +13,7 @@ function getUploadTime(item) {
 function compareByUploadOrder(a, b) {
   const aTime = getUploadTime(a);
   const bTime = getUploadTime(b);
-  if (aTime == null && bTime == null) return 0;
+  if (aTime == null && bTime == null) return compareContentNewestFirst(a, b);
   if (aTime == null) return 1;
   if (bTime == null) return -1;
   return bTime - aTime;
@@ -20,7 +21,10 @@ function compareByUploadOrder(a, b) {
 
 export default function AchievementsTicker() {
   const scrollerRef = useRef(null);
-  const { data: achievements, loading } = useContentCollection('achievements', null);
+  const [refreshKey, setRefreshKey] = useState(0);
+  const { data: achievements, loading } = useContentCollection('achievements', null, 'desc', { refreshKey });
+
+  useEffect(() => subscribeGoogleSheetsRefresh(() => setRefreshKey(key => key + 1)), []);
   const publishedAchievements = useMemo(() => {
     return [...achievements]
       .filter(item => item.published !== false)

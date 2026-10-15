@@ -45,6 +45,51 @@ export function saveSheetRecord(collectionName, record) {
   return postToSheets('save', { collectionName, record });
 }
 
+// Apps Script Web Apps need `no-cors` for this public browser-to-script POST.
+// That makes the browser response opaque, so a failed script execution used to
+// look exactly like a successful save. Verify transport edits through the
+// same public Sheets read endpoint before telling an administrator they saved.
+export async function confirmTransportStaffSaved(record) {
+  const expected = {
+    id: String(record.id || ''),
+    busNumber: String(record.busNumber || '').trim(),
+    driverName: String(record.driverName || '').trim(),
+    driverPhone: String(record.driverPhone || '').replace(/\D/g, ''),
+    conductorName: String(record.conductorName || '').trim(),
+    conductorPhone: String(record.conductorPhone || '').replace(/\D/g, ''),
+    published: record.published !== false
+  };
+  const sheetUrl = `https://docs.google.com/spreadsheets/d/${GOOGLE_SHEETS_DATABASE.spreadsheetId}/gviz/tq?${new URLSearchParams({
+    tqx: 'out:json',
+    sheet: 'transportStaff',
+    v: String(Date.now())
+  })}`;
+
+  // Writes can take a moment to appear in the Sheets visualization endpoint.
+  for (const delay of [700, 1200, 2000, 3000]) {
+    await new Promise(resolve => window.setTimeout(resolve, delay));
+    const response = await fetch(sheetUrl.replace(/v=\d+/, `v=${Date.now()}`));
+    if (!response.ok) continue;
+    const text = await response.text();
+    const match = text.match(/setResponse\(([\s\S]*)\);?$/);
+    if (!match) continue;
+    const payload = JSON.parse(match[1]);
+    const headers = (payload.table?.cols || []).map(column => String(column.label || '').trim());
+    const row = (payload.table?.rows || []).find(({ c = [] }) => String(c[headers.indexOf('id')]?.v || '') === expected.id);
+    if (!row) continue;
+    const value = (name) => String(row.c?.[headers.indexOf(name)]?.v ?? '').trim();
+    const same = value('busNumber') === expected.busNumber
+      && value('driverName') === expected.driverName
+      && value('driverPhone').replace(/\D/g, '') === expected.driverPhone
+      && value('conductorName') === expected.conductorName
+      && value('conductorPhone').replace(/\D/g, '') === expected.conductorPhone
+      && (value('published').toLowerCase() === 'true') === expected.published;
+    if (same) return;
+  }
+
+  throw new Error('The change was not confirmed in Google Sheets. Deploy the latest Apps Script Web App version, then try again.');
+}
+
 /**
  * Ask the Apps Script Web App to email a system-generated acknowledgement to a
  * visitor who just submitted the contact form. Runs with the same write token,

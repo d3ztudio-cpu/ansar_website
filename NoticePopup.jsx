@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { collection, query, where, onSnapshot } from 'firebase/firestore';
 import { db } from './firebase-init';
 import { useNavigate } from 'react-router-dom';
+import { normalizeImageUrl } from './imageUrlUtils';
 
 let hasShownNoticeThisPageLoad = false;
 
@@ -15,7 +16,8 @@ export default function NoticePopup() {
     const q = query(collection(db, 'notices'), where('active', '==', true));
     const unsubscribe = onSnapshot(q, (snapshot) => {
       if (!snapshot.empty) {
-        setNotice({ id: snapshot.docs[0].id, ...snapshot.docs[0].data() });
+        const data = snapshot.docs[0].data();
+        setNotice({ id: snapshot.docs[0].id, ...data, imageUrl: normalizeImageUrl(data.imageUrl || '') });
         setImageFailed(false);
         if (!hasShownNoticeThisPageLoad) {
           hasShownNoticeThisPageLoad = true;

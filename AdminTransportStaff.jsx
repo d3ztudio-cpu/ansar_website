@@ -1,6 +1,6 @@
 import React, { useMemo, useState } from 'react';
 import { clearGoogleSheetsCache, useContentCollection } from './useContentCollection';
-import { deleteSheetRecord, saveSheetRecord } from './googleSheetsAdminApi';
+import { confirmTransportStaffSaved, deleteSheetRecord, saveSheetRecord } from './googleSheetsAdminApi';
 import { DEFAULT_TRANSPORT_STAFF, mergeTransportStaff } from './transportStaffData';
 
 const blankStaff = () => ({ id: '', busNumber: '', driverName: '', driverPhone: '', conductorName: '', conductorPhone: '', published: true });
@@ -24,7 +24,7 @@ export default function AdminTransportStaff() {
     setSaving(true);
     try {
       const id = form.id || `bus-${busNumber.toLowerCase().replace(/[^a-z0-9]+/g, '-')}`;
-      await saveSheetRecord('transportStaff', {
+      const record = {
         ...form,
         id,
         busNumber,
@@ -34,7 +34,9 @@ export default function AdminTransportStaff() {
         conductorPhone: String(form.conductorPhone || '').replace(/\D/g, ''),
         order: Number(form.order) || staff.length + 1,
         published: !!form.published
-      });
+      };
+      await saveSheetRecord('transportStaff', record);
+      await confirmTransportStaffSaved(record);
       clearGoogleSheetsCache(); setRefreshKey(key => key + 1); startAdd();
     } catch (error) { alert(`Save failed: ${error.message}`); } finally { setSaving(false); }
   };

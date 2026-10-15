@@ -27,6 +27,7 @@ const AnsarTimes = lazy(() => import('./AnsarTimes'));
 const Staff = lazy(() => import('./Staff'));
 const Contact = lazy(() => import('./Contact'));
 const Gallery = lazy(() => import('./Gallery'));
+const Forms = lazy(() => import('./Forms'));
 const ArticleView = lazy(() => import('./ArticleView'));
 const MandatoryDisclosure = lazy(() => import('./MandatoryDisclosure'));
 const SopPage = lazy(() => import('./SopPage'));
@@ -67,6 +68,7 @@ const AdminAlumni = lazy(() => import('./AdminAlumni'));
 const AdminQuizCorner = lazy(() => import('./AdminQuizCorner'));
 const AdminStaffExams = lazy(() => import('./AdminStaffExams'));
 const AdminAnalytics = lazy(() => import('./AdminAnalytics'));
+const AdminForms = lazy(() => import('./AdminForms'));
 
 const BOOT_SPLASH_ID = 'boot-splash';
 let bootSplashHidden = false;
@@ -577,7 +579,7 @@ const BASE_LEARNING_FEATURES = {
     title: 'A Safe & Secure Campus',
     kicker: 'Safe campus',
     icon: 'shield',
-    image: 'https://images.unsplash.com/photo-1581091226825-a6a2a5aee158?q=90&w=2400&auto=format&fit=crop',
+    image: '',
     description: 'A monitored learning environment helps students move through the campus with confidence. Safety systems support staff supervision and create a secure setting for academic and co-curricular activity.',
     points: ['CCTV-supported campus monitoring', 'Structured supervision around key areas', 'A calm environment for focused learning']
   },
@@ -642,7 +644,7 @@ const BASE_LEARNING_FEATURES = {
     title: "Champions' Arena",
     kicker: 'Fitness and teamwork',
     icon: 'trophy',
-    image: 'https://images.unsplash.com/photo-1526232761682-d26e03ac148e?q=90&w=2400&auto=format&fit=crop',
+    image: '',
     description: 'The multi-sports play area supports fitness, coordination, teamwork, and healthy competition. Students get structured opportunities to participate, practice, and build sporting spirit.',
     points: ['Space for multiple sports and activities', 'Builds stamina, teamwork, and discipline', 'Encourages regular physical participation']
   },
@@ -732,13 +734,13 @@ function LearningImageCarousel({ feature }) {
   return (
     <div className="overflow-hidden rounded-2xl border border-slate-100 bg-white shadow-sm">
       <div className="relative aspect-[4/3] bg-slate-100">
-        <img
+        {currentImage ? <img
           src={currentImage}
           alt={`${feature.title} facility view ${activeIndex + 1}`}
           className="absolute inset-0 h-full w-full object-cover"
           loading="lazy"
           decoding="async"
-        />
+        /> : <div className="absolute inset-0 flex items-center justify-center bg-gradient-to-br from-emerald-50 to-slate-100 px-6 text-center text-sm font-bold text-slate-500">Images will appear here once added by the school.</div>}
         {hasMultipleImages && (
           <>
             <button
@@ -877,9 +879,9 @@ function LearningFeaturePage() {
         ? String(sheetFeature.body || '').split(/\r?\n/).map(item => item.trim()).filter(Boolean)
         : defaultFeature.body,
     points: Array.isArray(sheetFeature?.points) && sheetFeature.points.length ? sheetFeature.points : defaultFeature.points,
-    galleryImages: Array.isArray(sheetFeature?.galleryImages) && sheetFeature.galleryImages.length ? sheetFeature.galleryImages : defaultFeature.galleryImages,
+    galleryImages: Array.isArray(sheetFeature?.galleryImages) ? sheetFeature.galleryImages : [],
     outdoorGymImageUrls: Array.isArray(sheetFeature?.outdoorGymImageUrls) ? sheetFeature.outdoorGymImageUrls : defaultFeature.outdoorGymImageUrls,
-    image: resolveLearningFeatureImage(slug, sheetFeature?.imageUrl || sheetFeature?.image, defaultFeature.image)
+    image: resolveLearningFeatureImage(slug, sheetFeature?.imageUrl || sheetFeature?.image, '')
   } : null;
 
   useEffect(() => {
@@ -916,14 +918,14 @@ function LearningFeaturePage() {
     <Layout>
       <main className="mx-auto max-w-7xl px-4 py-12 lg:py-20">
         <section className="relative min-h-[28rem] overflow-hidden rounded-3xl bg-emerald-950 text-white shadow-2xl">
-          <img
+          {feature.image && <img
             src={feature.image}
             alt={`${feature.title} at Ansar English School`}
             className="absolute inset-0 h-full w-full object-cover opacity-45"
             loading="eager"
             decoding="async"
             fetchPriority="high"
-          />
+          />}
           <div className="absolute inset-0 bg-gradient-to-r from-emerald-950 via-emerald-950/88 to-slate-950/45" />
           <div className="relative z-10 flex min-h-[28rem] max-w-4xl flex-col justify-center px-6 py-16 sm:px-10 lg:px-14">
             <div className="mb-6 flex h-16 w-16 items-center justify-center rounded-2xl bg-amber-400 text-emerald-950 shadow-lg">
@@ -1171,8 +1173,9 @@ function SportsPage() {
                     src={sport.imageUrl}
                     alt={`${sport.title} at Ansar English School`}
                     className="absolute inset-0 h-full w-full object-cover transition-transform duration-700 group-hover:scale-105"
-                    loading={index < 2 ? 'eager' : 'lazy'}
+                    loading="lazy"
                     decoding="async"
+                    fetchPriority="low"
                   />
                 ) : (
                   <div className="absolute inset-0 flex flex-col items-center justify-center bg-gradient-to-br from-emerald-50 via-white to-amber-50 text-center">
@@ -1224,7 +1227,7 @@ function SportsPage() {
                           <Link key={item.id} to={`/sports-achievements/${item.id}`} className="group overflow-hidden rounded-2xl border border-slate-100 bg-white shadow-sm transition-all hover:-translate-y-1 hover:shadow-xl">
                             <div className="relative aspect-[4/3] bg-slate-100">
                               {imageUrl ? (
-                                <img src={imageUrl} alt={item.title} className="absolute inset-0 h-full w-full object-cover transition-transform duration-700 group-hover:scale-105" loading={index < 3 ? 'eager' : 'lazy'} />
+                                <img src={imageUrl} alt={item.title} className="absolute inset-0 h-full w-full object-cover transition-transform duration-700 group-hover:scale-105" loading="lazy" decoding="async" fetchPriority="low" />
                               ) : (
                                 <div className="absolute inset-0 flex items-center justify-center text-slate-400">
                                   <LearningIcon name="trophy" className="h-12 w-12" />
@@ -1506,7 +1509,7 @@ export default function App() {
 
   useEffect(() => {
     // Public routes do not use authentication. Keep them responsive from the first
-    // paint and never wait on Firebase Auth during the critical rendering path. The
+    // paint and never wait on Firebase Auth during the critical rendering path. The
     // listener starts only when an administrator opens /admin. SPA navigation inside
     // /admin does not change isAdminRoute, so the session listener persists.
     if (!isAdminRoute) {
@@ -1590,6 +1593,7 @@ export default function App() {
         <Route path="/events" element={<Events />} />
         <Route path="/contact" element={<Contact />} />
         <Route path="/gallery" element={<Gallery />} />
+        <Route path="/forms" element={<Forms />} />
         <Route path="/sports-page" element={<SportsPage />} />
         <Route path="/atl" element={<AtlPage />} />
         <Route path="/library" element={<LibraryPage />} />
@@ -1603,6 +1607,7 @@ export default function App() {
         <Route path="/extension-services" element={<DynamicPage slug="extension-services" />} />
         <Route path="/life-at-ansar" element={<LifeAtAnsar />} />
         <Route path="/ansar-times" element={<AnsarTimes />} />
+        <Route path="/ansar-times/:editionId" element={<AnsarTimes />} />
         <Route path="/ansar-family" element={<Staff />} />
         <Route path="/alumni" element={<Alumni />} />
         <Route path="/alumni/:section/:index" element={<AlumniArticle />} />
@@ -1661,6 +1666,7 @@ export default function App() {
                   <Route path="/academics" element={<AdminAcademics />} />
                   <Route path="/academic-calendar" element={<AdminAcademicCalendar />} />
                   <Route path="/public-disclosure" element={<AdminPublicDisclosure />} />
+                  <Route path="/forms" element={<AdminForms />} />
                   <Route path="/gallery" element={<AdminGallery />} />
                   <Route path="/notices" element={<AdminNotices />} />
                   <Route path="/settings" element={<AdminSettings />} />

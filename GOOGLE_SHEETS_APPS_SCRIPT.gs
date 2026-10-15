@@ -126,6 +126,7 @@ const SHEET_COLUMNS = {
     'order',
     'published'
   ],
+  forms: ['id', 'title', 'description', 'driveUrl', 'order', 'published'],
   pushSubscriptions: ['id', 'token', 'updatedAt'],
   electionSettings: [
     'key',

@@ -16,6 +16,66 @@ import {
   isSchoolMagazineDeleted
 } from './schoolMagazinesConfig';
 
+function copyToClipboard_(value) {
+  if (navigator.clipboard && window.isSecureContext) return navigator.clipboard.writeText(value);
+
+  const textarea = document.createElement('textarea');
+  textarea.value = value;
+  textarea.setAttribute('readonly', '');
+  textarea.style.position = 'fixed';
+  textarea.style.opacity = '0';
+  document.body.appendChild(textarea);
+  textarea.select();
+  const copied = document.execCommand('copy');
+  document.body.removeChild(textarea);
+  return copied ? Promise.resolve() : Promise.reject(new Error('Could not copy the link.'));
+}
+
+function getEditionShareUrl(year, month) {
+  const editionId = `${year}-${String(month || '').trim().toLowerCase()}`;
+  return `${window.location.origin}/ansar-times/${encodeURIComponent(editionId)}`;
+}
+
+function ShareEditionButton({ url, title }) {
+  const [copied, setCopied] = useState(false);
+
+  const handleShare = async () => {
+    try {
+      if (navigator.share) {
+        await navigator.share({ title, text: `Read ${title}`, url });
+        return;
+      }
+      await copyToClipboard_(url);
+      setCopied(true);
+      window.setTimeout(() => setCopied(false), 2200);
+    } catch (error) {
+      if (error && error.name !== 'AbortError') {
+        try {
+          await copyToClipboard_(url);
+          setCopied(true);
+          window.setTimeout(() => setCopied(false), 2200);
+        } catch (_) {
+          // Clipboard access can be restricted by some browsers.
+        }
+      }
+    }
+  };
+
+  return (
+    <button
+      type="button"
+      onClick={handleShare}
+      className="inline-flex items-center justify-center gap-2 rounded-xl border border-emerald-100 bg-emerald-50 px-4 py-3 text-sm font-extrabold text-emerald-700 transition-colors hover:bg-emerald-100"
+      title={copied ? 'Link copied' : 'Share or copy link'}
+    >
+      <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8.7 12.7 15.3 6m-5.8-1.5H16V11m-8 8.5H4.5A2.5 2.5 0 0 1 2 17V6.5A2.5 2.5 0 0 1 4.5 4H8" />
+      </svg>
+      {copied ? 'Link Copied' : 'Share'}
+    </button>
+  );
+}
+
 function MagazineCard({ item }) {
   const pdfUrl = getSchoolMagazineUrl(item);
   const downloadUrl = getSchoolMagazineDownloadUrl(item);
@@ -75,6 +135,7 @@ function MagazineCard({ item }) {
             </svg>
             Download
           </a>
+          <ShareEditionButton url={pdfUrl} title={title} />
         </div>
       </div>
     </article>
@@ -89,6 +150,19 @@ export default function AnsarTimes() {
   useEffect(() => {
     return subscribeGoogleSheetsRefresh(() => setRefreshKey(key => key + 1));
   }, []);
+
+  useEffect(() => {
+    const match = window.location.pathname.match(/^\/ansar-times\/([^/]+)$/i);
+    if (!match || loading) return;
+
+    const requestedEdition = decodeURIComponent(match[1]).trim().toLowerCase();
+    const entry = entries.find(item => {
+      const id = `${item.year}-${String(item.month || '').trim().toLowerCase()}`;
+      return id === requestedEdition;
+    });
+    const pdfUrl = getAnsarTimesPdfUrl(entry);
+    if (pdfUrl) window.location.replace(pdfUrl);
+  }, [entries, loading]);
 
   const yearSections = useMemo(() => {
     const sections = new Map();
@@ -174,11 +248,8 @@ export default function AnsarTimes() {
 
                       if (isActive) {
                         return (
-                          <a
+                          <article
                             key={month.value}
-                            href={pdfUrl}
-                            target="_blank"
-                            rel="noopener noreferrer"
                             className="group flex flex-col overflow-hidden rounded-2xl border border-slate-100 bg-white shadow-sm transition-all hover:-translate-y-1.5 hover:border-emerald-200 hover:shadow-2xl"
                           >
                             <div className="relative flex h-24 items-center justify-between overflow-hidden bg-gradient-to-br from-slate-950 via-slate-900 to-emerald-950 px-5">
@@ -193,14 +264,25 @@ export default function AnsarTimes() {
                             <div className="flex flex-1 flex-col p-5">
                               <h4 className="text-lg font-extrabold text-slate-950">{month.label} Edition</h4>
                               <p className="mt-1 text-sm text-slate-500">{year} · Monthly issue</p>
-                              <span className="mt-5 flex items-center justify-center gap-2 rounded-xl bg-emerald-600 px-4 py-3 text-sm font-extrabold text-white shadow-md transition-colors group-hover:bg-emerald-700">
-                                Read Edition
-                                <svg className="h-4 w-4 transition-transform group-hover:translate-x-1" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M7 17 17 7M8 7h9v9" />
-                                </svg>
-                              </span>
+                              <div className="mt-5 flex flex-wrap gap-2">
+                                <a
+                                  href={pdfUrl}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  className="flex flex-1 items-center justify-center gap-2 rounded-xl bg-emerald-600 px-4 py-3 text-sm font-extrabold text-white shadow-md transition-colors hover:bg-emerald-700"
+                                >
+                                  Read Edition
+                                  <svg className="h-4 w-4 transition-transform group-hover:translate-x-1" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M7 17 17 7M8 7h9v9" />
+                                  </svg>
+                                </a>
+                                <ShareEditionButton
+                                  url={getEditionShareUrl(year, month.value)}
+                                  title={`Ansar Times ${month.label} ${year}`}
+                                />
+                              </div>
                             </div>
-                          </a>
+                          </article>
                         );
                       }
 

@@ -15,5 +15,6 @@ export const GOOGLE_SHEETS_DATABASE = {
     contactSubmissions: ['contactSubmissions', 'ContactSubmissions', 'Contact Submissions'],
     ansarTimes: ['ansarTimes', 'AnsarTimes', 'Ansar Times'],
     schoolMagazines: ['schoolMagazines', 'SchoolMagazines', 'School Magazines']
+    ,forms: ['forms', 'Forms', 'School Forms']
   }
 };

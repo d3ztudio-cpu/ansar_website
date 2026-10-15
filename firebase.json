@@ -3,6 +3,9 @@
   "firestore": {
     "rules": "firestore.rules"
   },
+  "storage": {
+    "rules": "storage.rules"
+  },
   "hosting": {
     "public": "dist",
     "ignore": [
@@ -342,6 +345,10 @@
       { "source": "/learning/healthy-dining-spaces", "destination": "/seo/learning/healthy-dining-spaces.html" },
       {
         "source": "/@(news|events|achievements|sports-achievements)/**",
+        "destination": "/index.html"
+      },
+      {
+        "source": "/ansar-times/:editionId",
         "destination": "/index.html"
       },
       {

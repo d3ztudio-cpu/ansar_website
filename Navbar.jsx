@@ -9,6 +9,7 @@ import SmartImage from './SmartImage';
 // that project is still incomplete and will be re-added once it is live.
 
 const LEGACY_EXPLORE_LINKS = [
+  { title: 'Forms', slug: 'forms' },
   { title: 'Gallery', slug: 'gallery' },
   { title: 'Achievements', slug: 'achievements' },
   { title: 'Ansar Media Productions', slug: 'ansar-media-production' },

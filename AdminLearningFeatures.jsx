@@ -4,6 +4,7 @@ import { saveSheetRecord } from './googleSheetsAdminApi';
 import ImgBbUrlImporter from './ImgBbUrlImporter';
 import AdminTransportStaff from './AdminTransportStaff';
 import { LEARNING_FEATURES_DOCUMENT_CONTENT, resolveLearningFeatureImage } from './learningFeaturesDocumentContent';
+import { uploadLearningFeatureImages } from './firebaseStorageUpload';
 
 const MAX_GALLERY_IMAGES = 30;
 
@@ -13,7 +14,7 @@ const BASE_DEFAULT_FEATURES = [
     title: 'A Safe & Secure Campus',
     kicker: 'Safe campus',
     icon: 'shield',
-    imageUrl: 'https://images.unsplash.com/photo-1581091226825-a6a2a5aee158?q=90&w=2400&auto=format&fit=crop',
+    imageUrl: '',
     description: 'A monitored learning environment helps students move through the campus with confidence. Safety systems support staff supervision and create a secure setting for academic and co-curricular activity.',
     points: ['CCTV-supported campus monitoring', 'Structured supervision around key areas', 'A calm environment for focused learning']
   },
@@ -83,7 +84,7 @@ const BASE_DEFAULT_FEATURES = [
     title: "Champions' Arena",
     kicker: 'Fitness and teamwork',
     icon: 'trophy',
-    imageUrl: 'https://images.unsplash.com/photo-1526232761682-d26e03ac148e?q=90&w=2400&auto=format&fit=crop',
+    imageUrl: '',
     description: 'The multi-sports play area supports fitness, coordination, teamwork, and healthy competition. Students get structured opportunities to participate, practice, and build sporting spirit.',
     points: ['Space for multiple sports and activities', 'Builds stamina, teamwork, and discipline', 'Encourages regular physical participation']
   },
@@ -165,8 +166,8 @@ export default function AdminLearningFeatures() {
         ...feature,
         ...saved,
         order: saved?.order ?? index + 1,
-        imageUrl: resolveLearningFeatureImage(feature.slug, saved?.imageUrl || saved?.image, feature.imageUrl),
-        galleryImages: Array.isArray(saved?.galleryImages) && saved.galleryImages.length ? saved.galleryImages : feature.galleryImages,
+        imageUrl: resolveLearningFeatureImage(feature.slug, saved?.imageUrl || saved?.image, ''),
+        galleryImages: Array.isArray(saved?.galleryImages) ? saved.galleryImages : [],
         outdoorGymImageUrls: Array.isArray(saved?.outdoorGymImageUrls) ? saved.outdoorGymImageUrls : feature.outdoorGymImageUrls,
         points: Array.isArray(saved?.points) && saved.points.length ? saved.points : feature.points
       };
@@ -209,6 +210,28 @@ export default function AdminLearningFeatures() {
       }
       return { ...prev, galleryImages: nextImages.length ? nextImages : [''] };
     });
+  };
+
+  const uploadGalleryImages = async (event) => {
+    try {
+      const urls = await uploadLearningFeatureImages(formData.slug, event.target.files);
+      appendGalleryImages(urls);
+    } catch (error) {
+      alert(`Upload failed: ${error.message}`);
+    } finally {
+      event.target.value = '';
+    }
+  };
+
+  const uploadCoverImage = async (event) => {
+    try {
+      const [url] = await uploadLearningFeatureImages(formData.slug, event.target.files);
+      if (url) setFormData(prev => ({ ...prev, imageUrl: url }));
+    } catch (error) {
+      alert(`Upload failed: ${error.message}`);
+    } finally {
+      event.target.value = '';
+    }
   };
 
   const addGalleryField = () => {
@@ -329,16 +352,16 @@ export default function AdminLearningFeatures() {
               <span className="text-sm font-bold text-slate-700">Cover Image URL</span>
               <input name="imageUrl" value={formData.imageUrl} onChange={handleChange} className="mt-1 w-full rounded-xl border border-slate-200 px-4 py-3 outline-none focus:ring-2 focus:ring-emerald-500" />
             </label>
-            <ImgBbUrlImporter onExtracted={(url) => setFormData(prev => ({ ...prev, imageUrl: url }))} label="Extract Cover ImgBB URL" />
+            <label className="cursor-pointer rounded-xl bg-emerald-700 px-4 py-3 text-center text-sm font-extrabold text-white hover:bg-emerald-800">Upload cover image<input type="file" accept="image/*" onChange={uploadCoverImage} className="sr-only" /></label>
           </div>
 
           <div className="mt-6 rounded-2xl border border-slate-100 bg-slate-50 p-4">
             <div className="flex flex-wrap items-center justify-between gap-3">
               <div>
                 <h3 className="text-base font-extrabold text-slate-900">Carousel Images</h3>
-                <p className="text-sm font-semibold text-slate-500">Saved as image links in Google Sheets.</p>
+                <p className="text-sm font-semibold text-slate-500">Device images upload to Firebase Storage; Sheets saves only their URLs.</p>
               </div>
-              <ImgBbUrlImporter multiple onExtracted={appendGalleryImages} label="Extract Carousel ImgBB URLs" />
+              <label className="cursor-pointer rounded-xl bg-emerald-700 px-4 py-2.5 text-sm font-extrabold text-white hover:bg-emerald-800">Upload from device<input type="file" accept="image/*" multiple onChange={uploadGalleryImages} className="sr-only" /></label>
             </div>
 
             <div className="mt-4 space-y-3">
@@ -395,7 +418,7 @@ export default function AdminLearningFeatures() {
 
           <div className="mt-6 flex flex-wrap items-center gap-3">
             <button type="submit" disabled={isSubmitting} className="rounded-xl bg-emerald-700 px-6 py-3 text-sm font-extrabold text-white transition-colors hover:bg-emerald-800 disabled:cursor-not-allowed disabled:opacity-60">
-              {isSubmitting ? 'Saving...' : 'Save to Google Sheets'}
+              {isSubmitting ? 'Saving...' : 'Save page details'}
             </button>
             <button type="button" onClick={() => setFormData(createFormState(selectedFeature))} className="rounded-xl px-5 py-3 text-sm font-bold text-slate-600 hover:bg-slate-100">
               Reload Selected Page

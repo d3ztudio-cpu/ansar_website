@@ -4,10 +4,11 @@ import Hero from './Hero';
 import NewsCard from './NewsCard';
 import AchievementsTicker from './AchievementsTicker';
 import { useSettings } from './SettingsContext';
-import { useContentCollection } from './useContentCollection';
+import { subscribeGoogleSheetsRefresh, useContentCollection } from './useContentCollection';
 import { Link } from 'react-router-dom';
 import { compareByUploadOrder, compareContentNewestFirst, getDisplayYear, isYearOnly } from './dateUtils';
 import EventCountdown from './EventCountdown';
+import NoticePopup from './NoticePopup';
 
 // Transformed into a Bento Layout configuration using Lucide-style SVG icons
 const FALLBACK_FEATURES = [
@@ -222,20 +223,24 @@ function getJuniorPrincipalItemClass(count, index) {
 export default function Home() {
   const settings = useSettings();
   const [lightboxImage, setLightboxImage] = useState(null);
+  const [contentRefreshKey, setContentRefreshKey] = useState(0);
   const sportsAchievementsRef = useRef(null);
   const { data: leadershipData } = useContentCollection('leadership', 'order', 'asc', { firestoreOnly: true });
-  const { data: updates } = useContentCollection('updates', null, 'desc', { limit: 18 });
-  const { data: eventItems } = useContentCollection('events', null, 'desc');
+  const { data: updates } = useContentCollection('updates', null, 'desc', { limit: 36, refreshKey: contentRefreshKey });
+  const { data: eventItems } = useContentCollection('events', null, 'desc', { refreshKey: contentRefreshKey });
   const { data: sportsAchievements } = useContentCollection('sportsAchievements', null, 'desc', { limit: 8 });
   const { data: learningFeatures } = useContentCollection('learningFeatures', null, 'asc', { sheetsOnly: true });
+
+  useEffect(() => subscribeGoogleSheetsRefresh(() => setContentRefreshKey(key => key + 1)), []);
 
   const publishedUpdates = updates
     .filter(item => item.published !== false)
     .sort(compareContentNewestFirst);
-  const homeNews = publishedUpdates.filter(item => item.category === 'News' || !item.category).slice(0, 3);
-  const homeEvents = eventItems
-    .filter(item => item.published !== false && (!item.category || item.category === 'Events'))
+  const homeNews = publishedUpdates.filter(item => !item.category || String(item.category).trim().toLowerCase() === 'news').slice(0, 3);
+  const homeEvents = [...eventItems, ...publishedUpdates]
+    .filter(item => item.published !== false && /^(event|events)$/i.test(String(item.category || '').trim()))
     .sort(compareContentNewestFirst)
+    .filter((item, index, items) => items.findIndex(candidate => candidate.id === item.id) === index)
     .slice(0, 3);    const homeSportsAchievements = sportsAchievements
     .filter(item => item.published !== false)
     .sort(compareByUploadOrder)
@@ -280,6 +285,18 @@ export default function Home() {
 
   return (
     <Layout isHome={true}>
+      <NoticePopup />
+      <Link
+        to="/admission"
+        className="group relative flex w-full items-center justify-center overflow-hidden rounded-2xl border border-amber-300/60 bg-gradient-to-r from-emerald-950 via-emerald-800 to-emerald-950 px-4 py-3 text-center shadow-lg shadow-emerald-950/15 transition hover:-translate-y-0.5 hover:shadow-xl"
+      >
+        <span className="pointer-events-none absolute inset-y-0 left-[-28%] w-1/3 -skew-x-12 bg-gradient-to-r from-transparent via-white/25 to-transparent motion-safe:animate-[admission-sheen_3.6s_ease-in-out_infinite]" />
+        <span className="relative flex flex-wrap items-center justify-center gap-x-3 gap-y-1 text-sm font-black uppercase tracking-[0.12em] text-white sm:text-base sm:tracking-[0.18em]">
+          <span className="flex h-2.5 w-2.5 rounded-full bg-amber-300 shadow-[0_0_0_5px_rgba(251,191,36,0.16)] motion-safe:animate-pulse" />
+          Admissions started for <span className="text-amber-300">2027 – 28</span>
+          <span className="hidden text-xs normal-case tracking-normal text-emerald-100 sm:inline">Explore admission details →</span>
+        </span>
+      </Link>
       <Hero 
         title="Ansar English School – CBSE School in Thrissur"
         subtitle="A NABET-accredited CBSE Senior Secondary School in Perumpilavu, Thrissur, nurturing curious learners, ethical leaders, and responsible global citizens."
