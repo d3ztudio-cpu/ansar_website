@@ -272,12 +272,13 @@ service cloud.firestore {
     }
 
     function isValidFieldTrip() {
-      return hasOnlyAllowedFields(['title', 'section', 'destination', 'date', 'description', 'imageUrls', 'published', 'createdAt', 'updatedAt']) &&
+      return hasOnlyAllowedFields(['title', 'section', 'destination', 'date', 'description', 'coverImageUrl', 'imageUrls', 'published', 'createdAt', 'updatedAt']) &&
              isValidStringLength('title', 1, 200) &&
-             request.resource.data.section in ['Ansar Sprouts', 'Primary Section', 'Middle Section', 'Secondary Section', 'Senior Secondary Section', 'General'] &&
+             request.resource.data.section in ['Ansar Sprouts', 'Primary Section', 'Middle Section', 'Secondary Section', 'Senior Secondary Section', 'LP Section', 'General'] &&
              isValidOptionalString('destination', 0, 300) &&
              isValidDateString('date') &&
              isValidStringLength('description', 1, 20000) &&
+             isValidUrl('coverImageUrl') &&
              isOptionalUrlList('imageUrls', 30) &&
              isOptionalBool('published') &&
              isOptionalTimestamp('createdAt') &&

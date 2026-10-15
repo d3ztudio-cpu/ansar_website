@@ -141,6 +141,16 @@
     </image:image>
   </url>
   <url>
+    <loc>https://ansarschool.in/counseling</loc>
+    <lastmod>2026-10-15</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+    <image:image>
+      <image:loc>https://ansarschool.in/og-image.jpg</image:loc>
+      <image:title>Ansar English School</image:title>
+    </image:image>
+  </url>
+  <url>
     <loc>https://ansarschool.in/life-at-ansar</loc>
     <lastmod>2026-10-15</lastmod>
     <changefreq>monthly</changefreq>

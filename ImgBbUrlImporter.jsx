@@ -15,7 +15,7 @@ const ImageIcon = () => (
   </svg>
 );
 
-export default function ImgBbUrlImporter({ multiple = false, onExtracted, label }) {
+export default function ImgBbUrlImporter({ multiple = false, onExtracted, label, allowUrlPaste = true }) {
   const [isOpen, setIsOpen] = useState(false);
   const [rawText, setRawText] = useState('');
   const [uploadState, setUploadState] = useState({ busy: false, done: 0, total: 0 });
@@ -103,9 +103,9 @@ export default function ImgBbUrlImporter({ multiple = false, onExtracted, label 
       <div className="w-full max-w-xl space-y-2">
         {dropZone}
         {hiddenFileInput}
-        <button type="button" onClick={() => setIsOpen(true)} className="inline-flex items-center justify-center rounded-lg px-2 py-1 text-xs font-bold text-emerald-700 transition-colors hover:bg-emerald-50">
+        {allowUrlPaste && <button type="button" onClick={() => setIsOpen(true)} className="inline-flex items-center justify-center rounded-lg px-2 py-1 text-xs font-bold text-emerald-700 transition-colors hover:bg-emerald-50">
           {label || (multiple ? 'Or paste image URLs' : 'Or paste an image URL')}
-        </button>
+        </button>}
       </div>
     );
   }

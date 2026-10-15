@@ -1,50 +1,35 @@
-import React, { useState } from 'react';
-import { Link } from 'react-router-dom';
-import { useSettings } from './SettingsContext';
-import { useFirestoreCollection } from './useFirestoreCollection';
-import NotificationsBell from './NotificationsBell';
-import SmartImage from './SmartImage';
+import React, { useState } from "react";
+import { Link } from "react-router-dom";
+import NotificationsBell from "./NotificationsBell";
+import SmartImage from "./SmartImage";
 
 // NOTE: The Ansar Awards external link is intentionally removed for now —
 // that project is still incomplete and will be re-added once it is live.
 
-const LEGACY_EXPLORE_LINKS = [
-  { title: 'Forms', slug: 'forms' },
-  { title: 'Gallery', slug: 'gallery' },
-  { title: 'Achievements', slug: 'achievements' },
-  { title: 'Ansar Media Productions', slug: 'ansar-media-production' },
-  { title: 'Sports', slug: 'sports-page' },
-  { title: 'ATL', slug: 'atl' },
-  { title: 'Library', slug: 'library' },
-  { title: 'Extension Services', slug: 'extension-services' },
-  { title: 'Life at Ansar', slug: 'life-at-ansar' },
-  { title: 'Ansar Times', slug: 'ansar-times' },
-  { title: 'Ansar Family', slug: 'ansar-family' },
-  { title: 'Alumni', slug: 'alumni' },
-  { title: 'SOP', slug: 'sop' },
-  { title: 'AES School Policies', slug: 'school-policies' },
-  { title: 'Mandatory Public Disclosure', slug: 'mandatory-public-disclosure' }
+const EXPLORE_LINKS = [
+  { title: "Field Trips", slug: "field-trips" },
+  { title: "ATL", slug: "atl" },
+  { title: "Sports", slug: "sports-page" },
+  { title: "Achievements", slug: "achievements" },
+  { title: "Ansar Media Productions", slug: "ansar-media-production" },
+  { title: "Extension Services", slug: "extension-services" },
+  { title: "Life at Ansar", slug: "life-at-ansar" },
 ];
 
 export default function Navbar() {
   const [isOpen, setIsOpen] = useState(false);
   const [isMoreOpen, setIsMoreOpen] = useState(false);
-  const settings = useSettings();
-
-  // Fetch all custom pages to dynamically build the navigation menu
-  const { data: pages } = useFirestoreCollection('pages', 'order', 'asc');
-  const mainNavSlugs = ['about', 'academics', 'admission'];
   // Admins can override the logo from Settings; only wide wordmark images
   // (uploaded specifically for the navbar) are used there, otherwise the
   // bundled tightly-cropped logo is shown so it always renders large enough.
-  const customLogoUrl = '';
-  const dynamicExplorePages = pages
-    .filter(p => p.published !== false && !mainNavSlugs.includes(p.slug))
-    .map(page => ({ title: page.title, slug: page.slug, id: page.id }));
-  const explorePages = [
-    ...LEGACY_EXPLORE_LINKS,
-    ...dynamicExplorePages.filter(page => !LEGACY_EXPLORE_LINKS.some(link => link.slug === page.slug))
-  ];
+  const customLogoUrl = "";
+  const scrollToFooter = () => {
+    document
+      .getElementById("site-footer")
+      ?.scrollIntoView({ behavior: "smooth", block: "start" });
+    setIsMoreOpen(false);
+    setIsOpen(false);
+  };
 
   return (
     <header className="relative sticky top-0 z-50 border-b border-slate-200 bg-white shadow-sm">
@@ -55,20 +40,34 @@ export default function Navbar() {
             <span className="flex items-center rounded-2xl bg-white px-3 py-2 shadow-md shadow-slate-950/5 ring-1 ring-slate-950/5">
               <SmartImage
                 src={customLogoUrl || "/school-logo.webp"}
-                fallbacks={[customLogoUrl, "/school-logo.png", "/icon-192.png"].filter(Boolean)}
+                fallbacks={[
+                  customLogoUrl,
+                  "/school-logo.png",
+                  "/icon-192.png",
+                ].filter(Boolean)}
                 alt="Ansar English School Logo"
                 width="208"
                 height="44"
                 decoding="async"
                 className="h-11 w-auto object-contain object-left contrast-125 brightness-105 transition-all duration-300 hover:scale-[1.03]"
-                style={{ imageRendering: '-webkit-optimize-contrast', transform: 'translateZ(0)', backfaceVisibility: 'hidden' }}
+                style={{
+                  imageRendering: "-webkit-optimize-contrast",
+                  transform: "translateZ(0)",
+                  backfaceVisibility: "hidden",
+                }}
               />
             </span>
             <div className="hidden xl:flex flex-col border-l-2 border-slate-950 pl-3 ml-1">
-              <span className="block whitespace-nowrap text-base font-extrabold uppercase leading-tight tracking-wide text-slate-900">ANSAR ENGLISH SCHOOL</span>
+              <span className="block whitespace-nowrap text-base font-extrabold uppercase leading-tight tracking-wide text-slate-900">
+                ANSAR ENGLISH SCHOOL
+              </span>
               <div className="flex items-center gap-2 mt-0.5">
-                <span className="block whitespace-nowrap font-sans text-sm font-semibold normal-case tracking-normal text-slate-500">Perumpilavu</span>
-                <span className="block whitespace-nowrap rounded bg-amber-100 px-2 py-0.5 text-[11px] font-black uppercase leading-none tracking-wide text-amber-900 shadow-sm">NABET Accredited</span>
+                <span className="block whitespace-nowrap font-sans text-sm font-semibold normal-case tracking-normal text-slate-500">
+                  Perumpilavu
+                </span>
+                <span className="block whitespace-nowrap rounded bg-amber-100 px-2 py-0.5 text-[11px] font-black uppercase leading-none tracking-wide text-amber-900 shadow-sm">
+                  NABET Accredited
+                </span>
               </div>
             </div>
           </Link>
@@ -76,38 +75,81 @@ export default function Navbar() {
           {/* Fluid Desktop Navigation */}
           <nav className="hidden lg:flex shrink-0 items-center gap-3 xl:gap-4">
             {[
-              { title: 'Home', path: '/' },
-              { title: 'About', path: '/about' },
-              { title: 'Academics', path: '/academics' },
-              { title: 'Admission', path: '/admission' },
-              { title: 'Ansar Sprouts', path: '/ansar-sprouts' },
-              { title: 'News', path: '/news' },
-              { title: 'Events', path: '/events' },
-              { title: 'Contact', path: '/contact' }
+              { title: "Home", path: "/" },
+              { title: "About", path: "/about" },
+              { title: "Academics", path: "/academics" },
+              { title: "Admission", path: "/admission" },
+              { title: "Ansar Sprouts", path: "/ansar-sprouts" },
+              { title: "News", path: "/news" },
+              { title: "Events", path: "/events" },
+              { title: "Contact", path: "/contact" },
             ].map((item) => (
-              <Link key={item.path} to={item.path} className="relative whitespace-nowrap text-sm font-bold text-slate-700 hover:text-amber-700 transition-colors py-2.5 group lg:text-base">
+              <Link
+                key={item.path}
+                to={item.path}
+                className="relative whitespace-nowrap text-sm font-bold text-slate-700 hover:text-amber-700 transition-colors py-2.5 group lg:text-base"
+              >
                 {item.title}
                 <span className="absolute bottom-0 left-0 w-0 h-0.5 bg-amber-700 transition-all duration-300 ease-out group-hover:w-full rounded-full"></span>
               </Link>
             ))}
 
-            {/* "More Options" Dropdown relocating the Login mechanism */}
+            {/* Activity and experiential learning pages */}
             <div className="relative">
               <button
                 onClick={() => setIsMoreOpen(!isMoreOpen)}
                 className="flex items-center gap-1 whitespace-nowrap text-sm font-bold text-slate-700 hover:text-amber-700 transition-colors py-2.5 lg:text-base"
               >
                 Explore
-                <svg className={`w-4 h-4 transition-transform duration-300 ${isMoreOpen ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7"></path></svg>
+                <svg
+                  className={`w-4 h-4 transition-transform duration-300 ${isMoreOpen ? "rotate-180" : ""}`}
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth="2"
+                    d="M19 9l-7 7-7-7"
+                  ></path>
+                </svg>
               </button>
 
               {isMoreOpen && (
                 <div className="absolute right-0 mt-4 w-64 bg-white/95 backdrop-blur-xl border border-slate-950/10 rounded-2xl shadow-2xl py-3 flex flex-col max-h-96 overflow-y-auto z-50 ring-1 ring-black/5">
-                  {explorePages.map(page => (
-                    <Link key={page.id || page.slug} to={`/${page.slug}`} onClick={() => setIsMoreOpen(false)} className="px-4 py-2 text-sm font-bold text-slate-700 hover:bg-amber-50 hover:text-amber-900 transition-colors">{page.title}</Link>
+                  {EXPLORE_LINKS.map((page) => (
+                    <Link
+                      key={page.slug}
+                      to={`/${page.slug}`}
+                      onClick={() => setIsMoreOpen(false)}
+                      className="px-4 py-2 text-sm font-bold text-slate-700 hover:bg-amber-50 hover:text-amber-900 transition-colors"
+                    >
+                      {page.title}
+                    </Link>
                   ))}
-                  <div className="border-t border-slate-950/5 my-1"></div>
-                  <Link to="/admin" className="px-4 py-2 text-sm font-bold text-amber-700 hover:bg-amber-50 transition-colors">Admin Login</Link>
+                  <div className="my-2 border-t border-slate-950/10" />
+                  <button
+                    type="button"
+                    onClick={scrollToFooter}
+                    className="flex items-center justify-between px-4 py-2 text-left text-sm font-bold text-amber-800 transition-colors hover:bg-amber-50"
+                  >
+                    More information
+                    <svg
+                      className="h-4 w-4"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                      aria-hidden="true"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth="2"
+                        d="m19 9-7 7-7-7"
+                      />
+                    </svg>
+                  </button>
                 </div>
               )}
             </div>
@@ -123,9 +165,33 @@ export default function Navbar() {
               onClick={() => setIsOpen(!isOpen)}
             >
               {isOpen ? (
-                <svg className="w-7 h-7" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
+                <svg
+                  className="w-7 h-7"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M6 18L18 6M6 6l12 12"
+                  />
+                </svg>
               ) : (
-                <svg className="w-7 h-7" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" /></svg>
+                <svg
+                  className="w-7 h-7"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M4 6h16M4 12h16M4 18h16"
+                  />
+                </svg>
               )}
             </button>
           </div>
@@ -136,22 +202,97 @@ export default function Navbar() {
       {isOpen && (
         <div className="absolute left-0 right-0 top-full z-50 max-h-[calc(100vh-5rem)] overflow-y-auto border-t border-slate-200 bg-white shadow-xl lg:hidden">
           <div className="grid w-full gap-1 px-4 py-4">
-            <Link to="/" onClick={() => setIsOpen(false)} className="block rounded-lg px-4 py-3 text-base font-bold text-slate-900 hover:bg-slate-100">Home</Link>
-            <Link to="/about" onClick={() => setIsOpen(false)} className="block rounded-lg px-4 py-3 text-base font-bold text-slate-900 hover:bg-slate-100">About Us</Link>
-            <Link to="/admission" onClick={() => setIsOpen(false)} className="block rounded-lg px-4 py-3 text-base font-bold text-slate-900 hover:bg-slate-100">Admissions</Link>
-            <Link to="/ansar-sprouts" onClick={() => setIsOpen(false)} className="block rounded-lg px-4 py-3 text-base font-bold text-slate-900 hover:bg-slate-100">Ansar Sprouts</Link>
-            <Link to="/academics" onClick={() => setIsOpen(false)} className="block rounded-lg px-4 py-3 text-base font-bold text-slate-900 hover:bg-slate-100">Academics</Link>
-            <Link to="/news" onClick={() => setIsOpen(false)} className="block rounded-lg px-4 py-3 text-base font-bold text-slate-900 hover:bg-slate-100">News</Link>
-            <Link to="/events" onClick={() => setIsOpen(false)} className="block rounded-lg px-4 py-3 text-base font-bold text-slate-900 hover:bg-slate-100">Events</Link>
-            {explorePages.map(page => (
-              <Link key={page.id || page.slug} to={`/${page.slug}`} onClick={() => setIsOpen(false)} className="block rounded-lg px-4 py-3 text-base font-bold text-slate-900 hover:bg-slate-100">{page.title}</Link>
+            <Link
+              to="/"
+              onClick={() => setIsOpen(false)}
+              className="block rounded-lg px-4 py-3 text-base font-bold text-slate-900 hover:bg-slate-100"
+            >
+              Home
+            </Link>
+            <Link
+              to="/about"
+              onClick={() => setIsOpen(false)}
+              className="block rounded-lg px-4 py-3 text-base font-bold text-slate-900 hover:bg-slate-100"
+            >
+              About Us
+            </Link>
+            <Link
+              to="/admission"
+              onClick={() => setIsOpen(false)}
+              className="block rounded-lg px-4 py-3 text-base font-bold text-slate-900 hover:bg-slate-100"
+            >
+              Admissions
+            </Link>
+            <Link
+              to="/ansar-sprouts"
+              onClick={() => setIsOpen(false)}
+              className="block rounded-lg px-4 py-3 text-base font-bold text-slate-900 hover:bg-slate-100"
+            >
+              Ansar Sprouts
+            </Link>
+            <Link
+              to="/academics"
+              onClick={() => setIsOpen(false)}
+              className="block rounded-lg px-4 py-3 text-base font-bold text-slate-900 hover:bg-slate-100"
+            >
+              Academics
+            </Link>
+            <Link
+              to="/news"
+              onClick={() => setIsOpen(false)}
+              className="block rounded-lg px-4 py-3 text-base font-bold text-slate-900 hover:bg-slate-100"
+            >
+              News
+            </Link>
+            <Link
+              to="/events"
+              onClick={() => setIsOpen(false)}
+              className="block rounded-lg px-4 py-3 text-base font-bold text-slate-900 hover:bg-slate-100"
+            >
+              Events
+            </Link>
+            {EXPLORE_LINKS.map((page) => (
+              <Link
+                key={page.slug}
+                to={`/${page.slug}`}
+                onClick={() => setIsOpen(false)}
+                className="block rounded-lg px-4 py-3 text-base font-bold text-slate-900 hover:bg-slate-100"
+              >
+                {page.title}
+              </Link>
             ))}
+            <button
+              type="button"
+              onClick={scrollToFooter}
+              className="flex items-center justify-between rounded-lg px-4 py-3 text-left text-base font-bold text-slate-900 hover:bg-slate-100"
+            >
+              More information
+              <svg
+                className="w-5 h-5"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+                aria-hidden="true"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth="2"
+                  d="m19 9-7 7-7-7"
+                />
+              </svg>
+            </button>
             <div className="mt-2 border-t border-slate-950/5 pt-2">
-              <Link to="/contact" onClick={() => setIsOpen(false)} className="block rounded-lg px-4 py-3 text-base font-bold text-amber-700 hover:bg-slate-100">Contact Us</Link>
+              <Link
+                to="/contact"
+                onClick={() => setIsOpen(false)}
+                className="block rounded-lg px-4 py-3 text-base font-bold text-amber-700 hover:bg-slate-100"
+              >
+                Contact Us
+              </Link>
               <div className="mt-2 border-t border-slate-950/5 pt-2">
                 <NotificationsBell />
               </div>
-              <Link to="/admin" onClick={() => setIsOpen(false)} className="block rounded-lg px-4 py-3 text-base font-bold text-amber-700 hover:bg-slate-100">Admin Login</Link>
             </div>
           </div>
         </div>
@@ -159,4 +300,3 @@ export default function Navbar() {
     </header>
   );
 }
-

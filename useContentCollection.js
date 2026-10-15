@@ -132,8 +132,13 @@ function coerceRow(row, collectionName, rowIndex) {
     instagramurl: 'instagramUrl',
     youtubeurl: 'youtubeUrl',
     pdfurl: 'pdfUrl',
-    drivelink: 'driveLink',
-    googledrivelink: 'driveLink'
+    // Google Sheets header labels are normalized to lowercase. Keep the Forms
+    // data model on driveUrl regardless of whether a legacy sheet calls its
+    // column Drive Link, Google Drive Link, or Drive URL.
+    driveurl: 'driveUrl',
+    drivelink: 'driveUrl',
+    googledrivelink: 'driveUrl',
+    googledriveurl: 'driveUrl'
   };
 
   const item = {};
