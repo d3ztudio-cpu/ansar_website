@@ -84,6 +84,7 @@ const SHEET_COLUMNS = {
     'imageUrls3',
     'imageUrls4',
     'order',
+    'isFieldTrip',
     'published'
   ],
   contactSubmissions: [
@@ -919,6 +920,7 @@ function normalizeRecord_(collectionName, record) {
 
   if (collectionName === 'sproutsActivities') {
     item.category = item.category || 'Sprouts Activity';
+    item.isFieldTrip = item.isFieldTrip === true || String(item.isFieldTrip || '').toLowerCase() === 'true';
     splitLargeImageList_(item, 'imageUrls');
   }
 

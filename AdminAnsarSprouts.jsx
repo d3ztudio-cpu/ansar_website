@@ -9,7 +9,7 @@ import { deleteSheetRecord, saveSheetRecord } from './googleSheetsAdminApi';
 import AdminSproutsFacilities from './AdminSproutsFacilities';
 
 const MAX_IMAGES = 30;
-const EMPTY_ACTIVITY = { title: '', category: '', date: '', description: '', imageUrls: [''], order: 0, published: true };
+const EMPTY_ACTIVITY = { title: '', category: '', date: '', description: '', imageUrls: [''], order: 0, published: true, isFieldTrip: false };
 
 export default function AdminAnsarSprouts() {
   const { data, loading } = useContentDocument('pages', 'ansar-sprouts');
@@ -72,7 +72,7 @@ export default function AdminAnsarSprouts() {
   const refreshActivities = () => { clearGoogleSheetsCache(); setRefreshKey(value => value + 1); };
   const editActivity = item => {
     setEditingActivityId(item.id);
-    setActivity({ title: item.title || '', category: item.category || '', date: item.date || '', description: item.description || '', imageUrls: item.imageUrls?.length ? item.imageUrls : [''], order: item.order || 0, published: item.published !== false });
+    setActivity({ title: item.title || '', category: item.category || '', date: item.date || '', description: item.description || '', imageUrls: item.imageUrls?.length ? item.imageUrls : [''], order: item.order || 0, published: item.published !== false, isFieldTrip: item.isFieldTrip === true || String(item.isFieldTrip).toLowerCase() === 'true' || /^field\s*trips?$/i.test(String(item.category || '').trim()) });
     window.scrollTo({ top: document.body.scrollHeight / 3, behavior: 'smooth' });
   };
   const saveActivity = async event => {
@@ -80,7 +80,8 @@ export default function AdminAnsarSprouts() {
     setSavingActivity(true);
     try {
       const imageUrls = [...new Set(activity.imageUrls.map(normalizeImageUrl).filter(Boolean))].slice(0, MAX_IMAGES);
-      await saveSheetRecord('sproutsActivities', { ...activity, id: editingActivityId || undefined, title: activity.title.trim(), category: activity.category.trim() || 'Sprouts Activity', description: activity.description.trim(), imageUrls, order: Number(activity.order) || 0, published: !!activity.published });
+      const category = activity.isFieldTrip ? 'Field Trip' : (/^field\s*trips?$/i.test(activity.category.trim()) ? 'Sprouts Activity' : (activity.category.trim() || 'Sprouts Activity'));
+      await saveSheetRecord('sproutsActivities', { ...activity, id: editingActivityId || undefined, title: activity.title.trim(), category, description: activity.description.trim(), imageUrls, order: Number(activity.order) || 0, published: !!activity.published, isFieldTrip: !!activity.isFieldTrip });
       resetActivity();
       refreshActivities();
       alert('Sprouts activity saved to Google Sheets.');
@@ -146,7 +147,7 @@ export default function AdminAnsarSprouts() {
     <div className="mt-5 flex flex-wrap items-center justify-between gap-3"><div><h3 className="font-extrabold text-slate-900">Activity images</h3><p className="text-sm text-slate-500">The first image is the article cover; all images rotate in its carousel.</p></div><ImgBbUrlImporter multiple label="Extract Multiple ImgBB URLs" onExtracted={appendActivityImages} /></div>
     <div className="mt-4 space-y-3">{activity.imageUrls.map((url, index) => <div key={index} className="flex gap-2"><input type="url" value={url} onChange={event => setActivity(current => ({ ...current, imageUrls: current.imageUrls.map((image, imageIndex) => imageIndex === index ? event.target.value : image) }))} placeholder={`Activity image ${index + 1}`} className="min-w-0 flex-1 rounded-xl border border-slate-200 p-3 outline-none focus:ring-2 focus:ring-emerald-500" /><button type="button" onClick={() => setActivity(current => ({ ...current, imageUrls: current.imageUrls.length === 1 ? [''] : current.imageUrls.filter((_, imageIndex) => imageIndex !== index) }))} className="rounded-xl px-4 font-bold text-red-600 hover:bg-red-50">Remove</button></div>)}</div>
     <button type="button" onClick={() => setActivity(current => current.imageUrls.length < MAX_IMAGES ? ({ ...current, imageUrls: [...current.imageUrls, ''] }) : current)} className="mt-4 rounded-xl border border-emerald-200 px-4 py-2 text-sm font-bold text-emerald-700">+ Add image</button>
-    <div className="mt-6 flex flex-wrap items-center justify-between gap-4 border-t border-slate-100 pt-6"><label className="flex items-center gap-2 font-bold text-slate-700"><input type="checkbox" name="published" checked={activity.published} onChange={updateActivityField} className="h-5 w-5" /> Published</label><div className="flex gap-3">{editingActivityId && <button type="button" onClick={resetActivity} className="rounded-xl px-5 py-3 font-bold text-slate-600">Cancel</button>}<button type="submit" disabled={savingActivity} className="rounded-xl bg-emerald-700 px-6 py-3 font-bold text-white disabled:opacity-50">{savingActivity ? 'Saving...' : 'Save Activity to Google Sheets'}</button></div></div>
+    <div className="mt-6 flex flex-wrap items-center justify-between gap-4 border-t border-slate-100 pt-6"><div className="space-y-2"><label className="flex items-center gap-2 font-bold text-slate-700"><input type="checkbox" name="published" checked={activity.published} onChange={updateActivityField} className="h-5 w-5" /> Published</label><label className="flex items-center gap-2 font-bold text-emerald-700"><input type="checkbox" name="isFieldTrip" checked={activity.isFieldTrip} onChange={updateActivityField} className="h-5 w-5" /> Show on the Field Trips page</label><p className="pl-7 text-xs text-slate-500">Use this for Sprouts visits and educational journeys.</p></div><div className="flex gap-3">{editingActivityId && <button type="button" onClick={resetActivity} className="rounded-xl px-5 py-3 font-bold text-slate-600">Cancel</button>}<button type="submit" disabled={savingActivity} className="rounded-xl bg-emerald-700 px-6 py-3 font-bold text-white disabled:opacity-50">{savingActivity ? 'Saving...' : 'Save Activity to Google Sheets'}</button></div></div>
   </form>
 
   <section className="space-y-3"><h2 className="text-xl font-extrabold text-slate-900">Sprouts activity articles</h2>{activitiesLoading ? <p className="text-slate-500">Loading from Google Sheets...</p> : activities.length ? activities.map(item => <article key={item.id} className="flex flex-col gap-4 rounded-xl border border-slate-100 bg-white p-4 shadow-sm sm:flex-row sm:items-center"><div className="h-20 w-28 flex-none overflow-hidden rounded-lg bg-amber-50">{item.imageUrls?.[0] && <img src={item.imageUrls[0]} alt="" className="h-full w-full object-cover" />}</div><div className="min-w-0 flex-1"><p className="text-xs font-extrabold uppercase text-orange-600">{item.category || 'Sprouts Activity'}</p><h3 className="truncate font-extrabold text-slate-900">{item.title}</h3><p className="text-sm text-slate-500">{item.date || 'No date'} · {item.published === false ? 'Draft' : 'Published'}</p></div><div className="flex gap-2"><button type="button" onClick={() => editActivity(item)} className="rounded-lg px-3 py-2 font-bold text-emerald-700">Edit</button><button type="button" onClick={() => removeActivity(item)} className="rounded-lg px-3 py-2 font-bold text-red-600">Delete</button></div></article>) : <p className="rounded-xl bg-white p-6 text-slate-500">No Sprouts activities have been added yet.</p>}</section>
