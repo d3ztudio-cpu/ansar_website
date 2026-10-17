@@ -1,11 +1,9 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { addDoc, collection, doc, serverTimestamp, setDoc, updateDoc } from 'firebase/firestore';
+import { addDoc, collection, deleteDoc, doc, serverTimestamp, setDoc, updateDoc } from 'firebase/firestore';
 import { db } from './firebase-init';
 import { useFirestoreCollection } from './useFirestoreCollection';
 import ImgBbUrlImporter from './ImgBbUrlImporter';
-import { softDeleteRecord } from './adminUndo';
 import { normalizeImageUrl } from './imageUrlUtils';
-import { Link } from 'react-router-dom';
 
 const DEFAULT_SETTINGS = {
   title: 'Ansar English School Library',
@@ -106,9 +104,9 @@ export default function AdminLibrary() {
   };
 
   const removePost = async (item) => {
-    if (!window.confirm(`Delete “${item.title}”? You can restore it from the Undo Centre for 15 minutes.`)) return;
+    if (!window.confirm(`Delete “${item.title}”? This cannot be undone.`)) return;
     try {
-      await softDeleteRecord('libraryPosts', item);
+      await deleteDoc(doc(db, 'libraryPosts', item.id));
     } catch (error) {
       alert(`Could not delete this post: ${error.message}`);
     }
@@ -118,10 +116,6 @@ export default function AdminLibrary() {
 
   return (
     <div className="mx-auto max-w-6xl space-y-8">
-      <div className="rounded-2xl bg-gradient-to-r from-indigo-700 to-cyan-600 p-6 text-white shadow-lg sm:p-8">
-        <p className="text-xs font-black uppercase tracking-[0.18em] text-cyan-100">New interactive module</p>
-        <div className="mt-2 flex flex-wrap items-center justify-between gap-5"><div><h2 className="text-2xl font-extrabold">Library Quiz Corner</h2><p className="mt-2 max-w-2xl text-indigo-100">Create quizzes from Google files, run live sessions, monitor violations, unlock students, and export ranked results.</p></div><Link to="/admin/library/quiz" className="rounded-xl bg-white px-5 py-3 font-black text-indigo-700">Open quiz control room →</Link></div>
-      </div>
       <div className="rounded-2xl border border-emerald-100 bg-emerald-50 p-6 sm:p-8">
         <p className="text-xs font-black uppercase tracking-[0.18em] text-emerald-700">Library content manager</p>
         <h2 className="mt-2 text-2xl font-extrabold text-slate-900">Manage the Library page</h2>

@@ -8,10 +8,41 @@ import ShareButton from './ShareButton';
 export const FIELD_TRIP_SECTIONS = ['Ansar Sprouts', 'LP Section', 'Primary Section', 'Middle Section', 'Secondary Section', 'Senior Secondary Section', 'General'];
 const FIELD_TRIPS_SHARE_ORIGIN = 'https://ansarschool.in';
 
+function isTrue(value) {
+  return value === true || String(value).trim().toLowerCase() === 'true';
+}
+
+function isFieldTripCategory(activity) {
+  return /^field\s*trips?$/i.test(String(activity.category || '').trim());
+}
+
+function isLegacySproutsFieldTrip(activity) {
+  // These two visits were published before the Field Trips option existed.
+  return /\b(field|farm|paddy)\s+visit\b/i.test(String(activity.title || ''));
+}
+
+function toSproutsTrip(activity) {
+  return {
+    ...activity,
+    id: `sprouts-${activity.id}`,
+    section: 'Ansar Sprouts',
+    destination: activity.destination || '',
+    articlePath: `/field-trips/sprouts-${activity.id}`
+  };
+}
+
 export default function FieldTrips() {
   const { data, loading } = useContentCollection('fieldTrips', null, 'desc', { firestoreOnly: true });
+  const { data: sproutsActivities, loading: sproutsActivitiesLoading } = useContentCollection('sproutsActivities', 'date', 'desc', { sheetsOnly: true });
   const [section, setSection] = useState('All');
-  const trips = useMemo(() => data.filter(item => item.published !== false).sort((a, b) => String(b.date || '').localeCompare(String(a.date || ''))), [data]);
+  const trips = useMemo(() => {
+    const sproutsTrips = sproutsActivities
+      .filter(activity => activity.published !== false && (isTrue(activity.isFieldTrip) || isFieldTripCategory(activity) || isLegacySproutsFieldTrip(activity)))
+      .map(toSproutsTrip);
+    return [...data, ...sproutsTrips]
+      .filter(item => item.published !== false)
+      .sort((a, b) => String(b.date || '').localeCompare(String(a.date || '')));
+  }, [data, sproutsActivities]);
   const availableSections = FIELD_TRIP_SECTIONS.filter(item => trips.some(trip => trip.section === item));
   const filterTabs = ['All', ...availableSections];
   useEffect(() => { if (!filterTabs.includes(section)) setSection('All'); }, [filterTabs, section]);
@@ -32,7 +63,7 @@ export default function FieldTrips() {
           {filterTabs.map(item => <button key={item} type="button" onClick={() => setSection(item)} className={`rounded-full px-4 py-2 text-sm font-bold transition ${section === item ? 'bg-emerald-700 text-white shadow' : 'bg-white text-slate-600 ring-1 ring-slate-200 hover:bg-emerald-50'}`}>{item}</button>)}
         </div>
 
-        {loading ? <p className="py-20 text-center font-bold text-slate-500">Loading field trips...</p> : visibleTrips.length ? <div className="mt-10 grid gap-8 md:grid-cols-2 lg:grid-cols-3">
+        {loading || sproutsActivitiesLoading ? <p className="py-20 text-center font-bold text-slate-500">Loading field trips...</p> : visibleTrips.length ? <div className="mt-10 grid gap-8 md:grid-cols-2 lg:grid-cols-3">
           {visibleTrips.map(trip => <article key={trip.id} className="overflow-hidden rounded-2xl border border-slate-100 bg-white shadow-lg">
             <div className="aspect-[16/10] bg-slate-100">{trip.coverImageUrl || trip.imageUrls?.[0] ? <img src={trip.coverImageUrl || trip.imageUrls[0]} alt="" className="h-full w-full object-cover" loading="lazy" /> : <div className="flex h-full items-center justify-center px-6 text-center text-sm font-bold text-slate-500">Cover image coming soon</div>}</div>
             <div className="flex h-full flex-col p-6">
@@ -42,7 +73,7 @@ export default function FieldTrips() {
               </div>
               <h2 className="mt-4 text-2xl font-extrabold text-slate-900 sm:text-3xl">{trip.title}</h2>
               {trip.destination && <p className="mt-2 text-sm font-bold text-amber-700">Destination: {trip.destination}</p>}
-              <div className="mt-6 flex flex-wrap gap-3"><Link to={`/field-trips/${trip.id}`} className="inline-flex items-center justify-center rounded-lg bg-emerald-700 px-4 py-2.5 text-sm font-bold text-white transition hover:bg-emerald-800">Read more</Link><ShareButton url={`${FIELD_TRIPS_SHARE_ORIGIN}/field-trips/${trip.id}`} title={`${trip.title} | Ansar Field Trips`} text={`Explore ${trip.title} from Ansar English School.`} className="border border-emerald-200 px-4 py-2.5 text-sm text-emerald-800 hover:bg-emerald-50" /></div>
+              <div className="mt-6 flex flex-wrap gap-3"><Link to={trip.articlePath || `/field-trips/${trip.id}`} className="inline-flex items-center justify-center rounded-lg bg-emerald-700 px-4 py-2.5 text-sm font-bold text-white transition hover:bg-emerald-800">Read more</Link><ShareButton url={`${FIELD_TRIPS_SHARE_ORIGIN}${trip.articlePath || `/field-trips/${trip.id}`}`} title={`${trip.title} | Ansar Field Trips`} text={`Explore ${trip.title} from Ansar English School.`} className="border border-emerald-200 px-4 py-2.5 text-sm text-emerald-800 hover:bg-emerald-50" /></div>
             </div>
           </article>)}
         </div> : <div className="mt-10 rounded-2xl border-2 border-dashed border-slate-200 bg-white py-20 text-center"><h2 className="text-xl font-extrabold text-slate-800">No field trips in this category yet</h2><p className="mt-2 text-slate-500">New educational journeys will appear here after they are published.</p></div>}

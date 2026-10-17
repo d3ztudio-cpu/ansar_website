@@ -142,6 +142,9 @@ const ADMIN_EMAILS = [
   "aesmedia2025@gmail.com",
 ];
 const SPROUTS_ADMIN_EMAIL = "sprouts@ansar.in";
+// This account is intentionally *not* part of ADMIN_EMAILS. It is allowed into
+// the portal, but its routes and Firestore permissions are limited to Library.
+const LIBRARY_ADMIN_EMAIL = "aeslibrary@ansarschool.in";
 const ADMIN_GOOGLE_REDIRECT_KEY = "ansar:admin-google-redirect";
 let authServices = null;
 let authServicesPromise = null;
@@ -150,9 +153,12 @@ function isAuthorizedAdmin(email) {
   const normalizedEmail = String(email || "")
     .trim()
     .toLowerCase();
+  const isAnsaSchoolEmail = normalizedEmail.endsWith("@ansarschool.in") || normalizedEmail.endsWith("@ansar.in");
   return (
     ADMIN_EMAILS.includes(normalizedEmail) ||
-    normalizedEmail === SPROUTS_ADMIN_EMAIL
+    normalizedEmail === SPROUTS_ADMIN_EMAIL ||
+    normalizedEmail === LIBRARY_ADMIN_EMAIL ||
+    isAnsaSchoolEmail
   );
 }
 
@@ -2293,6 +2299,8 @@ export default function App() {
   const [deniedEmail, setDeniedEmail] = useState(null);
   const isSproutsAdmin =
     String(user?.email || "").toLowerCase() === SPROUTS_ADMIN_EMAIL;
+  const isLibraryAdmin =
+    String(user?.email || "").toLowerCase() === LIBRARY_ADMIN_EMAIL;
 
   const handleDenied = (email) => setDeniedEmail(email || "your account");
   const handleAdminRouteChange = useCallback((nextIsAdminRoute) => {
@@ -2504,6 +2512,7 @@ export default function App() {
                       user={user}
                       onLogout={handleSignOut}
                       sproutsOnly={isSproutsAdmin}
+                      libraryOnly={isLibraryAdmin}
                     >
                       <Routes>
                         {isSproutsAdmin ? (
@@ -2523,6 +2532,18 @@ export default function App() {
                               element={
                                 <Navigate to="/admin/ansar-sprouts" replace />
                               }
+                            />
+                          </>
+                        ) : isLibraryAdmin ? (
+                          <>
+                            <Route
+                              path="/"
+                              element={<Navigate to="/admin/library" replace />}
+                            />
+                            <Route path="/library" element={<AdminLibrary />} />
+                            <Route
+                              path="*"
+                              element={<Navigate to="/admin/library" replace />}
                             />
                           </>
                         ) : (

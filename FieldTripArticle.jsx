@@ -3,7 +3,7 @@ import { Link, useParams } from 'react-router-dom';
 import { AnimatePresence, motion } from 'framer-motion';
 import Layout from './Layout';
 import ShareButton from './ShareButton';
-import { useContentDocument } from './useContentCollection';
+import { useContentCollection, useContentDocument } from './useContentCollection';
 import { formatDisplayDate } from './dateUtils';
 import { applySeoMetadata, createMetaDescription } from './seoUtils';
 
@@ -25,7 +25,12 @@ function TripCarousel({ trip }) {
 
 export default function FieldTripArticle() {
   const { id } = useParams();
-  const { data: trip, loading } = useContentDocument('fieldTrips', id);
+  const legacySproutsId = id.startsWith('sprouts-') ? id.slice('sprouts-'.length) : '';
+  const { data: savedTrip, loading: savedTripLoading } = useContentDocument('fieldTrips', id);
+  const { data: sproutsActivities, loading: sproutsLoading } = useContentCollection('sproutsActivities', 'date', 'desc', { sheetsOnly: true });
+  const sproutsActivity = legacySproutsId ? sproutsActivities.find(activity => activity.id === legacySproutsId) : null;
+  const trip = sproutsActivity ? { ...sproutsActivity, id, section: 'Ansar Sprouts', destination: /paddy\s+field/i.test(`${sproutsActivity.title || ''} ${sproutsActivity.description || ''}`) ? 'Paddy Field' : '', coverImageUrl: sproutsActivity.imageUrls?.[0] || '' } : savedTrip;
+  const loading = legacySproutsId ? sproutsLoading : savedTripLoading;
   const shareUrl = `${FIELD_TRIPS_SHARE_ORIGIN}/field-trips/${id}`;
   useEffect(() => {
     if (loading) return;

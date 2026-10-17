@@ -42,8 +42,10 @@ function SproutIcon({ name, className = 'h-10 w-10' }) {
 
 function SproutsActivityCard({ activity, index }) {
   const images = Array.isArray(activity.imageUrls) ? activity.imageUrls.filter(Boolean) : [];
+  const isFieldTrip = activity.isFieldTrip === true || String(activity.isFieldTrip).toLowerCase() === 'true' || /^field\s*trips?$/i.test(String(activity.category || '').trim()) || /\b(field|farm|paddy)\s+visit\b/i.test(String(activity.title || ''));
+  const articlePath = isFieldTrip ? `/field-trips/sprouts-${encodeURIComponent(activity.id)}` : `/ansar-sprouts/activities/${encodeURIComponent(activity.id)}`;
   return <motion.article initial={{ opacity: 0, y: 28 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true, amount: 0.18 }} transition={{ delay: Math.min(index * 0.05, 0.25) }} className="group overflow-hidden rounded-[2rem] border border-slate-100 bg-white shadow-lg transition hover:-translate-y-1 hover:shadow-2xl">
-    <Link to={`/ansar-sprouts/activities/${encodeURIComponent(activity.id)}`} className="block h-full">
+    <Link to={articlePath} className="block h-full">
     <div className="relative aspect-[4/3] overflow-hidden bg-slate-100">
       {images.length ? <img src={images[0]} alt={activity.title} className="absolute inset-0 h-full w-full object-cover transition duration-700 group-hover:scale-105" loading="lazy" /> : <div className="absolute inset-0 flex items-center justify-center bg-[#fbad18]/10 text-[#fbad18]"><SproutIcon name="art" className="h-20 w-20" /></div>}
       {images.length > 1 && <span className="absolute bottom-3 right-3 rounded-full bg-slate-950/75 px-3 py-1.5 text-xs font-black text-white">{images.length} photos</span>}
@@ -137,6 +139,8 @@ export default function AnsarSprouts() {
   const settings = useSettings();
   const { data } = useContentDocument('pages', 'ansar-sprouts');
   const { data: sproutsActivities, loading: activitiesLoading } = useContentCollection('sproutsActivities', 'date', 'desc', { sheetsOnly: true });
+  const { data: fieldTrips, loading: fieldTripsLoading } = useContentCollection('fieldTrips', null, 'desc', { firestoreOnly: true });
+  const sproutsFieldTrips = fieldTrips.filter(trip => trip.published !== false && trip.section === 'Ansar Sprouts').sort((a, b) => String(b.date || '').localeCompare(String(a.date || '')));
   const images = Array.isArray(data?.sproutsImages) && data.sproutsImages.length ? data.sproutsImages : DEFAULT_SPROUTS_IMAGES;
   const facilities = data?.sproutsFacilities && data.sproutsFacilities.length
     ? data.sproutsFacilities
@@ -552,6 +556,7 @@ export default function AnsarSprouts() {
             </div>
               <div className="text-center"><motion.div animate={{ y: [0, -10, 0], rotate: [-3, 3, -3] }} transition={{ duration: 4, repeat: Infinity }}><SproutIcon name="bus" className="mx-auto h-24 w-24 text-[#4f1f71]" /></motion.div><Link to="/field-trips" className="mt-5 inline-flex rounded-full bg-[#4f1f71] px-7 py-3.5 font-black text-white shadow-lg transition hover:-translate-y-1 hover:bg-[#3d1758]">Explore Field Trips</Link></div>
           </div>
+          {fieldTripsLoading ? <p className="mt-8 text-center font-bold text-slate-500">Loading Sprouts field trips...</p> : sproutsFieldTrips.length ? <div className="mt-8 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">{sproutsFieldTrips.map(trip => <Link key={trip.id} to={`/field-trips/${trip.id}`} className="group overflow-hidden rounded-3xl bg-white shadow-lg transition hover:-translate-y-1"><div className="aspect-[16/10] bg-slate-100">{trip.coverImageUrl || trip.imageUrls?.[0] ? <img src={trip.coverImageUrl || trip.imageUrls[0]} alt="" className="h-full w-full object-cover" /> : null}</div><div className="p-5"><p className="text-xs font-black uppercase tracking-wider text-emerald-700">Field Trip {trip.date ? `· ${trip.date}` : ''}</p><h3 className="mt-2 text-xl font-black text-[#4f1f71]">{trip.title}</h3>{trip.destination && <p className="mt-2 text-sm font-bold text-amber-700">Destination: {trip.destination}</p>}<span className="mt-4 inline-flex font-black text-emerald-700">Read full story →</span></div></Link>)}</div> : null}
         </section>
 
         <section className="mx-auto max-w-6xl px-4 py-20">

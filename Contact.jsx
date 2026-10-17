@@ -50,7 +50,10 @@ const CONTACT_CHANNELS = [
 
 const DESTINATIONS = ['School', 'Ansar Sprouts'];
 const CATEGORIES = ['Admission Query', 'General Information', 'Complaint', 'Suggestion', 'Other Queries'];
-const CLASS_OPTIONS = Array.from({ length: 12 }, (_, index) => `Class ${index + 1}`);
+// Classes X and XII do not accept enquiries through this form.
+const SCHOOL_CLASS_OPTIONS = Array.from({ length: 12 }, (_, index) => `Class ${index + 1}`)
+  .filter((className) => className !== 'Class 10' && className !== 'Class 12');
+const SPROUTS_CLASS_OPTIONS = ['Pre-KG', 'Junior KG', 'Senior KG'];
 
 export default function Contact() {
   const schoolPhone = '8129808051';
@@ -70,11 +73,19 @@ export default function Contact() {
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const isCustomerCareCategory = formData.category === 'Complaint' || formData.category === 'Suggestion';
-  const showClassSelection = !isCustomerCareCategory && formData.destination === 'School';
+  const showClassSelection = !isCustomerCareCategory;
+  const classOptions = formData.destination === 'Ansar Sprouts'
+    ? SPROUTS_CLASS_OPTIONS
+    : SCHOOL_CLASS_OPTIONS;
 
   const handleChange = (e) => {
     const { name, value } = e.target;
-    setFormData(prev => ({ ...prev, [name]: value }));
+    setFormData(prev => ({
+      ...prev,
+      [name]: value,
+      // A selection from the previous destination must not be submitted.
+      ...(name === 'destination' ? { applyingForClass: '' } : {})
+    }));
   };
 
   const getIndiaDate = () => new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Kolkata' });
@@ -290,10 +301,10 @@ ${formData.message}`;
               )}
               {showClassSelection && (
                 <div>
-                  <label htmlFor="contact-class" className="mb-2 block text-sm font-bold text-slate-700">Class Applying For (1 - 12) *</label>
+                  <label htmlFor="contact-class" className="mb-2 block text-sm font-bold text-slate-700">Class Applying For *</label>
                   <select id="contact-class" name="applyingForClass" value={formData.applyingForClass} onChange={handleChange} required className="w-full appearance-none rounded-lg border border-slate-200 bg-slate-50 p-3 outline-none transition-colors focus:bg-white focus:ring-2 focus:ring-emerald-500">
                     <option value="" disabled>Select Class</option>
-                    {CLASS_OPTIONS.map(option => <option key={option} value={option}>{option}</option>)}
+                    {classOptions.map(option => <option key={option} value={option}>{option}</option>)}
                   </select>
                 </div>
               )}

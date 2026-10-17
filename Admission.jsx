@@ -349,29 +349,38 @@ export default function Admission() {
               </div>
             </div>
 
+            <div className="bg-slate-900 p-8 rounded-3xl shadow-xl text-white academics-card">
+              <h2 className="text-xl font-bold mb-6 text-emerald-400">Eligibility by Class and Age</h2>
+              <div className="overflow-x-auto">
+                <table className="w-full text-left text-sm">
+                  <thead>
+                    <tr className="border-b border-slate-700">
+                      <th className="pb-3 font-bold text-emerald-300">Class</th>
+                      <th className="pb-3 font-bold text-emerald-300">Minimum Age</th>
+                    </tr>
+                  </thead>
+                  <tbody className="text-slate-300">
+                    <tr className="border-b border-slate-700/60"><td className="pb-3 font-semibold text-slate-100">Pre KG</td><td className="pb-3 font-bold text-slate-100">3</td></tr>
+                    <tr className="border-b border-slate-700/60"><td className="pb-3 font-semibold text-slate-100">Jr. KG</td><td className="pb-3 font-bold text-slate-100">4</td></tr>
+                    <tr className="border-b border-slate-700/60"><td className="pb-3 font-semibold text-slate-100">Sr. KG</td><td className="pb-3 font-bold text-slate-100">5</td></tr>
+                    <tr><td className="pb-3 font-semibold text-slate-100">Std. I</td><td className="pb-3 font-bold text-slate-100">6</td></tr>
+                  </tbody>
+                </table>
+                <p className="mt-3 text-xs text-slate-400 italic">*Age computed as of June 1st of the academic year.</p>
+              </div>
+            </div>
+
             <div className="bg-white p-8 sm:p-10 rounded-3xl shadow-sm border border-slate-100 academics-card">
-              <h2 className="text-2xl font-bold text-slate-900 mb-6">Documentation Checklist</h2>
+              <h2 className="text-2xl font-bold text-slate-900 mb-6">Documentation Required for Admission</h2>
               <ul className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <li className="flex items-start gap-3"><svg className="w-6 h-6 text-emerald-500 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7"></path></svg><span className="text-slate-600">Original Birth Certificate (with photocopy)</span></li>
-                <li className="flex items-start gap-3"><svg className="w-6 h-6 text-emerald-500 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7"></path></svg><span className="text-slate-600">Three recent passport-sized photos</span></li>
-                <li className="flex items-start gap-3"><svg className="w-6 h-6 text-emerald-500 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7"></path></svg><span className="text-slate-600">Transfer Certificate (TC) <em>(AEO/DEO Countersigned if required)</em></span></li>
-                <li className="flex items-start gap-3"><svg className="w-6 h-6 text-emerald-500 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7"></path></svg><span className="text-slate-600">Latest Progress Report from previous year</span></li>
+                <li className="flex items-start gap-3"><svg className="w-6 h-6 text-emerald-500 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7"></path></svg><span className="text-slate-600"><strong>KG &amp; Std. I</strong> — Copy of the Birth Certificate &amp; Copy of the Aadhaar Card. Also 4 passport size photos.</span></li>
+                <li className="flex items-start gap-3"><svg className="w-6 h-6 text-emerald-500 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7"></path></svg><span className="text-slate-600"><strong>Std. II to Std. IX</strong> — Transfer Certificate (TC) from a recognised school, Copy of the Birth Certificate, Copy of the Aadhaar Card and Passport Size Photo.</span></li>
+                <li className="flex items-start gap-3"><svg className="w-6 h-6 text-emerald-500 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7"></path></svg><span className="text-slate-600"><strong>Std. XI</strong> — Attested copy of the Std. X Mark List, Transfer Certificate (TC), Conduct Certificate (CC), Copy of the Aadhaar Card and Passport Size Photo.</span></li>
               </ul>
             </div>
           </div>
 
-          <div className="space-y-8">
-            <div className="bg-slate-900 p-8 rounded-3xl shadow-xl text-white academics-card">
-              <h2 className="text-xl font-bold mb-6 text-emerald-400">Eligibility Criteria</h2>
-              <div className="space-y-4">
-                <div className="flex justify-between items-center border-b border-slate-700 pb-3"><span>LKG</span><span className="font-bold bg-slate-800 px-3 py-1 rounded text-sm">3½+ Years</span></div>
-                <div className="flex justify-between items-center border-b border-slate-700 pb-3"><span>UKG</span><span className="font-bold bg-slate-800 px-3 py-1 rounded text-sm">4½+ Years</span></div>
-                <div className="flex justify-between items-center pb-1"><span>Class I</span><span className="font-bold bg-slate-800 px-3 py-1 rounded text-sm">5½+ Years</span></div>
-                <p className="text-xs text-slate-400 italic mt-4">*Age computed as of June 1st of the academic year.</p>
-              </div>
-            </div>
-
-            <div className="bg-emerald-50 p-8 rounded-3xl shadow-sm border border-emerald-100 academics-card text-center">
+          <div className="space-y-8">              <div className="bg-emerald-50 p-8 rounded-3xl shadow-sm border border-emerald-100 academics-card text-center">
               <div className="w-16 h-16 mx-auto bg-emerald-100 text-emerald-600 rounded-full flex items-center justify-center mb-4">
                 <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
               </div>

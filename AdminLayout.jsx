@@ -3,7 +3,7 @@ import { Link, useLocation } from 'react-router-dom';
 import AdminFieldUndo from './AdminFieldUndo';
 import AdminUndoCenter from './AdminUndoCenter';
 
-export default function AdminLayout({ children, user, onLogout, sproutsOnly = false }) {
+export default function AdminLayout({ children, user, onLogout, sproutsOnly = false, libraryOnly = false }) {
   const [isSidebarOpen, setSidebarOpen] = useState(false);
   const [now, setNow] = useState(() => new Date());
   const location = useLocation();
@@ -79,6 +79,8 @@ export default function AdminLayout({ children, user, onLogout, sproutsOnly = fa
         <nav className="flex-1 overflow-y-auto p-4 space-y-1">
           {sproutsOnly ? (
           <Link to="/admin/ansar-sprouts" className="block rounded-lg bg-orange-500 px-4 py-3 font-medium text-white"><span className="mr-3" aria-hidden="true">🌱</span>Ansar Sprouts</Link>
+          ) : libraryOnly ? (
+          <Link to="/admin/library" className="block rounded-lg bg-emerald-600 px-4 py-3 font-medium text-white">Library</Link>
           ) : <>
           <Link to="/admin/analytics" className={`block px-4 py-3 rounded-lg font-medium transition-colors ${currentModule === 'Analytics & SEO' ? 'bg-emerald-600 text-white' : 'text-slate-300 hover:bg-slate-800 hover:text-white'}`}><span className="mr-3" aria-hidden="true">↗</span>Analytics & SEO</Link>
           <Link to="/admin/dashboard" className={`block px-4 py-3 rounded-lg font-medium transition-colors ${currentModule === 'Dashboard' ? 'bg-emerald-600 text-white' : 'text-slate-300 hover:bg-slate-800 hover:text-white'}`}><span className="mr-3" aria-hidden="true">▦</span>Dashboard</Link>
@@ -147,8 +149,8 @@ export default function AdminLayout({ children, user, onLogout, sproutsOnly = fa
           </div>
         </main>
       </div>
-      {!sproutsOnly && <AdminFieldUndo />}
-      {!sproutsOnly && <AdminUndoCenter />}
+      {!sproutsOnly && !libraryOnly && <AdminFieldUndo />}
+      {!sproutsOnly && !libraryOnly && <AdminUndoCenter />}
     </div>
   );
 }
