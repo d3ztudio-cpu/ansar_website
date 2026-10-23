@@ -123,6 +123,11 @@ function coerceRow(row, collectionName, rowIndex) {
     eventimages3: 'eventImages3',
     eventimages4: 'eventImages4',
     galleryimages: 'galleryImages',
+    // `normalizeHeader` preserves camel case only when a Sheet heading uses
+    // spaces or punctuation. Headings such as outdoorGymDescription become
+    // fully lowercase, so explicitly restore the public data-model names.
+    outdoorgymtitle: 'outdoorGymTitle',
+    outdoorgymdescription: 'outdoorGymDescription',
     outdoorgymimageurls: 'outdoorGymImageUrls',
     coverimageurl: 'coverImageUrl',
     thumbnailurl: 'thumbnailUrl',

@@ -12,7 +12,7 @@ const EMPTY_STUDENT = { name: '', className: '1', division: 'A' };
 export default function QuizCorner() {
   const [user, setUser] = useState(null), [quizzes, setQuizzes] = useState([]), [selected, setSelected] = useState(null);
   const [student, setStudent] = useState(EMPTY_STUDENT), [participant, setParticipant] = useState(null), [questions, setQuestions] = useState([]);
-  const [answers, setAnswers] = useState({}), [questionTimings, setQuestionTimings] = useState({}), [elapsed, setElapsed] = useState(0), [notice, setNotice] = useState('');
+  const [answers, setAnswers] = useState({}), [questionTimings, setQuestionTimings] = useState({}), [elapsed, setElapsed] = useState(0), [notice, setNotice] = useState(''), [questionLoadError, setQuestionLoadError] = useState(''), [questionRetry, setQuestionRetry] = useState(0);
   const disqualifying = useRef(false);
 
   useEffect(() => onAuthStateChanged(auth, async current => {
@@ -24,10 +24,33 @@ export default function QuizCorner() {
     return onSnapshot(doc(db, 'quizSessions', selected.id, 'participants', user.uid), snap => setParticipant(snap.exists() ? { id: snap.id, ...snap.data() } : null));
   }, [selected, user]);
   useEffect(() => {
-    if (!selected || !participant || selected.status !== 'running') return undefined;
-    getDocs(collection(db, 'quizSessions', selected.id, 'questions')).then(snap => setQuestions(shuffle(snap.docs.map(d => ({ id: d.id, ...d.data() })), participant.shuffleSeed)));
-    return undefined;
-  }, [selected?.id, selected?.status, participant?.id]);
+    if (!selected || !participant || !['waiting', 'active'].includes(participant.status) || selected.status !== 'running') { setQuestions([]); setQuestionLoadError(''); return undefined; }
+    let cancelled = false;
+    setQuestionLoadError('');
+    // A whole class can request its papers at the same instant. Keep retrying
+    // through temporary Firestore/network pressure instead of stranding a child
+    // on the loading screen after the first few seconds.
+    const load = async () => {
+      for (let attempt = 0; !cancelled; attempt += 1) {
+        try {
+          const snap = await getDocs(collection(db, 'quizSessions', selected.id, 'questions'));
+          if (cancelled) return;
+          const loaded = shuffle(snap.docs.map(d => ({ id: d.id, ...d.data() })), participant.shuffleSeed);
+          if (!loaded.length) throw new Error('No questions');
+          setQuestions(loaded);
+          setQuestionLoadError('');
+          return;
+        } catch {
+          if (cancelled) return;
+          const delay = Math.min(15000, 1000 * (2 ** Math.min(attempt, 4)));
+          setQuestionLoadError(`Connecting to the question paper… retrying automatically in ${Math.ceil(delay / 1000)} seconds.`);
+          await new Promise(resolve => window.setTimeout(resolve, delay));
+        }
+      }
+    };
+    load();
+    return () => { cancelled = true; };
+  }, [selected?.id, selected?.status, participant?.status, participant?.shuffleSeed, questionRetry]);
   useEffect(() => { if (participant?.questionTimings) setQuestionTimings(participant.questionTimings); }, [participant?.id]);
   useEffect(() => {
     if (!selected) return undefined;
@@ -46,15 +69,14 @@ export default function QuizCorner() {
       try { await updateDoc(doc(db, 'quizSessions', selected.id, 'participants', user.uid), { status: 'disqualified', violation: reason, violationAt: serverTimestamp(), updatedAt: serverTimestamp() }); } catch { /* listener will retry visually */ }
     };
     const visibility = () => document.hidden && violate('Switched tab or minimized the quiz');
-    const fullscreen = () => !document.fullscreenElement && violate('Exited full-screen mode');
     const keys = e => { if ((e.ctrlKey || e.metaKey) && ['c', 'v', 'x', 'a', 'p', 'u'].includes(e.key.toLowerCase())) { e.preventDefault(); violate('Used a restricted keyboard shortcut'); } };
-    document.addEventListener('visibilitychange', visibility); document.addEventListener('fullscreenchange', fullscreen); document.addEventListener('keydown', keys);
-    return () => { clearInterval(timer); document.removeEventListener('visibilitychange', visibility); document.removeEventListener('fullscreenchange', fullscreen); document.removeEventListener('keydown', keys); };
+    document.addEventListener('visibilitychange', visibility); document.addEventListener('keydown', keys);
+    return () => { clearInterval(timer); document.removeEventListener('visibilitychange', visibility); document.removeEventListener('keydown', keys); };
   }, [participant?.status, participant?.startedAt?.seconds, participant?.startedAt?.nanoseconds, selected?.id, user?.uid]);
 
   const eligible = useMemo(() => quizzes.filter(q => !q.className || q.className === student.className), [quizzes, student.className]);
   const join = async e => { e.preventDefault(); if (!user || !selected) return; await setDoc(doc(db, 'quizSessions', selected.id, 'participants', user.uid), { uid: user.uid, name: student.name.trim(), className: student.className, division: student.division.trim().toUpperCase(), status: 'waiting', progress: 0, shuffleSeed: Math.floor(Math.random() * 9999999) + 1, joinedAt: serverTimestamp(), updatedAt: serverTimestamp() }); };
-  const start = async () => { try { await document.documentElement.requestFullscreen(); await updateDoc(doc(db, 'quizSessions', selected.id, 'participants', user.uid), { status: 'active', startedAt: serverTimestamp(), updatedAt: serverTimestamp() }); disqualifying.current = false; } catch { setNotice('Full-screen permission is required to start this quiz.'); } };
+  const start = async () => { try { if (document.documentElement.requestFullscreen) { try { await document.documentElement.requestFullscreen(); } catch { /* iOS and embedded browsers continue in secure in-page mode. */ } } await updateDoc(doc(db, 'quizSessions', selected.id, 'participants', user.uid), { status: 'active', startedAt: serverTimestamp(), updatedAt: serverTimestamp() }); disqualifying.current = false; } catch { setNotice('We could not start the quiz. Please check your connection and try again.'); } };
   const submit = async (timedOut = false, finalTimings = questionTimings, forced = false) => { if (!timedOut && !forced && !window.confirm('Submit your final answers?')) return; disqualifying.current = true; const ref = doc(db, 'quizSessions', selected.id, 'participants', user.uid); await updateDoc(ref, { answers, questionTimings: finalTimings, timedOut, progress: questions.length, status: 'submitted', submittedAt: serverTimestamp(), updatedAt: serverTimestamp() }); if (document.fullscreenElement) await document.exitFullscreen(); };
   const setAnswer = async (id, value) => { const next = { ...answers, [id]: value }; setAnswers(next); await updateDoc(doc(db, 'quizSessions', selected.id, 'participants', user.uid), { answers: next, progress: Object.values(next).filter(Boolean).length, updatedAt: serverTimestamp() }); };
   const recordQuestionTime = async (id, milliseconds) => { const next = { ...questionTimings, [id]: Math.min(10800000, Math.max(0, (questionTimings[id] || 0) + Math.round(milliseconds))) }; setQuestionTimings(next); await updateDoc(doc(db, 'quizSessions', selected.id, 'participants', user.uid), { questionTimings: next, updatedAt: serverTimestamp() }); return next; };
@@ -62,7 +84,7 @@ export default function QuizCorner() {
   const remainingMs = Math.max(0, durationMs - elapsed);
   if (participant?.status === 'disqualified' || participant?.status === 'locked') return <Blocked participant={participant} />;
   if (participant?.status === 'submitted' || participant?.status === 'scored') return <QuizWaitingResult participant={participant} quiz={selected} />;
-  if (participant?.status === 'active') return <QuizQuestionPlayer quiz={selected} questions={questions} answers={answers} remainingMs={remainingMs} setAnswer={setAnswer} recordQuestionTime={recordQuestionTime} submit={submit} />;
+  if (participant?.status === 'active') return <QuizQuestionPlayer quiz={selected} questions={questions} answers={answers} remainingMs={remainingMs} setAnswer={setAnswer} recordQuestionTime={recordQuestionTime} submit={submit} loadingError={questionLoadError} onRetryQuestions={() => setQuestionRetry(value => value + 1)} />;
   return <main className="min-h-screen bg-gradient-to-br from-indigo-950 via-blue-900 to-violet-900 px-4 py-10 text-white">
     <div className="mx-auto max-w-4xl"><a href="/ansar-media-production" className="text-sm font-bold text-cyan-200">← Back to Ansar Media Productions</a><div className="mt-8 rounded-[2rem] border border-white/15 bg-white/10 p-6 shadow-2xl backdrop-blur sm:p-10">
       <p className="text-sm font-black uppercase tracking-[.25em] text-amber-300">Ansar Media Productions · Add-on</p><h1 className="mt-3 text-4xl font-black sm:text-6xl">Online Quiz & Exam</h1><p className="mt-4 max-w-2xl text-blue-100">Student online quizzes are available now. This platform is being prepared to support staff online exams in a later phase.</p>
@@ -73,7 +95,7 @@ export default function QuizCorner() {
         <label className="text-sm font-bold">Division<input required maxLength="5" value={student.division} onChange={e => setStudent({ ...student, division: e.target.value })} className="mt-1 w-full rounded-xl border p-3" /></label>
         <label className="text-sm font-bold">Available quiz<select required value={selected?.id || ''} onChange={e => setSelected(eligible.find(q => q.id === e.target.value))} className="mt-1 w-full rounded-xl border p-3"><option value="">Select…</option>{eligible.map(q => <option value={q.id} key={q.id}>{q.title}</option>)}</select></label>
         <button disabled={!selected} className="sm:col-span-3 rounded-xl bg-indigo-600 px-5 py-3 font-black text-white disabled:opacity-40">Join quiz</button>
-      </form> : <div className="mt-8 rounded-2xl bg-white p-7 text-center text-slate-900"><p className="text-sm font-black uppercase text-indigo-600">You are registered</p><h2 className="mt-2 text-3xl font-black">{selected?.title}</h2>{selected?.status === 'running' ? <button onClick={start} className="mt-6 rounded-xl bg-emerald-600 px-8 py-4 text-lg font-black text-white">Enter full screen & start</button> : <p className="mt-5 font-bold text-slate-600">Waiting for the administrator to start the quiz…</p>}</div>}
+      </form> : <div className="mt-8 rounded-2xl bg-white p-7 text-center text-slate-900"><p className="text-sm font-black uppercase text-indigo-600">You are registered</p><h2 className="mt-2 text-3xl font-black">{selected?.title}</h2>{selected?.status === 'running' ? <><button onClick={start} className="mt-6 rounded-xl bg-emerald-600 px-8 py-4 text-lg font-black text-white">Start quiz</button><p className="mt-3 text-sm font-medium text-slate-500">Fullscreen opens where supported. On iPhone and iPad, your quiz starts safely in the browser.</p></> : <p className="mt-5 font-bold text-slate-600">Waiting for the administrator to start the quiz…</p>}</div>}
     </div></div>
   </main>;
 }

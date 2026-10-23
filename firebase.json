@@ -342,35 +342,35 @@
       },
       {
         "source": "/learning/cctv-enabled-safety",
-        "destination": "/seo/learning/cctv-enabled-safety.html"
+        "destination": "/index.html"
       },
       {
         "source": "/learning/smart-classrooms",
-        "destination": "/seo/learning/smart-classrooms.html"
+        "destination": "/index.html"
       },
       {
         "source": "/learning/qualified-support-staff",
-        "destination": "/seo/learning/qualified-support-staff.html"
+        "destination": "/index.html"
       },
       {
         "source": "/learning/special-play-area",
-        "destination": "/seo/learning/special-play-area.html"
+        "destination": "/index.html"
       },
       {
         "source": "/learning/advanced-labs",
-        "destination": "/seo/learning/advanced-labs.html"
+        "destination": "/index.html"
       },
       {
         "source": "/learning/multi-sports-play-area",
-        "destination": "/seo/learning/multi-sports-play-area.html"
+        "destination": "/index.html"
       },
       {
         "source": "/learning/safe-school-transport",
-        "destination": "/seo/learning/safe-school-transport.html"
+        "destination": "/index.html"
       },
       {
         "source": "/learning/healthy-dining-spaces",
-        "destination": "/seo/learning/healthy-dining-spaces.html"
+        "destination": "/index.html"
       },
       {
         "source": "/@(news|events|achievements|sports-achievements)/**",
@@ -400,40 +400,44 @@
         "source": "/forms",
         "destination": "/index.html"
       },
-      { "source": "/about", "destination": "/seo/about.html" },
-      { "source": "/academics", "destination": "/seo/academics.html" },
-      { "source": "/admission", "destination": "/seo/admission.html" },
-      { "source": "/news", "destination": "/seo/news.html" },
-      { "source": "/events", "destination": "/seo/events.html" },
-      { "source": "/contact", "destination": "/seo/contact.html" },
-      { "source": "/gallery", "destination": "/seo/gallery.html" },
-      { "source": "/sports-page", "destination": "/seo/sports-page.html" },
-      { "source": "/atl", "destination": "/seo/atl.html" },
-      { "source": "/library", "destination": "/seo/library.html" },
-      { "source": "/ansar-sprouts", "destination": "/seo/ansar-sprouts.html" },
-      { "source": "/field-trips", "destination": "/seo/field-trips.html" },
-      { "source": "/counseling", "destination": "/seo/counseling.html" },
+      { "source": "/about", "destination": "/index.html" },
+      { "source": "/academics", "destination": "/index.html" },
+      { "source": "/admission", "destination": "/index.html" },
+      { "source": "/news", "destination": "/index.html" },
+      { "source": "/events", "destination": "/index.html" },
+      { "source": "/contact", "destination": "/index.html" },
+      { "source": "/gallery", "destination": "/index.html" },
+      { "source": "/sports-page", "destination": "/index.html" },
+      { "source": "/atl", "destination": "/index.html" },
+      { "source": "/library", "destination": "/index.html" },
+      { "source": "/ansar-sprouts", "destination": "/index.html" },
+      { "source": "/field-trips", "destination": "/index.html" },
+      { "source": "/counseling", "destination": "/index.html" },
       {
         "source": "/extension-services",
-        "destination": "/seo/extension-services.html"
+        "destination": "/index.html"
       },
-      { "source": "/life-at-ansar", "destination": "/seo/life-at-ansar.html" },
-      { "source": "/ansar-times", "destination": "/seo/ansar-times.html" },
-      { "source": "/ansar-family", "destination": "/seo/ansar-family.html" },
-      { "source": "/alumni", "destination": "/seo/alumni.html" },
-      { "source": "/achievements", "destination": "/seo/achievements.html" },
+      { "source": "/life-at-ansar", "destination": "/index.html" },
+      { "source": "/ansar-times", "destination": "/index.html" },
+      { "source": "/ansar-family", "destination": "/index.html" },
+      { "source": "/alumni", "destination": "/index.html" },
+      { "source": "/achievements", "destination": "/index.html" },
       {
         "source": "/ansar-media-production",
-        "destination": "/seo/ansar-media-production.html"
+        "destination": "/index.html"
       },
-      { "source": "/sop", "destination": "/seo/sop.html" },
+      { "source": "/sop", "destination": "/index.html" },
       {
         "source": "/school-policies",
-        "destination": "/seo/school-policies.html"
+        "destination": "/index.html"
       },
       {
         "source": "/mandatory-public-disclosure",
-        "destination": "/seo/mandatory-public-disclosure.html"
+        "destination": "/index.html"
+      },
+      {
+        "source": "**",
+        "destination": "/index.html"
       }
     ]
   }

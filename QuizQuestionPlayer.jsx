@@ -6,9 +6,8 @@ const formatCountdown = ms => {
   return `${Math.floor(seconds / 60)}:${String(seconds % 60).padStart(2, '0')}`;
 };
 
-export default function QuizQuestionPlayer({ quiz, questions, answers, remainingMs, setAnswer, recordQuestionTime, submit, onSecurityEvent }) {
+export default function QuizQuestionPlayer({ quiz, questions, answers, remainingMs, setAnswer, recordQuestionTime, submit, onSecurityEvent, loadingError, onRetryQuestions }) {
   const [index, setIndex] = useState(0);
-  const [fullscreenRequired, setFullscreenRequired] = useState(false);
   const enteredAt = useRef(Date.now());
   const moving = useRef(false);
   const timedOut = useRef(false);
@@ -27,37 +26,24 @@ export default function QuizQuestionPlayer({ quiz, questions, answers, remaining
   useEffect(() => { enteredAt.current = Date.now(); }, [index]);
 
   useEffect(() => {
-    const secureLock = reason => {
-      setFullscreenRequired(true);
+    const reportSecurityEvent = reason => {
       if (!securityEventReported.current) {
         securityEventReported.current = true;
         onSecurityEvent?.(reason);
       }
     };
-    const onFullscreenChange = () => { if (!document.fullscreenElement) secureLock('Fullscreen exited during exam'); };
-    const onVisibilityChange = () => { if (document.hidden) secureLock('Exam tab was hidden'); };
+    const onVisibilityChange = () => { if (document.hidden) reportSecurityEvent('Exam tab was hidden'); };
     const onKeyDown = event => {
-      if (event.key === 'F11') { event.preventDefault(); secureLock('Fullscreen shortcut was used'); }
+      if (event.key === 'F11') { event.preventDefault(); reportSecurityEvent('Fullscreen shortcut was used'); }
       if (event.key === 'Escape') event.preventDefault();
     };
-    document.addEventListener('fullscreenchange', onFullscreenChange);
     document.addEventListener('visibilitychange', onVisibilityChange);
     window.addEventListener('keydown', onKeyDown, true);
     return () => {
-      document.removeEventListener('fullscreenchange', onFullscreenChange);
       document.removeEventListener('visibilitychange', onVisibilityChange);
       window.removeEventListener('keydown', onKeyDown, true);
     };
   }, [onSecurityEvent]);
-
-  const resumeFullscreen = async () => {
-    try {
-      await document.documentElement.requestFullscreen();
-      setFullscreenRequired(false);
-    } catch {
-      setFullscreenRequired(true);
-    }
-  };
 
   const saveTime = async () => {
     if (!question) return {};
@@ -125,7 +111,7 @@ export default function QuizQuestionPlayer({ quiz, questions, answers, remaining
     saveTime().then(timings => submit(false, timings, true)).finally(() => { moving.current = false; });
   }, [quiz?.status, question?.id]);
 
-  if (!question) return <main className="flex min-h-screen items-center justify-center bg-slate-950 text-white"><p className="text-xl font-bold">Loading questions…</p></main>;
+  if (!question) return <main className="flex min-h-screen items-center justify-center bg-slate-950 p-6 text-center text-white"><section className="max-w-lg rounded-3xl border border-white/15 bg-white/5 p-8"><p className="text-xl font-bold">{loadingError || 'Loading questions…'}</p><p className="mt-3 text-sm leading-6 text-slate-300">Your exam session is active. Please keep this page open while we reconnect.</p>{onRetryQuestions && <button onClick={onRetryQuestions} className="mt-6 rounded-xl bg-indigo-500 px-5 py-3 font-black text-white">Retry loading questions</button>}</section></main>;
 
   return <main onContextMenu={e => e.preventDefault()} onCopy={e => e.preventDefault()} onPaste={e => e.preventDefault()} className="min-h-screen select-none bg-slate-950 p-4 text-white sm:p-8">
     <div className="mx-auto max-w-4xl">
@@ -147,6 +133,6 @@ export default function QuizQuestionPlayer({ quiz, questions, answers, remaining
         <span className="text-sm font-bold text-slate-400">Answered {Object.values(answers).filter(Boolean).length}/{questions.length}</span>
         {index < questions.length - 1 ? <button disabled={splitTiming} onClick={() => move(index + 1)} title={splitTiming ? 'Questions advance automatically when the timer ends.' : undefined} className="rounded-2xl bg-indigo-500 px-7 py-4 font-black disabled:cursor-not-allowed disabled:opacity-45">{splitTiming ? 'Auto-advance' : 'Next →'}</button> : <button onClick={finish} className="rounded-2xl bg-amber-400 px-7 py-4 font-black text-slate-950 shadow-lg shadow-amber-400/20 transition hover:bg-amber-300 focus:outline-none focus:ring-4 focus:ring-amber-200">Submit exam</button>}
       </nav>
-    </div>{fullscreenRequired && <div role="dialog" aria-modal="true" className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/95 p-6 text-center"><section className="max-w-md rounded-3xl border border-white/15 bg-slate-900 p-8 shadow-2xl"><p className="text-xs font-black uppercase tracking-[.2em] text-amber-300">Secure exam mode</p><h2 className="mt-3 text-3xl font-black">Return to full screen</h2><p className="mt-4 leading-7 text-slate-300">Your exam is paused while full screen is unavailable. Continue only after restoring secure exam mode.</p><button onClick={resumeFullscreen} className="mt-7 w-full rounded-xl bg-amber-400 px-5 py-3 font-black text-slate-950 transition hover:bg-amber-300">Resume secure exam</button></section></div>}
+    </div>
   </main>;
 }

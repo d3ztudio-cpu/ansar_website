@@ -45,6 +45,43 @@ export function saveSheetRecord(collectionName, record) {
   return postToSheets('save', { collectionName, record });
 }
 
+// Learning-feature writes go through an Apps Script endpoint using no-cors.
+// Confirm the values from the published Sheet before the UI says they saved;
+// this also makes a stale Apps Script deployment visible to the administrator.
+export async function confirmLearningFeatureSaved(record) {
+  const expected = {
+    id: String(record.id || ''),
+    description: String(record.description || '').trim(),
+    outdoorGymTitle: String(record.outdoorGymTitle || '').trim(),
+    outdoorGymDescription: String(record.outdoorGymDescription || '').trim(),
+    published: record.published !== false
+  };
+  const sheetUrl = `https://docs.google.com/spreadsheets/d/${GOOGLE_SHEETS_DATABASE.spreadsheetId}/gviz/tq?${new URLSearchParams({
+    tqx: 'out:json', sheet: 'learningFeatures', v: String(Date.now())
+  })}`;
+
+  for (const delay of [700, 1200, 2000, 3000]) {
+    await new Promise(resolve => window.setTimeout(resolve, delay));
+    const response = await fetch(sheetUrl.replace(/v=\d+/, `v=${Date.now()}`));
+    if (!response.ok) continue;
+    const text = await response.text();
+    const match = text.match(/setResponse\(([\s\S]*)\);?$/);
+    if (!match) continue;
+    const payload = JSON.parse(match[1]);
+    const headers = (payload.table?.cols || []).map(column => String(column.label || '').trim());
+    const indexOf = name => headers.findIndex(header => header.replace(/[^a-z0-9]/gi, '').toLowerCase() === name.replace(/[^a-z0-9]/gi, '').toLowerCase());
+    const value = (row, name) => String(row.c?.[indexOf(name)]?.v ?? '').trim();
+    const saved = (payload.table?.rows || []).find(row => value(row, 'id') === expected.id);
+    if (saved
+      && value(saved, 'description') === expected.description
+      && value(saved, 'outdoorGymTitle') === expected.outdoorGymTitle
+      && value(saved, 'outdoorGymDescription') === expected.outdoorGymDescription
+      && (value(saved, 'published').toLowerCase() === 'true') === expected.published) return;
+  }
+
+  throw new Error('The change was not confirmed in Google Sheets. Deploy the latest Apps Script Web App version, then try again.');
+}
+
 export async function confirmFormSaved(record) {
   const expected = {
     id: String(record.id || ''),

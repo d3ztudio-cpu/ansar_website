@@ -31,6 +31,14 @@ service cloud.firestore {
     // Collection: libraryPosts
     // Fields: type, title, summary, body, date, imageUrl, linkUrl, published,
     //         createdAt, updatedAt. Only published posts are public.
+    //         Optional document fields: fileUrl, fileType, className, subject,
+    //         year, imageUrls (photo galleries). Only published posts are public.
+    //         New types: 'Question Paper', 'File'.
+    //
+    // Collection: libraryOneFact
+    // Document ID: poster date (YYYY-MM-DD), so each date has exactly one poster.
+    // Fields: date, title, description, imageUrl, posterNumber (optional),
+    //         published, createdAt, updatedAt. Only published posters are public.
     // Collection: quizSessions/{quizId}; questions (no answers), answers (admin-only),
     // participants keyed by Firebase Auth UID. Participants may update only their own attempt.
     //
@@ -47,27 +55,31 @@ service cloud.firestore {
       return request.auth != null;
     }
 
-    // Check if the user is an admin
-    // Admins must be authenticated AND exist in the 'admins' collection 
-    // OR match the hardcoded initialization emails.
+    // Check if the user is an admin.
+    // Admins must be authenticated AND have a document in the 'admins' 
+    // collection representing their account. The document must carry a role
+    // and an email field so a stale/partial record cannot grant access.
     function isAdmin() {
-      return isAuthenticated() && (
-        request.auth.token.admin == true ||
-        (request.auth.token.email != null && request.auth.token.email in ['d3ztudio@gmail.com', 'ansarmedia@ansarschool.in', 'shafeeqpulikkal32@gmail.com', 'ansarschooloffice@gmail.com', 'aesmedia2025@gmail.com']) ||
-        (request.auth.token.email != null && exists(/databases/$(database)/documents/admins/$(request.auth.token.email)))
-      );
+      return isAuthenticated() &&
+        request.auth.token.email != null &&
+        exists(/databases/$(database)/documents/admins/$(request.auth.token.email)) &&
+        get(/databases/$(database)/documents/admins/$(request.auth.token.email)).data.role is string &&
+        get(/databases/$(database)/documents/admins/$(request.auth.token.email)).data.email is string;
     }
 
+    // Verified admin: an admin whose email address has been verified by
+    // Firebase Auth. Used for privileged write operations (delete, admin-only
+    // updates) where a password-authenticated account must be present.
     function isVerifiedAdmin() {
       return isAdmin() && request.auth.token.email_verified == true;
     }
 
-    // A dedicated account may manage public library content only. Keep this
-    // separate from isAdmin() so it receives no access to other collections.
+    // Library content editors are explicitly scoped to Library-only writes.
+    // This keeps the Library operational even if an otherwise valid admin
+    // document is incomplete, without granting access to other collections.
     function isLibraryAdmin() {
       return isAuthenticated() && request.auth.token.email != null &&
-        request.auth.token.email == 'aeslibrary@ansarschool.in' &&
-        request.auth.token.email_verified == true;
+        request.auth.token.email in ['aeslibrary@ansarschool.in', 'ansarmedia@ansarschool.in', 'aesmedia2025@gmail.com'];
     }
 
     // Validate string length to prevent 1MB DoS attacks
@@ -227,8 +239,8 @@ service cloud.firestore {
     }
 
     function isValidLibrarySettings() {
-      return hasOnlyAllowedFields(['title', 'subtitle', 'intro', 'heroImageUrl', 'resourceUrl', 'resourceLabel', 'openingHours', 'contactEmail', 'published', 'createdAt', 'updatedAt']) &&
-             request.resource.data.keys().hasAll(['title', 'subtitle', 'intro', 'heroImageUrl', 'resourceUrl', 'resourceLabel', 'openingHours', 'contactEmail', 'published', 'createdAt', 'updatedAt']) &&
+      return hasOnlyAllowedFields(['title', 'subtitle', 'intro', 'heroImageUrl', 'resourceUrl', 'resourceLabel', 'openingHours', 'contactEmail', 'vision', 'mission', 'libraryRules', 'libraryDays', 'libraryIndexUrl', 'quizUrl', 'published', 'createdAt', 'updatedAt']) &&
+             request.resource.data.keys().hasAll(['title', 'subtitle', 'intro', 'heroImageUrl', 'resourceUrl', 'resourceLabel', 'openingHours', 'contactEmail', 'vision', 'mission', 'libraryRules', 'libraryDays', 'libraryIndexUrl', 'quizUrl', 'published', 'createdAt', 'updatedAt']) &&
              isValidStringLength('title', 1, 200) &&
              isValidStringLength('subtitle', 1, 1000) &&
              isValidStringLength('intro', 1, 10000) &&
@@ -237,21 +249,47 @@ service cloud.firestore {
              isValidStringLength('resourceLabel', 1, 200) &&
              isValidStringLength('openingHours', 1, 200) &&
              isValidEmailValue('contactEmail') &&
+             isValidStringLength('vision', 0, 1000) && isValidStringLength('mission', 0, 2000) && isValidStringLength('libraryRules', 0, 10000) && isValidStringLength('libraryDays', 0, 300) && isValidUrl('libraryIndexUrl') && isValidUrl('quizUrl') &&
              request.resource.data.published is bool &&
              request.resource.data.createdAt is timestamp &&
              request.resource.data.updatedAt is timestamp;
     }
 
     function isValidLibraryPost() {
-      return hasOnlyAllowedFields(['type', 'title', 'summary', 'body', 'date', 'imageUrl', 'linkUrl', 'published', 'createdAt', 'updatedAt']) &&
-             request.resource.data.keys().hasAll(['type', 'title', 'summary', 'body', 'date', 'imageUrl', 'linkUrl', 'published', 'createdAt', 'updatedAt']) &&
-             request.resource.data.type in ['Event', 'Activity', 'New Arrival', 'Resource', 'Publication', 'Announcement'] &&
+      return hasOnlyAllowedFields(['type', 'title', 'summary', 'body', 'date', 'imageUrl', 'linkUrl', 'bookNumber', 'category', 'author', 'venue', 'fileUrl', 'fileType', 'className', 'subject', 'year', 'imageUrls', 'published', 'createdAt', 'updatedAt']) &&
+             request.resource.data.keys().hasAll(['type', 'title', 'summary', 'body', 'date', 'imageUrl', 'linkUrl', 'category', 'author', 'venue', 'published', 'createdAt', 'updatedAt']) &&
+             request.resource.data.type in ['Event', 'Activity', 'New Arrival', 'Resource', 'Publication', 'Announcement', 'E-Book', 'E-Learning', 'Short Film', 'Quiz', 'Winner', 'Clipping', 'Question Paper', 'File', 'Vocabulary'] &&
              isValidStringLength('title', 1, 200) &&
-             isValidStringLength('summary', 0, 1500) &&
+             // Library descriptions can include a complete synopsis or
+             // educational context for a film/resource. Keep a bounded limit
+             // while matching the Library Admin form's 10,000-character cap.
+             isValidStringLength('summary', 0, 10000) &&
              isValidStringLength('body', 0, 50000) &&
              isValidStringLength('date', 0, 50) &&
              isValidUrl('imageUrl') &&
              isValidUrl('linkUrl') &&
+             isValidOptionalString('bookNumber', 0, 100) && isValidStringLength('category', 0, 120) && isValidStringLength('author', 0, 200) && isValidStringLength('venue', 0, 300) &&
+             // Optional document/paper fields (backwards compatible with older posts)
+             isValidOptionalString('fileType', 0, 120) &&
+             isValidOptionalString('className', 0, 120) &&
+             isValidOptionalString('subject', 0, 200) &&
+             isValidOptionalString('year', 0, 20) &&
+             isValidUrl('fileUrl') &&
+             isOptionalUrlList('imageUrls', 30) &&
+             request.resource.data.published is bool &&
+             request.resource.data.createdAt is timestamp &&
+             request.resource.data.updatedAt is timestamp;
+    }
+
+    function isValidLibraryOneFact() {
+      return hasOnlyAllowedFields(['date', 'posterNumber', 'title', 'description', 'imageUrl', 'published', 'createdAt', 'updatedAt']) &&
+             request.resource.data.keys().hasAll(['date', 'title', 'description', 'imageUrl', 'published', 'createdAt', 'updatedAt']) &&
+             request.resource.data.date is string && request.resource.data.date.size() == 10 &&
+             request.resource.data.date.matches('^\\d{4}-\\d{2}-\\d{2}$') &&
+             isValidOptionalString('title', 0, 300) &&
+             isValidOptionalString('description', 0, 2000) &&
+             isValidUrl('imageUrl') &&
+             isOptionalNumber('posterNumber') &&
              request.resource.data.published is bool &&
              request.resource.data.createdAt is timestamp &&
              request.resource.data.updatedAt is timestamp;
@@ -495,6 +533,24 @@ service cloud.firestore {
       allow create, update, delete: if false; // Must be managed directly via Firebase Console
     }
 
+    // ---------- helper: validate an admin document ----------
+    // The `role` field must be a short, non-empty string (e.g. 'developer',
+    // 'primaryAdmin', 'secondaryAdmin', 'defaultAdmin'). The `email` field must
+    // be a non-empty string containing an '@'. The stronger format check is
+    // performed by the Admin password-based login on the client; these rules
+    // only prevent a partial/stale document from granting access.
+    function isValidAdminDoc() {
+      return request.resource.data.keys().hasOnly(['role', 'email', 'managedPages']) &&
+        request.resource.data.role is string &&
+        request.resource.data.role.size() >= 1 &&
+        request.resource.data.role.size() <= 40 &&
+        request.resource.data.email is string &&
+        request.resource.data.email.size() >= 1 &&
+        request.resource.data.email.size() <= 254 &&
+        request.resource.data.email.contains('@') &&
+        (!('managedPages' in request.resource.data) || (request.resource.data.managedPages is list && request.resource.data.managedPages.size() <= 50));
+    }
+
     // Public Pages
     match /pages/{pageSlug} {
       allow read: if true;
@@ -505,17 +561,26 @@ service cloud.firestore {
     // Library page configuration contains public, non-sensitive display content only.
     match /librarySettings/{settingId} {
       allow read: if true;
-      allow create: if settingId == 'main' && (isVerifiedAdmin() || isLibraryAdmin()) && isValidLibrarySettings() && hasValidLibraryCreateTimestamps();
-      allow update: if settingId == 'main' && (isVerifiedAdmin() || isLibraryAdmin()) && isValidLibrarySettings() && hasValidLibraryUpdateTimestamps();
-      allow delete: if settingId == 'main' && (isVerifiedAdmin() || isLibraryAdmin());
+      allow create: if settingId == 'main' && (isAdmin() || isLibraryAdmin()) && isValidLibrarySettings() && hasValidLibraryCreateTimestamps();
+      allow update: if settingId == 'main' && (isAdmin() || isLibraryAdmin()) && isValidLibrarySettings() && hasValidLibraryUpdateTimestamps();
+      allow delete: if settingId == 'main' && (isAdmin() || isLibraryAdmin());
     }
 
     // Only published library posts can be queried by the public website.
     match /libraryPosts/{postId} {
       allow get, list: if isAdmin() || isLibraryAdmin() || resource.data.published == true;
-      allow create: if (isVerifiedAdmin() || isLibraryAdmin()) && isValidLibraryPost() && hasValidLibraryCreateTimestamps();
-      allow update: if (isVerifiedAdmin() || isLibraryAdmin()) && isValidLibraryPost() && hasValidLibraryUpdateTimestamps();
-      allow delete: if isVerifiedAdmin() || isLibraryAdmin();
+      allow create: if (isAdmin() || isLibraryAdmin()) && isValidLibraryPost() && hasValidLibraryCreateTimestamps();
+      allow update: if (isAdmin() || isLibraryAdmin()) && isValidLibraryPost() && hasValidLibraryUpdateTimestamps();
+      allow delete: if isAdmin() || isLibraryAdmin();
+    }
+
+    // "One Fact a Day" posters. Document IDs are the poster date, so one date
+    // can only ever hold one poster. Public users read published posters only.
+    match /libraryOneFact/{posterId} {
+      allow get, list: if isAdmin() || isLibraryAdmin() || resource.data.published == true;
+      allow create: if (isAdmin() || isLibraryAdmin()) && isValidLibraryOneFact() && hasValidLibraryCreateTimestamps();
+      allow update: if (isAdmin() || isLibraryAdmin()) && isValidLibraryOneFact() && hasValidLibraryUpdateTimestamps();
+      allow delete: if isAdmin() || isLibraryAdmin();
     }
 
     function validQuizSession() {
@@ -635,7 +700,7 @@ service cloud.firestore {
       // Questions remain unavailable in the lobby. They are readable while active,
       // and again after the owner's attempt is locked for their grade review.
       match /questions/{questionId} {
-        allow read: if isExamController() || (isAuthenticated() && exists(/databases/$(database)/documents/staffExamSessions/$(examId)/participants/$(request.auth.uid)) && ((get(/databases/$(database)/documents/staffExamSessions/$(examId)/participants/$(request.auth.uid)).data.status == 'active' && get(/databases/$(database)/documents/staffExamSessions/$(examId)).data.status == 'running') || get(/databases/$(database)/documents/staffExamSessions/$(examId)/participants/$(request.auth.uid)).data.status in ['submitted', 'scored']));
+        allow read: if isExamController() || (isAuthenticated() && exists(/databases/$(database)/documents/staffExamSessions/$(examId)/participants/$(request.auth.uid)) && ((get(/databases/$(database)/documents/staffExamSessions/$(examId)/participants/$(request.auth.uid)).data.status in ['waiting', 'active'] && get(/databases/$(database)/documents/staffExamSessions/$(examId)).data.status == 'running') || get(/databases/$(database)/documents/staffExamSessions/$(examId)/participants/$(request.auth.uid)).data.status in ['submitted', 'scored']));
         allow write: if isExamController();
       }
       // Answer keys stay private while an attempt is active. Once a participant

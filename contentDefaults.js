@@ -106,8 +106,12 @@ export function mergeListWithDefaults(savedItems, defaultItems) {
   // which silently discarded new admin-created cards (for example Cycling)
   // once the public page read the settings document.
   const length = Math.max(defaultItems.length, saved.length);
-  return Array.from({ length }, (_, index) => ({
-    ...(defaultItems[index] || {}),
-    ...(saved[index] || {})
-  }));
+  return Array.from({ length }, (_, index) => {
+    const item = { ...(saved[index] || {}) };
+    // An empty/removed legacy image should reveal the approved bundled image,
+    // instead of replacing it with a temporary remote placeholder or blank.
+    if (item.imageUrl === '') delete item.imageUrl;
+    if (item.image === '') delete item.image;
+    return { ...(defaultItems[index] || {}), ...item };
+  });
 }

@@ -403,7 +403,7 @@ export default function About() {
       <div className="mx-auto max-w-7xl px-4 py-12 lg:py-20">
         <section className="relative overflow-hidden rounded-2xl bg-slate-950 text-white shadow-2xl">
           <img
-            src="https://images.unsplash.com/photo-1523050854058-8df90110c9f1?q=80&w=1600&auto=format&fit=crop"
+            src="/school-logo.webp"
             alt="About Ansar English School"
             className="absolute inset-0 h-full w-full object-cover opacity-35"
           />

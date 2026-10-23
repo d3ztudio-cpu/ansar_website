@@ -26,6 +26,16 @@ const DEFAULT_FEE_STRUCTURE_URL = 'https://drive.google.com/file/d/1BlRQIlD4U4Rj
 const DEFAULT_PODCAST_URL = 'https://www.youtube.com/channel/UCINzivjyBDxX2O8vzGpUOCg/';
 const DEFAULT_EVENT_COUNTDOWNS = [{ id: 'vision-2030-launch', title: 'Official Launch & Inauguration of VISION 2030!', dateTime: '2026-08-29T09:30', enabled: true }];
 
+// Old settings included temporary Unsplash placeholders. Never hydrate those
+// into the live UI: doing so caused a visible image flash before the approved
+// local/administrator image was available.
+function stripUnsplashPlaceholders(value) {
+  if (typeof value === 'string') return /(^|\/)images\.unsplash\.com\//i.test(value) ? '' : value;
+  if (Array.isArray(value)) return value.map(stripUnsplashPlaceholders);
+  if (value && typeof value === 'object') return Object.fromEntries(Object.entries(value).map(([key, item]) => [key, stripUnsplashPlaceholders(item)]));
+  return value;
+}
+
 export const SettingsProvider = ({ children }) => {
   const [settings, setSettings] = useState({
     heroTitle: 'Empowering Minds, Enriching Futures',
@@ -92,7 +102,7 @@ export const SettingsProvider = ({ children }) => {
       (docSnap) => {
         if (cancelled) return;
         if (docSnap.exists()) {
-          const saved = docSnap.data();
+          const saved = stripUnsplashPlaceholders(docSnap.data());
           setSettings((prev) => ({
             ...prev,
             ...saved,

@@ -115,11 +115,20 @@ window.addEventListener('unhandledrejection', (event) => {
 
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
-    navigator.serviceWorker
-      .register('/sw.js', { updateViaCache: 'none' })
-      .then(registration => registration.update())
+    Promise.all([
+      // Remove caches created by the previous offline worker. Every page and
+      // bundle will then be fetched from Hosting after each deployment.
+      'caches' in window
+        ? caches.keys().then(names => Promise.all(names
+          .filter(name => /^(pages|assets|images)-/.test(name))
+          .map(name => caches.delete(name))))
+        : Promise.resolve(),
+      navigator.serviceWorker
+        .register('/sw.js', { updateViaCache: 'none' })
+        .then(registration => registration.update())
+    ])
       .catch((error) => {
-        console.error('Service worker registration failed:', error);
+        console.error('Service worker cleanup failed:', error);
       });
   });
 }

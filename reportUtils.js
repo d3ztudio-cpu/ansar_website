@@ -198,7 +198,17 @@ function collectImageUrls(item) {
     item?.imageUrl,
     item?.eventImages,
     item?.imageUrls,
-    item?.galleryImages
+    item?.galleryImages,
+    // Library document/media URLs (images and PDFs live on the school's Hostinger
+    // storage, so they are referenced by a URL rather than stored as a binary).
+    item?.fileUrl,
+    item?.fileUrl2,
+    item?.fileUrl3,
+    item?.fileUrl4,
+    item?.documentUrl,
+    item?.documentUrl2,
+    item?.documentUrl3,
+    item?.documentUrl4
   ];
   const urls = new Set();
   raw.forEach((entry) => {

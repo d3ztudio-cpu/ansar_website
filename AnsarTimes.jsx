@@ -96,7 +96,7 @@ function MagazineCard({ item }) {
           />
         ) : (
           <>
-            <div className="absolute inset-0 bg-[url('https://images.unsplash.com/photo-1544716278-ca5e3f4abd8c?q=80&w=1200&auto=format&fit=crop')] bg-cover bg-center opacity-25" />
+            <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,rgba(218,154,44,.22),transparent_45%)]" />
             <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-950/40 to-transparent" />
             <div className="absolute inset-0 flex flex-col items-center justify-center px-6 text-center">
               <span className="text-xs font-black uppercase tracking-[0.35em] text-amber-300">Ansar English School</span>

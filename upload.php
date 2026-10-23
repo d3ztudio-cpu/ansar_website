@@ -68,14 +68,34 @@ if ($file['size'] <= 0) {
 
 // Real image check (blocks disguised files regardless of extension)
 $info = @getimagesize($file['tmp_name']);
-if ($info === false) {
-    respondError('The selected file is not a valid image.');
+
+$allowedTypes = [IMAGETYPE_JPEG => 'jpg', IMAGETYPE_PNG => 'png', IMAGETYPE_GIF => 'gif', IMAGETYPE_WEBP => 'webp'];
+
+if ($info !== false) {
+    // Any PHP-supported image type is accepted; keep a sane extension fallback.
+    $extension = $allowedTypes[$info[2]]
+        ?? (image_type_to_extension($info[2], false) ?: 'img');
+} elseif (isPdfFile($file['tmp_name'])) {
+    // Library question papers and documents are stored as PDFs.
+    $extension = 'pdf';
+} else {
+    respondError('The selected file is not a valid image or PDF.');
 }
 
-// Any PHP-supported image type is accepted; keep a sane extension fallback.
-$allowedTypes = [IMAGETYPE_JPEG => 'jpg', IMAGETYPE_PNG => 'png', IMAGETYPE_GIF => 'gif', IMAGETYPE_WEBP => 'webp'];
-$extension = $allowedTypes[$info[2]]
-    ?? (image_type_to_extension($info[2], false) ?: 'img');
+// Detect a real PDF by its magic bytes (%PDF- at the start of the file);
+// avoids depending on the fileinfo extension being enabled.
+function isPdfFile($path) {
+    if (!is_resource($path) && !@is_readable($path)) {
+        return false;
+    }
+    $handle = @fopen($path, 'rb');
+    if ($handle === false) {
+        return false;
+    }
+    $magic = (string) fread($handle, 5);
+    fclose($handle);
+    return strncmp($magic, '%PDF-', 5) === 0;
+}
 
 // ----- Ensure the target directory exists (public_html/UPLOADS) -----
 $uploadDir = __DIR__ . '/UPLOADS';

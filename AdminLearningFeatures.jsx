@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { clearGoogleSheetsCache, useContentCollection } from './useContentCollection';
-import { saveSheetRecord } from './googleSheetsAdminApi';
+import { confirmLearningFeatureSaved, saveSheetRecord } from './googleSheetsAdminApi';
 import ImgBbUrlImporter from './ImgBbUrlImporter';
 import AdminTransportStaff from './AdminTransportStaff';
 import { LEARNING_FEATURES_DOCUMENT_CONTENT, resolveLearningFeatureImage } from './learningFeaturesDocumentContent';
@@ -277,6 +277,7 @@ export default function AdminLearningFeatures() {
       };
 
       await saveSheetRecord('learningFeatures', payload);
+      await confirmLearningFeatureSaved(payload);
       clearGoogleSheetsCache();
       setRefreshKey(key => key + 1);
       alert('Student-Centric Learning page saved.');
@@ -359,7 +360,7 @@ export default function AdminLearningFeatures() {
             <div className="flex flex-wrap items-center justify-between gap-3">
               <div>
                 <h3 className="text-base font-extrabold text-slate-900">Carousel Images</h3>
-                <p className="text-sm font-semibold text-slate-500">Device images upload to Firebase Storage; Sheets saves only their URLs.</p>
+                <p className="text-sm font-semibold text-slate-500">Device images upload to Hostinger server storage; Sheets saves only their URLs.</p>
               </div>
               <label className="cursor-pointer rounded-xl bg-emerald-700 px-4 py-2.5 text-sm font-extrabold text-white hover:bg-emerald-800">Upload from device<input type="file" accept="image/*" multiple onChange={uploadGalleryImages} className="sr-only" /></label>
             </div>

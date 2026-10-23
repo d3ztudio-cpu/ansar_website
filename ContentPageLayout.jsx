@@ -4,7 +4,7 @@ export default function ContentPageLayout({ page, eyebrow = 'Ansar English Schoo
   return (
     <LayoutWrapper>
       <div className="relative overflow-hidden rounded-3xl bg-slate-900 px-6 py-14 text-white shadow-2xl sm:px-10 lg:px-14">
-        <div className="absolute inset-0 bg-[url('https://images.unsplash.com/photo-1523050854058-8df90110c9f1?q=80&w=2000&auto=format&fit=crop')] bg-cover bg-center opacity-15" />
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,rgba(218,154,44,.18),transparent_42%)]" />
         <div className="absolute inset-0 bg-gradient-to-r from-slate-950 via-slate-900/90 to-emerald-950/70" />
         <div className="relative z-10 max-w-4xl">
           <p className="mb-3 text-sm font-extrabold uppercase tracking-widest text-amber-300">{eyebrow}</p>

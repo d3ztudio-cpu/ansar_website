@@ -1,5 +1,5 @@
 export const SMART_CLASSROOM_KERALA_IMAGE = '/learning/smart-classroom-kerala.jpg';
-const LEGACY_FOREIGN_CLASSROOM_IMAGE = 'https://images.unsplash.com/photo-1588072432836-e10032774350';
+const LEGACY_FOREIGN_CLASSROOM_IMAGE = '';
 export function resolveLearningFeatureImage(slug, imageUrl, fallback = '') {
   if (slug === 'smart-classrooms' && (!imageUrl || String(imageUrl).startsWith(LEGACY_FOREIGN_CLASSROOM_IMAGE))) return SMART_CLASSROOM_KERALA_IMAGE;
   return imageUrl || fallback;

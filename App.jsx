@@ -137,8 +137,6 @@ function RouteFallback() {
 const ADMIN_EMAILS = [
   "d3ztudio@gmail.com",
   "ansarmedia@ansarschool.in",
-  "shafeeqpulikkal32@gmail.com",
-  "ansarschooloffice@gmail.com",
   "aesmedia2025@gmail.com",
 ];
 const SPROUTS_ADMIN_EMAIL = "sprouts@ansar.in";
@@ -510,7 +508,7 @@ const SAMPLE_PAGES = {
     subtitle:
       "Innovation, tinkering, STEM exploration, and student-led problem solving.",
     heroImage:
-      "https://images.unsplash.com/photo-1581092160562-40aa08e78837?q=90&w=2400&auto=format&fit=crop",
+      "/og-image.jpg",
     intro:
       "The Atal Tinkering Lab culture at Ansar encourages students to observe problems, build prototypes, test ideas, and learn through experimentation. It gives young learners a practical space to connect science, technology, design, and teamwork.",
     highlights: [
@@ -542,7 +540,7 @@ const SAMPLE_PAGES = {
     eyebrow: "Early Years",
     subtitle: "A joyful early learning environment for foundational growth.",
     heroImage:
-      "https://images.unsplash.com/photo-1503676260728-1c00da094a0b?q=90&w=2400&auto=format&fit=crop",
+      "/og-image.jpg",
     intro:
       "Ansar Sprouts is designed for the youngest learners, where care, play, language, movement, imagination, and social confidence come together. The environment supports children as they begin school life with warmth and steady routines.",
     highlights: [
@@ -574,7 +572,7 @@ const SAMPLE_PAGES = {
     eyebrow: "Community Outreach",
     subtitle: "Community outreach, student service, and support initiatives.",
     heroImage:
-      "https://images.unsplash.com/photo-1559027615-cd4628902d4a?q=90&w=2400&auto=format&fit=crop",
+      "/og-image.jpg",
     intro:
       "Extension Services connects the school community with meaningful social responsibility. Through outreach, awareness, support activities, and service learning, students understand that education also includes compassion and civic responsibility.",
     highlights: [
@@ -607,7 +605,7 @@ const SAMPLE_PAGES = {
     subtitle:
       "A look into campus culture, clubs, celebrations, and student life.",
     heroImage:
-      "https://images.unsplash.com/photo-1523050854058-8df90110c9f1?q=90&w=2400&auto=format&fit=crop",
+      "/og-image.jpg",
     intro:
       "Life at Ansar is shaped by learning, friendships, discipline, celebrations, creativity, faith in values, and opportunities beyond the classroom. The campus experience helps students grow as confident, responsible, and expressive individuals.",
     highlights: [
@@ -681,7 +679,7 @@ const SAMPLE_PAGES = {
     eyebrow: "School Procedures",
     subtitle: "Standard operating procedures and essential school guidelines.",
     heroImage:
-      "https://images.unsplash.com/photo-1450101499163-c8848c66ca85?q=90&w=2400&auto=format&fit=crop",
+      "/og-image.jpg",
     intro:
       "The SOP page provides a clear reference for expected routines, safety practices, academic processes, communication channels, and campus protocols followed at Ansar English School.",
     highlights: [
@@ -738,42 +736,42 @@ const MEDIA_SERVICES = [
     title: "Photography",
     kicker: "Moments with meaning",
     image:
-      "https://images.unsplash.com/photo-1516035069371-29a1b244cc32?q=90&w=3840&auto=format&fit=crop",
+      "/og-image.jpg",
     body: "Our photography team captures the spirit of school life with clarity and care. From assemblies, celebrations, competitions, classroom activities, portraits, and official documentation, Ansar Media preserves important moments as high-quality visual records for the institution.",
   },
   {
     title: "Videography",
     kicker: "Stories in motion",
     image:
-      "https://images.unsplash.com/photo-1492691527719-9d1e07e534b4?q=90&w=3840&auto=format&fit=crop",
+      "/og-image.jpg",
     body: "We produce event films, highlight videos, awareness clips, reels, institutional presentations, and programme coverage. The unit supports departments by turning school activities into polished video stories that can be shared with parents, students, alumni, and the wider community.",
   },
   {
     title: "Drone Videography",
     kicker: "A wider campus view",
     image:
-      "https://images.unsplash.com/photo-1508614589041-895b88991e3e?q=90&w=3840&auto=format&fit=crop",
+      "/og-image.jpg",
     body: "Aerial visuals bring scale, movement, and a fresh perspective to campus documentation. Drone videography is used for major events, campus showcases, infrastructure highlights, outdoor activities, and special productions where a broader view helps tell the story better.",
   },
   {
     title: "Podcast",
     kicker: "Voices from Ansar",
     image:
-      "https://images.unsplash.com/photo-1478737270239-2f02b77fc618?q=90&w=3840&auto=format&fit=crop",
+      "/og-image.jpg",
     body: "The podcast setup creates space for student conversations, interviews, academic discussions, alumni interactions, awareness programmes, and leadership messages. It gives the Ansar community a clear voice and encourages confident, thoughtful communication.",
   },
   {
     title: "Graphic Designing",
     kicker: "Design for every announcement",
     image:
-      "https://images.unsplash.com/photo-1586717791821-3f44a563fa4c?q=90&w=3840&auto=format&fit=crop",
+      "/og-image.jpg",
     body: "Our design work supports posters, event announcements, certificates, social media creatives, digital banners, brochures, identity materials, and campaign visuals. Every design is prepared to keep school communication attractive, consistent, and easy to understand.",
   },
   {
     title: "Editing",
     kicker: "Finishing every story",
     image:
-      "https://images.unsplash.com/photo-1574717024653-61fd2cf4d44d?q=90&w=3840&auto=format&fit=crop",
+      "/og-image.jpg",
     body: "Editing brings together footage, sound, images, captions, color, and rhythm into a complete final output. The in-house team handles photo retouching, video cuts, event recaps, subtitles, audio cleanup, and final exports for web, social media, archives, and presentations.",
   },
 ];
@@ -1171,7 +1169,7 @@ function AnsarMediaProductionPage() {
       <main className="mx-auto max-w-7xl px-4 py-12 lg:py-20">
         <section className="relative overflow-hidden rounded-3xl bg-slate-950 text-white shadow-2xl">
           <img
-            src="https://images.unsplash.com/photo-1497366754035-f200968a6e72?q=90&w=3840&auto=format&fit=crop"
+            src="/og-image.jpg"
             alt="ANSAR MEDIA PRODUCTIONS studio workspace"
             className="absolute inset-0 h-full w-full object-cover opacity-30"
           />

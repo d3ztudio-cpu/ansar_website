@@ -20,9 +20,8 @@ export function isImageFile(file) {
 }
 
 /**
- * Uploads a single image file to the school's Hostinger storage via upload.php
+ * Uploads one image file to the school's Hostinger storage via upload.php
  * and resolves with the public URL
- * (e.g. https://upload.ansarschool.in/UPLOADS/1737500000_ab12c.jpg).
  *
  * No client-side size limit: large photos are accepted as-is and the server
  * decides what it can store. Network/browser limits still apply naturally.
@@ -71,4 +70,53 @@ export async function uploadImagesToHostinger(files) {
     urls.push(await uploadImageToHostinger(file));
   }
   return urls;
+}
+
+/**
+ * Generic upload used by the Library media manager for images AND PDF
+ * documents (the server-side handler decides what it accepts). Uses XHR so
+ * callers get real upload progress (0–100) instead of an indeterminate wait.
+ * Resolves with the public URL, e.g. https://upload.ansarschool.in/UPLOADS/
+ */
+export function uploadFileToHostinger(file, { onProgress } = {}) {
+  return new Promise((resolve, reject) => {
+    if (!file) {
+      reject(new Error('No file selected.'));
+      return;
+    }
+
+    const formData = new FormData();
+    formData.append('file', file);
+
+    const xhr = new XMLHttpRequest();
+    xhr.open('POST', HOSTINGER_UPLOAD_ENDPOINT);
+    xhr.responseType = 'text';
+
+    xhr.upload.onprogress = (event) => {
+      if (onProgress && event.lengthComputable) {
+        onProgress(Math.round((event.loaded / event.total) * 100));
+      }
+    };
+
+    xhr.onload = () => {
+      if (onProgress && xhr.status >= 200 && xhr.status < 300) onProgress(100);
+      let data = null;
+      try {
+        data = JSON.parse(xhr.responseText);
+      } catch {
+        // fall through to the error branch below
+      }
+      if (xhr.status >= 200 && xhr.status < 300 && data && data.status === 'success' && data.url) {
+        resolve({ url: data.url, path: '' });
+      } else {
+        reject(new Error((data && data.message) || `Upload failed (${xhr.status}).`));
+      }
+    };
+
+    xhr.onerror = () => {
+      reject(new Error('Could not reach the upload service. Check the connection and try again — or paste a file URL instead.'));
+    };
+
+    xhr.send(formData);
+  });
 }

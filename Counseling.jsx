@@ -1,231 +1,39 @@
-import React, { useEffect } from "react";
-import { Link } from "react-router-dom";
-import Layout from "./Layout";
-import { applySeoMetadata } from "./seoUtils";
+import React, { useEffect, useMemo, useState } from 'react';
+import Layout from './Layout';
+import { applySeoMetadata } from './seoUtils';
 
-const services = [
-  [
-    "Individual Counseling & Mental Health Support",
-    "A respectful, age-appropriate space where students can discuss wellbeing, emotions, relationships, and concerns.",
-  ],
-  [
-    "Academic & Career Guidance",
-    "Practical guidance to help students build effective learning habits, make informed subject choices, and plan their next steps.",
-  ],
-  [
-    "Behaviour & Life Skills Development",
-    "Support for self-awareness, resilience, communication, responsible decision-making, and positive behaviour.",
-  ],
-  [
-    "Parent & Teacher Workshops",
-    "Collaborative sessions that strengthen understanding, early support, and a consistent care network around every child.",
-  ],
-];
+const PHONE = '919747754164';
+const SECTIONS = ['Ansar Sprouts (KG)', 'Primary Section (Grades 1-4)', 'Middle Section (Grades 5-7)', 'Secondary Section (Grades 8-10)', 'Senior Secondary (Grades 11-12)'];
+const FOCUS = ['Transition, play and early emotional development', 'Learning habits, friendships and confidence', 'Emotional regulation, peer relationships and study skills', 'Exam wellbeing, resilience and future planning', 'Career pathways, transition planning and wellbeing'];
+const PILLARS = [['Academic', 'Study routines, learning confidence and examination support.'], ['Emotional', 'Understanding emotions, resilience and healthy coping skills.'], ['Social', 'Friendships, communication, belonging and conflict resolution.'], ['Behavioral', 'Positive choices, self-management and restorative support.'], ['Career', 'Age-appropriate pathways, subject choices and future planning.'], ['Parent partnerships', 'A respectful home-school support network around every learner.']];
+const POLICIES = [['Privacy with care', 'Conversations are treated respectfully and privately. Information is shared only when needed to protect a student or arrange appropriate support.'], ['Respectful participation', 'Students, families and staff communicate honestly, kindly and without judgment.'], ['Appointments', 'Routine sessions are arranged around the school timetable. Please book in advance where possible.'], ['Parent partnership', 'Families may be involved in planning and follow-up while respecting the student’s voice.']];
+const FAQS = [['Is counseling confidential?', 'Counseling is private and handled with care. If there is a safety concern, the counselor may involve appropriate school leaders or parents to protect the student.'], ['How do I book a session?', 'Complete the booking form below. It opens a pre-filled WhatsApp message to the school counseling appointment number.'], ['When are sessions held?', 'Routine appointments are scheduled during suitable school hours, avoiding essential learning whenever possible.'], ['Is there a fee?', 'School guidance appointments are coordinated through the school. Contact the counseling team through WhatsApp for the current process.']];
+const counselors = SECTIONS.map((section, i) => ({ section, name: `Counselor - ${section.split(' (')[0]}`, focus: FOCUS[i] }));
+const wa = (message) => `https://wa.me/${PHONE}?text=${encodeURIComponent(message)}`;
+const input = 'mt-1 w-full rounded-xl border border-slate-200 bg-white p-3 outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-100';
 
-const team = [
-  [
-    "School Counseling Team",
-    "Student wellbeing",
-    "Qualified professionals provide a calm, supportive first point of contact for students and families.",
-  ],
-  [
-    "Student Support Network",
-    "Pastoral care",
-    "Counselors, teachers, coordinators, and families work together to help each student feel seen and supported.",
-  ],
-];
+function Accordion({ items }) {
+  const [open, setOpen] = useState(null);
+  return <div className="space-y-3">{items.map(([title, text], index) => <article key={title} className="rounded-2xl border border-slate-200 bg-white"><button type="button" onClick={() => setOpen(open === index ? null : index)} className="flex w-full items-center justify-between gap-5 p-5 text-left font-black"><span>{title}</span><span className="text-emerald-700">{open === index ? '−' : '+'}</span></button>{open === index && <p className="border-t border-slate-100 px-5 py-4 leading-7 text-slate-600">{text}</p>}</article>)}</div>;
+}
 
 export default function Counseling() {
-  useEffect(() => {
-    applySeoMetadata(
-      {
-        title: "Guidance & Counseling | Ansar English School",
-        description:
-          "Learn about confidential student wellbeing, counseling, academic guidance, and family support at Ansar English School in Perumpilavu, Thrissur.",
-        keywords:
-          "school counseling, student wellbeing, mental health support, academic guidance, Ansar English School",
-      },
-      "/counseling",
-    );
-  }, []);
+  const [active, setActive] = useState(SECTIONS[0]);
+  const [form, setForm] = useState({ role: 'Student', name: '', section: SECTIONS[0], classDivision: '', date: '', time: '', purpose: 'General wellbeing check-in' });
+  const counselor = useMemo(() => counselors.find(item => item.section === form.section) || counselors[0], [form.section]);
+  const update = (key, value) => setForm(current => ({ ...current, [key]: value }));
+  useEffect(() => { applySeoMetadata({ title: 'Guidance & Counseling | Ansar English School', description: 'Student wellbeing, counseling, academic guidance and parent support at Ansar English School.', keywords: 'school counseling, student wellbeing, guidance, academic support' }, '/counseling'); }, []);
+  const message = `Counseling appointment request\n\nRequester: ${form.role}\nName: ${form.name || 'Not provided'}\nSchool section: ${form.section}\nClass & division: ${form.classDivision || 'Not provided'}\nAssigned counselor: ${counselor.name}\nPreferred date: ${form.date || 'To be discussed'}\nPreferred time: ${form.time || 'To be discussed'}\nPurpose: ${form.purpose}`;
 
-  return (
-    <Layout fullWidth>
-      <section className="relative overflow-hidden bg-slate-950 px-4 py-16 text-white sm:px-6 sm:py-24 lg:px-8">
-        <div
-          className="absolute inset-0 bg-[radial-gradient(circle_at_15%_20%,rgba(16,185,129,0.35),transparent_32%),radial-gradient(circle_at_85%_65%,rgba(14,165,233,0.25),transparent_30%)]"
-          aria-hidden="true"
-        />
-        <div className="relative mx-auto grid max-w-7xl items-center gap-12 lg:grid-cols-[1.25fr_0.75fr]">
-          <div>
-            <p className="mb-5 text-sm font-black uppercase tracking-[0.2em] text-emerald-300">
-              Campus Life · Student Wellbeing
-            </p>
-            <h1 className="max-w-3xl text-4xl font-black leading-tight sm:text-5xl lg:text-6xl">
-              Supporting Every Student’s Mind, Growth, and Wellbeing.
-            </h1>
-            <p className="mt-6 max-w-2xl text-lg leading-relaxed text-slate-200">
-              The Guidance &amp; Counseling Department offers thoughtful,
-              confidential support that helps students thrive academically,
-              socially, and emotionally.
-            </p>
-            <a
-              href="mailto:ansarmedia@ansarschool.in?subject=Guidance%20and%20Counseling%20Appointment%20Request"
-              className="mt-8 inline-flex items-center rounded-xl bg-emerald-400 px-6 py-3.5 font-bold text-slate-950 shadow-lg transition hover:bg-emerald-300"
-            >
-              Request a private appointment
-            </a>
-          </div>
-          <div className="rounded-3xl border border-white/15 bg-white/10 p-8 shadow-2xl backdrop-blur-sm">
-            <div className="mb-8 flex h-16 w-16 items-center justify-center rounded-2xl bg-emerald-400 text-slate-950">
-              <svg
-                className="h-9 w-9"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-                aria-hidden="true"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth="1.8"
-                  d="M12 21a9 9 0 1 0 0-18 9 9 0 0 0 0 18Zm-3.5-8.5c.7 1.5 1.85 2.25 3.5 2.25s2.8-.75 3.5-2.25M9 9h.01M15 9h.01"
-                />
-              </svg>
-            </div>
-            <p className="text-sm font-bold uppercase tracking-widest text-emerald-200">
-              A safe place to be heard
-            </p>
-            <p className="mt-3 text-xl font-bold leading-relaxed text-white">
-              Care is guided by respect, privacy, and each student’s best
-              interests.
-            </p>
-          </div>
-        </div>
-      </section>
+  return <Layout fullWidth><main className="bg-[#f7faf9] text-slate-900">
+    <section className="relative overflow-hidden bg-slate-950 px-4 py-16 text-white sm:px-6 lg:px-8 lg:py-24"><div className="absolute inset-0 bg-[radial-gradient(circle_at_12%_18%,rgba(16,185,129,.36),transparent_28%),radial-gradient(circle_at_85%_68%,rgba(14,165,233,.26),transparent_30%)]" /><div className="relative mx-auto grid max-w-7xl gap-10 lg:grid-cols-[1.2fr_.8fr] lg:items-end"><div><p className="text-xs font-black uppercase tracking-[.22em] text-emerald-300">Student wellbeing and guidance</p><h1 className="mt-5 max-w-4xl text-4xl font-black leading-tight sm:text-5xl lg:text-6xl">Every student deserves a safe place to be heard.</h1><p className="mt-6 max-w-2xl text-lg leading-8 text-slate-200">Our Guidance and Counseling Department helps students grow with confidence - academically, emotionally, socially and personally.</p><div className="mt-8 flex flex-wrap gap-3"><a href="#appointment" className="rounded-xl bg-emerald-400 px-5 py-3 font-extrabold text-slate-950 hover:bg-emerald-300">Book an appointment</a><a href="#team" className="rounded-xl border border-white/30 px-5 py-3 font-extrabold hover:bg-white/10">Meet the team</a></div></div><aside className="rounded-3xl border border-amber-200/30 bg-amber-100/10 p-6 backdrop-blur"><p className="text-xs font-black uppercase tracking-[.18em] text-amber-300">Urgent support during school hours</p><h2 className="mt-3 text-2xl font-black">Need support right now?</h2><p className="mt-3 leading-7 text-slate-200">Tell a teacher, coordinator, school office or counselor immediately. For routine support, use the appointment form below. In a life-threatening emergency, contact local emergency services first.</p></aside></div></section>
 
-      <section className="mx-auto max-w-7xl px-4 py-16 sm:px-6 lg:px-8 lg:py-24">
-        <div className="grid gap-10 lg:grid-cols-[0.8fr_1.2fr]">
-          <div>
-            <p className="text-sm font-black uppercase tracking-[0.18em] text-emerald-700">
-              About the department
-            </p>
-            <h2 className="mt-3 text-3xl font-black text-slate-900 sm:text-4xl">
-              Guidance for the whole student journey.
-            </h2>
-          </div>
-          <p className="text-lg leading-relaxed text-slate-600">
-            At Ansar English School, student wellbeing is central to meaningful
-            learning. Our department supports students as they navigate academic
-            demands, personal growth, friendships, family transitions, and
-            future choices. We work alongside parents and educators to identify
-            the right support at the right time.
-          </p>
-        </div>
-      </section>
-
-      <section className="bg-slate-50 px-4 py-16 sm:px-6 lg:px-8 lg:py-24">
-        <div className="mx-auto max-w-7xl">
-          <div className="max-w-2xl">
-            <p className="text-sm font-black uppercase tracking-[0.18em] text-emerald-700">
-              Services provided
-            </p>
-            <h2 className="mt-3 text-3xl font-black text-slate-900 sm:text-4xl">
-              Practical support, delivered with care.
-            </h2>
-          </div>
-          <div className="mt-10 grid gap-5 md:grid-cols-2">
-            {services.map(([title, text], index) => (
-              <article
-                key={title}
-                className="rounded-2xl border border-slate-200 bg-white p-7 shadow-sm"
-              >
-                <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-emerald-100 font-black text-emerald-800">
-                  0{index + 1}
-                </span>
-                <h3 className="mt-5 text-xl font-black text-slate-900">
-                  {title}
-                </h3>
-                <p className="mt-3 leading-relaxed text-slate-600">{text}</p>
-              </article>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      <section className="mx-auto max-w-7xl px-4 py-16 sm:px-6 lg:px-8 lg:py-24">
-        <p className="text-sm font-black uppercase tracking-[0.18em] text-emerald-700">
-          Meet the counselors
-        </p>
-        <h2 className="mt-3 text-3xl font-black text-slate-900 sm:text-4xl">
-          A connected team around every learner.
-        </h2>
-        <div className="mt-10 grid gap-6 md:grid-cols-2">
-          {team.map(([name, role, text]) => (
-            <article
-              key={name}
-              className="rounded-3xl border border-slate-200 p-8"
-            >
-              <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-slate-900 text-emerald-300">
-                <svg
-                  className="h-7 w-7"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                  aria-hidden="true"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth="1.8"
-                    d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2M9 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8Zm13 10v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"
-                  />
-                </svg>
-              </div>
-              <p className="mt-6 text-sm font-bold uppercase tracking-widest text-emerald-700">
-                {role}
-              </p>
-              <h3 className="mt-2 text-2xl font-black text-slate-900">
-                {name}
-              </h3>
-              <p className="mt-3 leading-relaxed text-slate-600">{text}</p>
-            </article>
-          ))}
-        </div>
-      </section>
-
-      <section className="bg-emerald-800 px-4 py-16 text-white sm:px-6 lg:px-8">
-        <div className="mx-auto grid max-w-7xl gap-8 rounded-3xl border border-white/20 bg-white/10 p-8 lg:grid-cols-[1fr_auto] lg:items-center lg:p-12">
-          <div>
-            <p className="text-sm font-black uppercase tracking-[0.18em] text-emerald-200">
-              Confidential help
-            </p>
-            <h2 className="mt-3 text-3xl font-black">
-              Ready to begin a conversation?
-            </h2>
-            <p className="mt-4 max-w-2xl leading-relaxed text-emerald-50">
-              Students and parents may request a private appointment through the
-              school office. Please share only the details needed to arrange a
-              suitable time. For an immediate emergency, contact local emergency
-              services.
-            </p>
-          </div>
-          <div className="flex flex-col gap-3 sm:flex-row lg:flex-col">
-            <a
-              href="mailto:ansarmedia@ansarschool.in?subject=Guidance%20and%20Counseling%20Appointment%20Request"
-              className="rounded-xl bg-white px-6 py-3.5 text-center font-bold text-emerald-900 transition hover:bg-emerald-50"
-            >
-              Email the school office
-            </a>
-            <Link
-              to="/contact"
-              className="rounded-xl border border-white/40 px-6 py-3.5 text-center font-bold transition hover:bg-white/10"
-            >
-              School contact details
-            </Link>
-          </div>
-        </div>
-      </section>
-    </Layout>
-  );
+    <section className="mx-auto grid max-w-7xl gap-8 px-4 py-14 sm:px-6 lg:grid-cols-[.85fr_1.15fr] lg:px-8 lg:py-20"><div><p className="text-xs font-black uppercase tracking-[.2em] text-emerald-700">What is counseling?</p><h2 className="mt-3 text-3xl font-black sm:text-4xl">Guidance for real school life.</h2></div><div className="space-y-5 text-lg leading-8 text-slate-600"><p>School counseling is a supportive, age-appropriate partnership that helps students understand their experiences, build skills and access the right help at the right time.</p><p>It is not only for a crisis. Students and families can seek support for learning, friendships, emotions, behavior, transitions, career questions and healthy routines.</p></div></section>
+    <section className="border-y border-emerald-100 bg-white px-4 py-14 sm:px-6 lg:px-8"><div className="mx-auto max-w-7xl"><p className="text-xs font-black uppercase tracking-[.2em] text-emerald-700">Why it matters</p><h2 className="mt-3 text-3xl font-black sm:text-4xl">Whole-child support, in six connected areas.</h2><div className="mt-9 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">{PILLARS.map(([title, text], index) => <article key={title} className="rounded-2xl border border-slate-200 bg-[#fbfefd] p-6"><span className="text-sm font-black text-emerald-700">0{index + 1}</span><h3 className="mt-4 text-xl font-black">{title}</h3><p className="mt-2 leading-6 text-slate-600">{text}</p></article>)}</div></div></section>
+    <section className="mx-auto max-w-7xl px-4 py-14 sm:px-6 lg:px-8"><div className="grid gap-8 lg:grid-cols-[.8fr_1.2fr]"><div><p className="text-xs font-black uppercase tracking-[.2em] text-emerald-700">Rules and policy guidelines</p><h2 className="mt-3 text-3xl font-black">Care built on trust.</h2><p className="mt-4 leading-7 text-slate-600">Our approach protects dignity, welcomes family partnership and always keeps student safety central.</p></div><Accordion items={POLICIES} /></div></section>
+    <section id="team" className="bg-slate-950 px-4 py-16 text-white sm:px-6 lg:px-8"><div className="mx-auto max-w-7xl"><p className="text-xs font-black uppercase tracking-[.2em] text-emerald-300">Counseling team</p><h2 className="mt-3 text-3xl font-black sm:text-4xl">Support tailored to each school stage.</h2><div className="mt-8 flex flex-wrap gap-2">{SECTIONS.map(section => <button key={section} type="button" onClick={() => setActive(section)} className={`rounded-full px-4 py-2 text-sm font-bold transition ${active === section ? 'bg-emerald-400 text-slate-950' : 'border border-white/20 text-slate-200 hover:bg-white/10'}`}>{section}</button>)}</div><div className="mt-8 grid gap-5 md:grid-cols-2 xl:grid-cols-3">{counselors.filter(member => member.section === active).map(member => <article key={member.section} className="rounded-3xl bg-white p-6 text-slate-900"><div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-slate-100 text-2xl" aria-label="Counselor image placeholder">👤</div><span className="mt-5 inline-block rounded-full bg-emerald-100 px-3 py-1 text-xs font-black text-emerald-800">{member.section}</span><p className="mt-4 text-sm font-bold text-slate-500">School Guidance & Wellbeing Team</p><h3 className="mt-1 text-2xl font-black">{member.name}</h3><p className="mt-1 font-bold text-emerald-700">Section Counselor</p><p className="mt-4 leading-6 text-slate-600"><strong>Focus:</strong> {member.focus}</p><a href={wa(`Hello, I would like to book a counseling appointment for ${member.section}.`)} target="_blank" rel="noreferrer" className="mt-6 inline-flex rounded-xl bg-emerald-700 px-4 py-3 text-sm font-extrabold text-white hover:bg-emerald-800">Book via WhatsApp</a></article>)}</div></div></section>
+    <section id="appointment" className="mx-auto max-w-7xl px-4 py-16 sm:px-6 lg:px-8"><div className="grid gap-8 lg:grid-cols-[.75fr_1.25fr]"><div><p className="text-xs font-black uppercase tracking-[.2em] text-emerald-700">Appointment booking</p><h2 className="mt-3 text-3xl font-black sm:text-4xl">Start with a simple message.</h2><p className="mt-4 leading-7 text-slate-600">When you submit, WhatsApp opens with your request prepared for the assigned counselor.</p><p className="mt-5 rounded-xl bg-emerald-50 p-4 text-sm font-bold text-emerald-900">Appointment number: +91 97477 54164</p></div><form onSubmit={event => { event.preventDefault(); window.open(wa(message), '_blank', 'noopener,noreferrer'); }} className="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm sm:p-7"><div className="grid gap-5 sm:grid-cols-2"><label className="text-sm font-bold">Requester role<select value={form.role} onChange={e => update('role', e.target.value)} className={input}><option>Student</option><option>Parent</option><option>Guardian</option></select></label><label className="text-sm font-bold">Full name<input required value={form.name} onChange={e => update('name', e.target.value)} className={input} /></label><label className="text-sm font-bold">School section<select value={form.section} onChange={e => update('section', e.target.value)} className={input}>{SECTIONS.map(item => <option key={item}>{item}</option>)}</select></label><label className="text-sm font-bold">Assigned counselor<input readOnly value={counselor.name} className={`${input} border-emerald-200 bg-emerald-50 text-emerald-900`} /></label><label className="text-sm font-bold">Purpose of visit<select value={form.purpose} onChange={e => update('purpose', e.target.value)} className={input}><option>General wellbeing check-in</option><option>Academic support</option><option>Emotional support</option><option>Friendship or social concern</option><option>Behavioral support</option><option>Career or subject guidance</option><option>Parent consultation</option></select></label><label className="text-sm font-bold">Preferred date<input type="date" value={form.date} onChange={e => update('date', e.target.value)} className={input} /></label><label className="text-sm font-bold">Preferred time slot<select value={form.time} onChange={e => update('time', e.target.value)} className={input}><option value="">Select a time</option><option>8:30 AM - 9:15 AM</option><option>10:30 AM - 11:15 AM</option><option>12:15 PM - 1:00 PM</option><option>3:30 PM - 4:15 PM</option></select></label></div><button className="mt-7 w-full rounded-xl bg-emerald-700 px-5 py-3.5 font-extrabold text-white hover:bg-emerald-800">Open WhatsApp appointment request</button></form></div></section>
+    <section className="border-y border-slate-200 bg-white px-4 py-16 sm:px-6 lg:px-8"><div className="mx-auto max-w-7xl"><p className="text-xs font-black uppercase tracking-[.2em] text-emerald-700">Wellbeing spaces and activities</p><h2 className="mt-3 text-3xl font-black">A calm place to connect and grow.</h2><div className="mt-8 grid gap-4 md:grid-cols-2 lg:grid-cols-4">{['Counseling room', 'Quiet discussion space', 'Mindfulness and activity zone', 'Workshop and parent session'].map((title, index) => <figure key={title} className="overflow-hidden rounded-2xl border border-slate-200 bg-slate-50"><div className={`flex aspect-[4/3] items-center justify-center text-4xl ${['bg-emerald-100', 'bg-sky-100', 'bg-violet-100', 'bg-amber-100'][index]}`} aria-label={`${title} image placeholder`}>✦</div><figcaption className="p-4 font-black">{title}</figcaption></figure>)}</div><div className="mt-10 grid gap-4 md:grid-cols-3">{['Student wellbeing guide', 'Study and exam routine tips', 'Parent conversation starter'].map((title, index) => <article key={title} className="rounded-2xl border border-emerald-100 bg-emerald-50 p-5"><p className="text-xs font-black uppercase tracking-widest text-emerald-700">Resource {index + 1}</p><h3 className="mt-2 text-lg font-black">{title}</h3><p className="mt-2 text-sm leading-6 text-slate-600">Downloadable resources will be published here by the school counseling team.</p><span className="mt-4 inline-block text-sm font-bold text-emerald-700">Coming soon</span></article>)}</div></div></section>
+    <section className="mx-auto max-w-4xl px-4 py-16 sm:px-6 lg:px-8"><p className="text-center text-xs font-black uppercase tracking-[.2em] text-emerald-700">Frequently asked questions</p><h2 className="mt-3 text-center text-3xl font-black sm:text-4xl">Clear answers for students and families.</h2><div className="mt-8"><Accordion items={FAQS} /></div></section>
+  </main></Layout>;
 }
