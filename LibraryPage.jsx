@@ -2,334 +2,64 @@ import React, { useEffect, useMemo, useState } from 'react';
 import { collection, doc, limit, onSnapshot, orderBy, query, where } from 'firebase/firestore';
 import Layout from './Layout';
 import { db } from './firebase-init';
+import { useLocation } from 'react-router-dom';
 
-const DEFAULT_LIBRARY = {
-  title: 'Ansar English School Library',
-  subtitle: 'A home for readers, researchers, storytellers, and lifelong learners.',
-  intro: 'The school library brings together books, ideas, conversation, and discovery. Students are encouraged to read widely, explore thoughtfully, and share what inspires them.',
-  heroImageUrl: '',
-  resourceUrl: 'https://sites.google.com/view/ansar-english-school-library/home',
-  resourceLabel: 'Explore the library collection',
-  openingHours: 'Open during school hours',
-  contactEmail: ''
-};
-
-const libraryAreas = [
-  { title: 'Library events', text: 'Author interactions, reading celebrations, competitions, and special programmes.', href: 'https://sites.google.com/view/ansar-english-school-library/library-events' },
-  { title: 'Library activities', text: 'Student-centred activities that turn reading and research into shared experiences.', href: 'https://sites.google.com/view/ansar-english-school-library/library-activities' },
-  { title: 'New arrivals', text: 'Discover recently added books and resources waiting for their next reader.', href: 'https://sites.google.com/view/ansar-english-school-library/new-arrivals' },
-  { title: 'Question papers', text: 'A structured collection of previous question papers for focused preparation.', href: 'https://sites.google.com/view/ansar-english-school-library/question-papers' },
-  { title: 'Reading desk', text: 'Newspaper clippings, periodicals, school magazines, and The Ansari Quill.', href: 'https://sites.google.com/view/ansar-english-school-library/news-paper-clippings' },
-  { title: 'Creative & kids’ corner', text: 'A joyful space for young readers, writers, and curious imaginations.', href: 'https://sites.google.com/view/ansar-english-school-library/creative-corner' }
+const LIBRARY_HOURS = 'Mon – Fri: 8:30 AM – 5:00 PM\nSaturday: 8:30 AM – 4:00 PM';
+const DEFAULT_LIBRARY = { title: 'Ansar English School Library', subtitle: 'Discover stories, ideas and learning beyond the classroom.', intro: 'A welcoming space for readers, researchers and curious minds. Explore books, learning resources, films and the many moments that bring our library to life.', heroImageUrl: '', openingHours: LIBRARY_HOURS, contactEmail: '' };
+const LIBRARY_PROFILE = 'Every library is the heart of an institution. The library provides the right information at the right time to the right person through books, dictionaries, encyclopedias, journals, magazines, newspapers and other e-resources. Ansar English School has 35,486 printed documents, subscribes to 14 magazines and six newspapers in English, Malayalam and other languages. Students and staff can access e-resources, and the library is a member of the National Digital Library of India. Our library is automated with KOHA software for barcode technology, circulation, acquisition, serial control and report generation.';
+const LIBRARY_RULES = [
+  'All students and staff of the school are members of the library.',
+  'A student can borrow one book at a time for a period of one week.',
+  'A staff member can borrow a maximum of eight books at a time for a period of one month.',
+  'Books are issued to students during intervals. No book will be issued or returned during teaching hours.',
+  'Marking, underlining or writing on library books, periodicals and newspapers is strictly forbidden.',
+  'Reference books and current periodicals are not issued; they may be consulted in the library only.',
+  'Late returns will be viewed seriously and a fine will be charged according to library rules.',
+  'The librarian may call for a book at any time, even before the normal loan period has expired.',
+  'A lost library card attracts a fine of ₹25.',
+  'Anyone who misuses, wrongly handles or loses a book must replace it or pay its current market price.',
+  'After reading, please return books, periodicals and newspapers to their respective places.',
+  'Members must take good care of library furnishings and equipment.',
+  'Students may bring only paper and a pen; personal belongings are not allowed in the library.',
+  'Members must not sub-lend library books.',
+  'Library computers are for academic purposes only. Do not tamper with settings; follow internet-safety guidelines.',
+  'Each student must obtain a No Dues Certificate from the librarian when transferring or withdrawing.',
+  'Strict order and silence must be maintained. Speak softly when necessary.'
 ];
-
-const categories = ['All', 'Event', 'Activity', 'New Arrival', 'Resource', 'Publication', 'Announcement'];
-
-/** Public tabs shown at the top of the page, mirroring the Library Admin tabs. */
-const PUBLIC_TABS = [
-  ['overview', 'Overview'],
-  ['one-fact', 'One Fact a Day'],
-  ['new-arrivals', 'New Arrivals'],
-  ['question-papers', 'Question Papers'],
-  ['e-books', 'E-Books'],
-  ['e-learning', 'E-Learning'],
-  ['short-films', 'Short Films'],
-  ['quizzes', 'Quizzes'],
-  ['events', 'Events & Activities'],
-  ['winners', 'Winners & Gallery'],
-  ['newspaper', 'Newspaper Clippings'],
-  ['files', 'Files & Documents'],
-  ['vocabulary', 'Vocabulary Vault']
-];
-
-/** Library post types that belong to each tab (same mapping the admin panel uses). */
-const TAB_POST_TYPES = {
-  'new-arrivals': ['New Arrival', 'Publication'],
-  'question-papers': ['Question Paper'],
-  'e-books': ['E-Book'],
-  'e-learning': ['E-Learning'],
-  'short-films': ['Short Film'],
-  'quizzes': ['Quiz'],
-  'events': ['Event', 'Activity'],
-  'winners': ['Winner'],
-  'newspaper': ['Clipping'],
-  'files': ['File'],
-  'vocabulary': ['Vocabulary']
-};
-
-const TAB_HINTS = {
-  'overview': 'Everything the library publishes.',
-  'one-fact': 'A fresh fact poster every school day.',
-  'new-arrivals': 'Recently added books, publications and resources.',
-  'question-papers': 'Previous question papers for focused preparation.',
-  'e-books': 'Digital books to read anywhere.',
-  'e-learning': 'Online learning resources curated by the library.',
-  'short-films': 'Student-friendly short films and videos.',
-  'quizzes': 'Practice quizzes and quiz corner links.',
-  'events': 'Library events and student activities.',
-  'winners': 'Winners and gallery highlights.',
-  'newspaper': 'Newspaper clippings and press mentions.',
-  'files': 'Documents, circulars and downloadable files.',
-  'vocabulary': 'Building word power, one card at a time.'
-};
-
+const PUBLIC_TABS = [['overview', 'Home'], ['one-fact', 'One Fact a Day'], ['new-arrivals', 'New Arrivals'], ['question-papers', 'Question Papers'], ['e-books', 'E-Books'], ['e-learning', 'E-Learning'], ['short-films', 'Short Films'], ['quizzes', 'Quizzes'], ['events', 'Events & Activities'], ['winners', 'Winners & Gallery'], ['newspaper', 'Clippings'], ['files', 'Files'], ['vocabulary', 'Vocabulary']];
+const TAB_POST_TYPES = { 'new-arrivals': ['New Arrival', 'Publication'], 'question-papers': ['Question Paper'], 'e-books': ['E-Book'], 'e-learning': ['E-Learning'], 'short-films': ['Short Film'], quizzes: ['Quiz'], events: ['Event', 'Activity'], winners: ['Winner'], newspaper: ['Clipping'], files: ['File'], vocabulary: ['Vocabulary'] };
+const COLLECTIONS = [['new-arrivals', 'New arrivals', 'Fresh reads waiting for their next reader.', '✦', 'from-amber-400 to-orange-500'], ['e-books', 'E-books', 'Read, learn and explore anywhere.', '▣', 'from-emerald-500 to-teal-600'], ['e-learning', 'E-learning', 'Trusted online learning resources.', '⌁', 'from-sky-500 to-blue-600'], ['short-films', 'Short films', 'Stories that make learning memorable.', '▶', 'from-violet-500 to-indigo-600'], ['question-papers', 'Question papers', 'Prepare with past papers and resources.', '⌘', 'from-rose-500 to-pink-600'], ['events', 'Library life', 'Activities, events and celebrations.', '✳', 'from-lime-500 to-green-600']];
 const YOUTUBE_ID = /(?:youtube\.com\/(?:watch\?v=|shorts\/|embed\/)|youtu\.be\/)([A-Za-z0-9_-]{11})/;
-const VIMEO_ID = /vimeo\.com\/(?:video\/)?(\d+)/;
+const VIMEO_ID = /vimeo\.com\/(?:video\/)?\d+/;
+function videoPreview(url, imageUrl) { const id = String(url || '').match(YOUTUBE_ID)?.[1]; return imageUrl || (id ? `https://i.ytimg.com/vi/${id}/hqdefault.jpg` : ''); }
+// Earlier Library uploads sometimes reached Firestore as an Announcement even
+// when their link was a video. Treat those legacy entries as Short Films too.
+function libraryType(post) { const type = String(post.type || '').trim(); const text = `${post.title || ''} ${post.summary || ''} ${post.category || ''} ${post.venue || ''}`; if (/clipping|newspaper/i.test(`${type} ${text}`)) return 'Clipping'; if ((type === 'Announcement' || type === 'Video') && (YOUTUBE_ID.test(String(post.linkUrl || '')) || VIMEO_ID.test(String(post.linkUrl || '')))) return 'Short Film'; if (/event|activit/i.test(type) || (/announcement/i.test(type) && /book fair|event|activity|celebration|programme|program/i.test(text))) return 'Event'; return type; }
+function postTime(post) { const date = Date.parse(post.date || ''); return Number.isNaN(date) ? (post.createdAt?.toMillis?.() || 0) : date; }
+function displayDate(value) { const date = new Date(value); return Number.isNaN(date.getTime()) ? '' : new Intl.DateTimeFormat('en-IN', { day: 'numeric', month: 'short', year: 'numeric' }).format(date); }
+function Arrow() { return <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.3" aria-hidden="true"><path strokeLinecap="round" strokeLinejoin="round" d="M5 12h14m-6-6 6 6-6 6" /></svg>; }
 
-function youtubeVideoId(url) {
-  const match = String(url || '').match(YOUTUBE_ID);
-  return match ? match[1] : '';
+function ResourceCard({ post, film = false }) {
+  const image = film ? videoPreview(post.linkUrl, post.imageUrl || post.imageUrls?.[0]) : (post.imageUrl || post.imageUrls?.[0]); const destination = post.linkUrl || post.fileUrl; const Card = destination ? 'a' : 'article'; const props = destination ? { href: destination, target: '_blank', rel: 'noreferrer' } : {};
+  return <Card {...props} className="group flex min-w-0 flex-col overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm transition duration-300 hover:-translate-y-1 hover:border-emerald-200 hover:shadow-xl"><div className={`relative ${film ? 'aspect-video' : 'aspect-[16/10]'} overflow-hidden bg-slate-100`}>{image ? <img src={image} alt="" className="h-full w-full object-cover transition duration-500 group-hover:scale-105" loading="lazy" /> : <div className="flex h-full items-center justify-center bg-gradient-to-br from-emerald-950 to-slate-900 px-5 text-center text-xl font-extrabold leading-tight text-white">{film ? '▶' : post.title}</div>}{film && <span className="absolute inset-0 flex items-center justify-center bg-slate-950/10 text-3xl text-white transition group-hover:bg-slate-950/35">▶</span>}<span className="absolute left-3 top-3 rounded-full bg-white/95 px-3 py-1 text-[10px] font-black uppercase tracking-widest text-emerald-800 shadow-sm">{film ? 'Short Film' : libraryType(post)}</span></div><div className="flex flex-1 flex-col p-5">{post.date && <p className="text-xs font-bold text-slate-400">{displayDate(post.date)}</p>}<h3 className="mt-2 line-clamp-2 text-lg font-extrabold leading-snug text-slate-900 transition group-hover:text-emerald-700">{post.title}</h3>{post.summary && <p className="mt-2 line-clamp-2 text-sm leading-6 text-slate-600">{post.summary}</p>}{destination && <span className="mt-4 inline-flex items-center gap-2 text-sm font-bold text-emerald-700">{film ? 'Watch now' : 'View'} <Arrow /></span>}</div></Card>;
 }
-
-function vimeoVideoId(url) {
-  const match = String(url || '').match(VIMEO_ID);
-  return match ? match[1] : '';
-}
-
-/** Preview image for a post: auto thumbnail for YouTube/Vimeo, cover image otherwise. */
-function videoPreview(url, imageUrl) {
-  const videoUrl = String(url || '');
-  const cover = String(imageUrl || '').trim();
-  const youtube = youtubeVideoId(videoUrl);
-  if (youtube) return { thumbnail: cover || `https://i.ytimg.com/vi/${youtube}/hqdefault.jpg`, vimeoId: '' };
-  const vimeo = vimeoVideoId(videoUrl);
-  if (vimeo) return { thumbnail: cover, vimeoId: vimeo };
-  return { thumbnail: cover, vimeoId: '' };
-}
-
-function shortFilmLinkLabel(url) {
-  const videoUrl = String(url || '');
-  if (youtubeVideoId(videoUrl)) return 'Watch on YouTube';
-  if (vimeoVideoId(videoUrl)) return 'Watch on Vimeo';
-  return 'Watch the video';
-}
-
-function postTime(post) {
-  const timestamp = Date.parse(post.date || '');
-  if (!Number.isNaN(timestamp)) return timestamp;
-  if (post.createdAt?.toMillis) return post.createdAt.toMillis();
-  return 0;
-}
-
-function displayDate(value) {
-  const date = new Date(value);
-  if (Number.isNaN(date.getTime())) return '';
-  return new Intl.DateTimeFormat('en-IN', { day: 'numeric', month: 'long', year: 'numeric' }).format(date);
-}
-
-function factDate(value) {
-  const date = new Date(`${value}T00:00:00`);
-  if (Number.isNaN(date.getTime())) return '';
-  return new Intl.DateTimeFormat('en-IN', { day: 'numeric', month: 'long', year: 'numeric' }).format(date);
-}
-
-function PostCard({ post }) {
-  const preview = videoPreview(post.linkUrl, post.imageUrl || (post.imageUrls || [])[0]);
-  const shortFilm = post.type === 'Short Film';
-  return (
-    <article className="group overflow-hidden border border-[#d8cbb9] bg-[#fdfbf6] shadow-sm transition hover:-translate-y-1 hover:border-[#a75032] hover:shadow-xl">
-      {preview.thumbnail
-        ? <img src={preview.thumbnail} alt="" className="h-48 w-full object-cover" loading="lazy" onError={(event) => { event.currentTarget.style.display = 'none'; }} />
-        : <div className="flex h-48 w-full items-center justify-center bg-[#ece4d6] text-4xl text-[#d8cbb9]">{shortFilm ? '▶' : '📄'}</div>}
-      <div className="p-6">
-        <div className="flex flex-wrap items-center gap-3 text-xs font-black uppercase tracking-[0.16em] text-[#a75032]">
-          <span>{post.type}</span>
-          {post.date && <span className="text-slate-400">{displayDate(post.date)}</span>}
-        </div>
-        <h3 className="mt-3 font-serif text-2xl font-bold text-[#15324a]">{post.title}</h3>
-        {post.summary && <p className="mt-3 line-clamp-3 text-sm leading-6 text-slate-600">{post.summary}</p>}
-        <div className="mt-5 flex flex-wrap gap-4">
-          {shortFilm
-            ? <a href={post.linkUrl} target="_blank" rel="noreferrer" className="text-sm font-extrabold text-[#a75032] underline decoration-2 underline-offset-4">{shortFilmLinkLabel(post.linkUrl)} →</a>
-            : null}
-          {!shortFilm && post.linkUrl
-            ? <a href={post.linkUrl} target="_blank" rel="noreferrer" className="text-sm font-extrabold text-[#a75032] underline decoration-2 underline-offset-4">Open resource →</a>
-            : null}
-          {post.fileUrl
-            ? <a href={post.fileUrl} target="_blank" rel="noreferrer" className="text-sm font-extrabold text-[#a75032] underline decoration-2 underline-offset-4">Open document →</a>
-            : null}
-        </div>
-      </div>
-    </article>
-  );
-}
+function EmptyState({ label }) { return <div className="rounded-3xl border border-dashed border-slate-300 bg-white p-12 text-center"><div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-emerald-50 text-2xl text-emerald-700">✦</div><h3 className="mt-5 text-xl font-extrabold text-slate-900">Nothing here yet</h3><p className="mx-auto mt-2 max-w-md text-sm leading-6 text-slate-500">New {label.toLowerCase()} will appear here as soon as the library publishes them.</p></div>; }
 
 export default function LibraryPage() {
-  const [settings, setSettings] = useState(DEFAULT_LIBRARY);
-  const [posts, setPosts] = useState([]);
-  const [facts, setFacts] = useState([]);
-  const [activeCategory, setActiveCategory] = useState('All');
-  const [activeTab, setActiveTab] = useState('overview');
-
-  useEffect(() => {
-    const unsubscribe = onSnapshot(doc(db, 'librarySettings', 'main'), (snapshot) => {
-      if (snapshot.exists()) setSettings({ ...DEFAULT_LIBRARY, ...snapshot.data() });
-    }, () => setSettings(DEFAULT_LIBRARY));
-    return unsubscribe;
-  }, []);
-
-  useEffect(() => {
-    const publicPosts = query(collection(db, 'libraryPosts'), where('published', '==', true));
-    const unsubscribe = onSnapshot(publicPosts, (snapshot) => {
-      setPosts(snapshot.docs.map(item => ({ id: item.id, ...item.data() })).sort((a, b) => postTime(b) - postTime(a)));
-    }, () => setPosts([]));
-    return unsubscribe;
-  }, []);
-
-  useEffect(() => {
-    const recentFacts = query(collection(db, 'libraryOneFact'), orderBy('date', 'desc'), limit(8));
-    const unsubscribe = onSnapshot(recentFacts, (snapshot) => {
-      setFacts(snapshot.docs.map(item => ({ id: item.id, ...item.data() })).filter(item => item.published !== false));
-    }, () => setFacts([]));
-    return unsubscribe;
-  }, []);
-
-  const visiblePosts = useMemo(
-    () => posts.filter(post => activeCategory === 'All' || post.type === activeCategory),
-    [activeCategory, posts]
-  );
-
-  const tabPosts = useMemo(
-    () => (TAB_POST_TYPES[activeTab] ? posts.filter(post => TAB_POST_TYPES[activeTab].includes(post.type)) : []),
-    [activeTab, posts]
-  );
-
-  const activeTabMeta = PUBLIC_TABS.find(([key]) => key === activeTab) || PUBLIC_TABS[0];
-
-  return (
-    <Layout fullWidth>
-      <main className="bg-[#f7f3ea] text-slate-900">
-        <section className="relative isolate overflow-hidden bg-[#15324a] text-white">
-          {settings.heroImageUrl && <img src={settings.heroImageUrl} alt="" className="absolute inset-0 -z-20 h-full w-full object-cover opacity-25" />}
-          <div className="absolute inset-0 -z-10 bg-[radial-gradient(circle_at_82%_18%,rgba(218,154,44,.42),transparent_25%),linear-gradient(115deg,rgba(12,36,55,.98),rgba(18,52,73,.82))]" />
-          <div className="mx-auto max-w-7xl px-4 py-20 sm:px-6 lg:px-8 lg:py-28">
-            <p className="text-xs font-black uppercase tracking-[0.28em] text-amber-300">Ansar English School · Perumpilavu</p>
-            <div className="mt-7 grid gap-10 lg:grid-cols-[1.15fr_.85fr] lg:items-end">
-              <div>
-                <h1 className="max-w-4xl font-serif text-5xl font-bold leading-[1.02] sm:text-6xl lg:text-7xl">{settings.title}</h1>
-                <p className="mt-6 max-w-2xl text-lg leading-8 text-slate-100 sm:text-xl">{settings.subtitle}</p>
-                <div className="mt-9 flex flex-wrap gap-3">
-                  <a href="#library-latest" className="rounded-full bg-amber-300 px-5 py-3 text-sm font-extrabold text-slate-950 transition hover:bg-amber-200">Read the latest</a>
-                  {settings.resourceUrl && <a href={settings.resourceUrl} target="_blank" rel="noreferrer" className="rounded-full border border-white/35 bg-white/10 px-5 py-3 text-sm font-extrabold text-white transition hover:bg-white/20">{settings.resourceLabel}</a>}
-                </div>
-              </div>
-              <div className="border-l border-white/20 pl-6 sm:pl-8 lg:mb-2">
-                <p className="font-serif text-3xl italic text-amber-200">“A reader lives a thousand lives before he dies.”</p>
-                <p className="mt-3 text-sm font-bold uppercase tracking-[0.16em] text-slate-300">George R. R. Martin</p>
-              </div>
-            </div>
-          </div>
-        </section>
-
-        <section className="border-b border-[#ded6c8] bg-white/70">
-          <div className="mx-auto grid max-w-7xl gap-6 px-4 py-7 sm:grid-cols-3 sm:px-6 lg:px-8">
-            <div><p className="text-xs font-black uppercase tracking-[0.18em] text-[#a75032]">Library hours</p><p className="mt-1 font-serif text-xl font-bold text-[#15324a]">{settings.openingHours}</p></div>
-            <div><p className="text-xs font-black uppercase tracking-[0.18em] text-[#a75032]">Our focus</p><p className="mt-1 font-serif text-xl font-bold text-[#15324a]">Read · Think · Create</p></div>
-            <div><p className="text-xs font-black uppercase tracking-[0.18em] text-[#a75032]">Connect</p>{settings.contactEmail ? <a href={`mailto:${settings.contactEmail}`} className="mt-1 block font-serif text-xl font-bold text-[#15324a] hover:text-[#a75032]">{settings.contactEmail}</a> : <p className="mt-1 font-serif text-xl font-bold text-[#15324a]">Meet us in the library</p>}</div>
-          </div>
-        </section>
-
-        <nav aria-label="Library sections" className="border-b border-[#ded6c8] bg-[#fdfbf6]">
-          <div className="mx-auto flex max-w-7xl gap-2 overflow-x-auto px-4 py-3 sm:px-6 lg:px-8">
-            {PUBLIC_TABS.map(([key, label]) => (
-              <button
-                key={key}
-                type="button"
-                onClick={() => setActiveTab(key)}
-                className={`whitespace-nowrap rounded-full px-4 py-2 text-sm font-bold transition ${activeTab === key ? 'bg-[#15324a] text-white shadow-sm' : 'border border-[#d8cbb9] bg-white text-slate-700 hover:border-[#a75032] hover:text-[#a75032]'}`}
-              >
-                {label}
-              </button>
-            ))}
-          </div>
-        </nav>
-
-        {activeTab === 'overview' ? (
-          <>
-            <section className="mx-auto max-w-7xl px-4 py-16 sm:px-6 lg:px-8 lg:py-24">
-              <div className="grid gap-10 lg:grid-cols-[.78fr_1.22fr] lg:items-start">
-                <div className="lg:sticky lg:top-28">
-                  <p className="text-xs font-black uppercase tracking-[0.22em] text-[#a75032]">About the library</p>
-                  <h2 className="mt-4 font-serif text-4xl font-bold leading-tight text-[#15324a]">A place where every question can begin.</h2>
-                </div>
-                <p className="max-w-3xl text-lg leading-9 text-slate-700">{settings.intro}</p>
-              </div>
-            </section>
-
-            <section className="bg-[#ece4d6] py-16 lg:py-24">
-              <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-                <div className="flex flex-wrap items-end justify-between gap-5">
-                  <div><p className="text-xs font-black uppercase tracking-[0.22em] text-[#a75032]">Explore</p><h2 className="mt-3 font-serif text-4xl font-bold text-[#15324a]">More than a bookshelf</h2></div>
-                  <a href={settings.resourceUrl} target="_blank" rel="noreferrer" className="text-sm font-extrabold text-[#a75032] underline decoration-2 underline-offset-4">View the existing resource archive</a>
-                </div>
-                <div className="mt-10 grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-                  {libraryAreas.map((area, index) => <a key={area.title} href={area.href} target="_blank" rel="noreferrer" className="group relative overflow-hidden border border-[#d8cbb9] bg-[#fdfbf6] p-6 transition hover:-translate-y-1 hover:border-[#a75032] hover:shadow-xl">
-                    <span className="font-serif text-5xl font-bold text-[#d8cbb9]">{String(index + 1).padStart(2, '0')}</span>
-                    <h3 className="mt-6 font-serif text-2xl font-bold text-[#15324a] group-hover:text-[#a75032]">{area.title}</h3>
-                    <p className="mt-3 text-sm leading-6 text-slate-600">{area.text}</p>
-                    <span className="mt-5 inline-block text-sm font-extrabold text-[#a75032]">Explore →</span>
-                  </a>)}
-                </div>
-              </div>
-            </section>
-
-            <section id="library-latest" className="mx-auto max-w-7xl px-4 py-16 sm:px-6 lg:px-8 lg:py-24">
-              <div className="max-w-3xl"><p className="text-xs font-black uppercase tracking-[0.22em] text-[#a75032]">From the library desk</p><h2 className="mt-3 font-serif text-4xl font-bold text-[#15324a] sm:text-5xl">Latest stories &amp; updates</h2></div>
-              <div className="mt-8 flex flex-wrap gap-2 border-y border-[#ded6c8] py-4">
-                {categories.map(category => <button key={category} onClick={() => setActiveCategory(category)} className={`rounded-full px-4 py-2 text-sm font-bold transition ${activeCategory === category ? 'bg-[#15324a] text-white' : 'text-slate-600 hover:bg-white'}`}>{category}</button>)}
-              </div>
-              <div className="mt-10 grid gap-8 lg:grid-cols-3">
-                {visiblePosts.map((post, index) => <article key={post.id} className={`border-t-4 border-[#a75032] bg-white shadow-sm ${index === 0 ? 'lg:col-span-2 lg:grid lg:grid-cols-2' : ''}`}>
-                  {post.imageUrl && <img src={post.imageUrl} alt="" className={`h-56 w-full object-cover ${index === 0 ? 'lg:h-full' : ''}`} loading="lazy" />}
-                  <div className="p-6 sm:p-7"><div className="flex flex-wrap items-center gap-3 text-xs font-black uppercase tracking-[0.16em] text-[#a75032]"><span>{post.type}</span>{post.date && <span className="text-slate-400">{displayDate(post.date)}</span>}</div><h3 className="mt-4 font-serif text-3xl font-bold leading-tight text-[#15324a]">{post.title}</h3>{post.summary && <p className="mt-4 leading-7 text-slate-600">{post.summary}</p>}{post.body && <p className="mt-4 whitespace-pre-line text-sm leading-6 text-slate-600">{post.body}</p>}{post.linkUrl && <a href={post.linkUrl} target="_blank" rel="noreferrer" className="mt-6 inline-block text-sm font-extrabold text-[#a75032] underline decoration-2 underline-offset-4">Open resource →</a>}</div>
-                </article>)}
-              </div>
-              {!visiblePosts.length && <div className="mt-10 border border-dashed border-[#bcae98] bg-white/70 p-10 text-center"><p className="font-serif text-2xl font-bold text-[#15324a]">New library stories will appear here.</p><p className="mx-auto mt-3 max-w-xl text-slate-600">Library staff can publish events, activities, new arrivals, resources, and publications from the Admin Portal.</p></div>}
-            </section>
-          </>
-        ) : (
-          <section className="mx-auto max-w-7xl px-4 py-16 sm:px-6 lg:px-8 lg:py-24">
-            <div className="max-w-3xl">
-              <p className="text-xs font-black uppercase tracking-[0.22em] text-[#a75032]">Library tab</p>
-              <h2 className="mt-3 font-serif text-4xl font-bold text-[#15324a] sm:text-5xl">{activeTabMeta[1]}</h2>
-              {TAB_HINTS[activeTab] && <p className="mt-3 text-lg leading-8 text-slate-600">{TAB_HINTS[activeTab]}</p>}
-            </div>
-
-            {activeTab === 'one-fact' ? (
-              facts.length ? (
-                <div className="mt-10 grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
-                  {facts.map(fact => (
-                    <figure key={fact.id} className="overflow-hidden border border-[#d8cbb9] bg-[#fdfbf6] shadow-sm">
-                      {fact.imageUrl && <img src={fact.imageUrl} alt="" className="aspect-square w-full object-cover" loading="lazy" />}
-                      <figcaption className="p-4">
-                        <p className="text-xs font-black uppercase tracking-[0.16em] text-[#a75032]">{factDate(fact.date)}</p>
-                        {fact.title && <p className="mt-2 font-serif text-lg font-bold leading-snug text-[#15324a]">{fact.title}</p>}
-                        {fact.description && <p className="mt-1 text-sm leading-6 text-slate-600">{fact.description}</p>}
-                      </figcaption>
-                    </figure>
-                  ))}
-                </div>
-              ) : (
-                <div className="mt-10 border border-dashed border-[#bcae98] bg-white/70 p-10 text-center">
-                  <p className="font-serif text-2xl font-bold text-[#15324a]">Today's fact will appear here.</p>
-                  <p className="mx-auto mt-3 max-w-xl text-slate-600">Library staff can publish the One Fact a Day poster from the Admin Portal.</p>
-                </div>
-              )
-            ) : (
-              tabPosts.length ? (
-                <div className="mt-10 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-                  {tabPosts.map(post => <PostCard key={post.id} post={post} />)}
-                </div>
-              ) : (
-                <div className="mt-10 border border-dashed border-[#bcae98] bg-white/70 p-10 text-center">
-                  <p className="font-serif text-2xl font-bold text-[#15324a]">Nothing here yet.</p>
-                  <p className="mx-auto mt-3 max-w-xl text-slate-600">Library staff can publish items for this tab from the Library Admin panel; they appear here instantly.</p>
-                </div>
-              )
-            )}
-          </section>
-        )}
-      </main>
-    </Layout>
-  );
+  const location = useLocation();
+  const [settings, setSettings] = useState(DEFAULT_LIBRARY); const [posts, setPosts] = useState([]); const [facts, setFacts] = useState([]); const [activeTab, setActiveTab] = useState(() => new URLSearchParams(window.location.search).get('tab') || 'overview'); const [search, setSearch] = useState(''); const [previewImage, setPreviewImage] = useState(null); const [factLimit, setFactLimit] = useState(8);
+  useEffect(() => { const requestedTab = new URLSearchParams(location.search).get('tab'); if (requestedTab && (requestedTab === 'one-fact' || PUBLIC_TABS.some(([key]) => key === requestedTab))) setActiveTab(requestedTab); }, [location.search]);
+  useEffect(() => onSnapshot(doc(db, 'librarySettings', 'main'), shot => setSettings(shot.exists() ? { ...DEFAULT_LIBRARY, ...shot.data(), openingHours: LIBRARY_HOURS } : DEFAULT_LIBRARY), () => setSettings(DEFAULT_LIBRARY)), []);
+  useEffect(() => onSnapshot(query(collection(db, 'libraryPosts'), where('published', '==', true)), shot => setPosts(shot.docs.map(item => ({ id: item.id, ...item.data() })).sort((a, b) => postTime(b) - postTime(a))), () => setPosts([])), []);
+  useEffect(() => onSnapshot(query(collection(db, 'libraryOneFact'), where('published', '==', true)), shot => setFacts(shot.docs.map(item => ({ id: item.id, ...item.data() })).sort((a, b) => String(b.date || '').localeCompare(String(a.date || ''))).slice(0, 8)), () => setFacts([])), []);
+  const chooseTab = tab => { setActiveTab(tab); setSearch(''); if (tab === 'one-fact') setFactLimit(8); window.scrollTo({ top: 0, behavior: 'smooth' }); }; const term = search.trim().toLowerCase(); const matches = item => !term || [item.title, item.summary, item.body, item.author, item.subject, item.bookNumber].some(value => String(value || '').toLowerCase().includes(term));
+  const tabPosts = useMemo(() => (TAB_POST_TYPES[activeTab] || []).length ? posts.filter(post => TAB_POST_TYPES[activeTab].includes(libraryType(post)) && matches(post)) : [], [activeTab, posts, term]);
+  const latest = useMemo(() => (term ? posts.filter(matches) : posts.filter(post => !Object.values(TAB_POST_TYPES).flat().includes(libraryType(post)))).slice(0, 12), [posts, term]); const films = posts.filter(post => libraryType(post) === 'Short Film'); const activeLabel = PUBLIC_TABS.find(([key]) => key === activeTab)?.[1] || 'Library';
+  return <Layout fullWidth><main className="min-h-screen bg-[#f7faf8] text-slate-900"><nav aria-label="Library navigation" className="border-b border-slate-200 bg-white shadow-sm"><div className="mx-auto grid max-w-7xl grid-cols-2 gap-2 px-4 py-3 sm:grid-cols-3 sm:px-6 lg:grid-cols-5 lg:px-8 xl:grid-cols-7">{PUBLIC_TABS.map(([key, label]) => <button key={key} type="button" onClick={() => chooseTab(key)} className={`min-w-0 rounded-xl border px-3 py-3 text-center text-sm font-extrabold leading-tight transition ${activeTab === key ? 'border-emerald-800 bg-emerald-800 text-white shadow-md shadow-emerald-900/15' : 'border-slate-200 bg-white text-slate-700 hover:border-emerald-300 hover:bg-emerald-50 hover:text-emerald-800'}`}>{label}</button>)}</div></nav>
+  {activeTab === 'overview' ? <><section className="relative overflow-hidden bg-emerald-950">{settings.heroImageUrl && <img src={settings.heroImageUrl} alt="" className="absolute inset-0 h-full w-full object-cover opacity-20" />}<div className="absolute -right-24 -top-32 h-96 w-96 rounded-full bg-amber-400/20 blur-3xl" /><div className="absolute -bottom-28 left-1/3 h-72 w-72 rounded-full bg-teal-400/15 blur-3xl" /><div className="relative mx-auto grid max-w-7xl gap-10 px-4 py-16 sm:px-6 sm:py-20 lg:grid-cols-[1.15fr_.85fr] lg:px-8 lg:py-24"><div><p className="inline-flex rounded-full border border-amber-300/35 bg-amber-300/10 px-3 py-1.5 text-xs font-black uppercase tracking-[.16em] text-amber-300">Knowledge · curiosity · imagination</p><h1 className="mt-6 max-w-3xl text-4xl font-extrabold leading-tight text-white sm:text-5xl lg:text-6xl">{settings.title}</h1><p className="mt-5 max-w-2xl text-lg leading-8 text-emerald-50/85">{settings.subtitle}</p><div className="mt-8 flex flex-wrap gap-3"><button onClick={() => document.getElementById('library-collections')?.scrollIntoView({ behavior: 'smooth' })} className="inline-flex items-center gap-2 rounded-full bg-amber-400 px-5 py-3 text-sm font-extrabold text-emerald-950 shadow-lg transition hover:bg-amber-300">Explore collections <Arrow /></button><button onClick={() => chooseTab('new-arrivals')} className="rounded-full border border-white/25 px-5 py-3 text-sm font-bold text-white transition hover:bg-white/10">See new arrivals</button></div></div><div className="self-end rounded-3xl border border-white/15 bg-white/10 p-6 backdrop-blur sm:p-7"><p className="text-xs font-black uppercase tracking-[.16em] text-amber-300">Library today</p><p className="mt-3 text-2xl font-extrabold leading-snug text-white">“A book is a dream you hold in your hands.”</p><div className="mt-7 grid grid-cols-2 gap-4 border-t border-white/15 pt-5"><div><p className="text-2xl font-black text-amber-300">{posts.length}+</p><p className="mt-1 text-xs font-bold text-emerald-50/70">Library resources</p></div><div><p className="text-2xl font-black text-amber-300">{films.length}+</p><p className="mt-1 text-xs font-bold text-emerald-50/70">Short films</p></div></div></div></div></section>
+  <section className="relative z-10 mx-auto -mt-7 grid max-w-6xl gap-3 px-4 sm:grid-cols-3 sm:px-6 lg:px-8"><div className="rounded-2xl bg-white p-5 shadow-lg shadow-slate-900/10"><p className="text-xs font-black uppercase tracking-widest text-emerald-700">Library hours</p><p className="mt-2 font-bold text-slate-800">{settings.openingHours}</p></div><div className="rounded-2xl bg-white p-5 shadow-lg shadow-slate-900/10"><p className="text-xs font-black uppercase tracking-widest text-emerald-700">Our focus</p><p className="mt-2 font-bold text-slate-800">Read · Learn · Create</p></div><div className="rounded-2xl bg-white p-5 shadow-lg shadow-slate-900/10"><p className="text-xs font-black uppercase tracking-widest text-emerald-700">Need help?</p><p className="mt-2 truncate font-bold text-slate-800">{settings.contactEmail || 'Visit the library desk'}</p></div></section>
+  <section className="mx-auto max-w-7xl px-4 py-16 sm:px-6 lg:px-8"><div className="grid gap-10 lg:grid-cols-[.75fr_1.25fr]"><div><p className="text-sm font-black uppercase tracking-widest text-emerald-700">Welcome to your library</p><h2 className="mt-3 text-3xl font-extrabold leading-tight text-emerald-950 sm:text-4xl">Every learner deserves a place to discover.</h2></div><p className="max-w-3xl text-lg leading-8 text-slate-600">{settings.intro}</p></div><div className="mt-10 rounded-2xl border border-slate-200 bg-white p-3 shadow-sm sm:p-4"><label className="flex items-center gap-3 rounded-xl bg-slate-50 px-4 py-3"><span className="text-xl text-emerald-700">⌕</span><input value={search} onChange={event => setSearch(event.target.value)} placeholder="Search books, resources, films and question papers" className="min-w-0 flex-1 bg-transparent text-sm font-medium text-slate-800 outline-none placeholder:text-slate-400" /></label></div></section>
+  <section className="bg-emerald-950 py-16 text-white"><div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8"><div className="grid gap-10 lg:grid-cols-[.8fr_1.2fr]"><div><p className="text-sm font-black uppercase tracking-widest text-amber-300">Library information</p><h2 className="mt-3 text-3xl font-extrabold sm:text-4xl">Library rules &amp; timings</h2><p className="mt-5 max-w-md leading-7 text-emerald-50/80">{LIBRARY_PROFILE}</p><div className="mt-7 rounded-2xl border border-white/15 bg-white/10 p-5"><p className="text-xs font-black uppercase tracking-widest text-amber-300">Library timings</p><p className="mt-2 text-xl font-extrabold">Monday to Friday</p><p className="mt-1 text-emerald-50/80">8:30 AM to 5:00 PM</p><p className="mt-4 text-xl font-extrabold">Saturday</p><p className="mt-1 text-emerald-50/80">8:30 AM to 4:00 PM</p></div></div><ol className="grid gap-3 sm:grid-cols-2">{LIBRARY_RULES.map((rule, index) => <li key={rule} className="flex gap-3 rounded-xl border border-white/10 bg-white/5 p-4 text-sm leading-6 text-emerald-50/90"><span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-amber-300 text-xs font-black text-emerald-950">{index + 1}</span><span>{rule}</span></li>)}</ol></div></div></section>
+  <section id="library-collections" className="bg-white py-16"><div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8"><div className="flex flex-wrap items-end justify-between gap-4"><div><p className="text-sm font-black uppercase tracking-widest text-emerald-700">Discover</p><h2 className="mt-2 text-3xl font-extrabold text-emerald-950 sm:text-4xl">Browse the library</h2></div><p className="max-w-md text-sm leading-6 text-slate-500">Resources are updated directly by the Library team.</p></div><div className="mt-9 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">{COLLECTIONS.map(([key, title, description, icon, colour]) => <button key={key} type="button" onClick={() => chooseTab(key)} className="group flex rounded-2xl border border-slate-200 bg-white p-5 text-left transition hover:-translate-y-1 hover:border-emerald-200 hover:shadow-xl"><span className={`flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br ${colour} text-xl font-bold text-white shadow-lg`}>{icon}</span><span className="ml-4"><span className="flex items-center gap-2 text-lg font-extrabold text-slate-900 group-hover:text-emerald-700">{title} <Arrow /></span><span className="mt-1 block text-sm leading-5 text-slate-500">{description}</span></span></button>)}</div></div></section>
+  <section className="mx-auto max-w-7xl px-4 py-16 sm:px-6 lg:px-8"><div className="flex flex-wrap items-end justify-between gap-4"><div><p className="text-sm font-black uppercase tracking-widest text-emerald-700">From the library desk</p><h2 className="mt-2 text-3xl font-extrabold text-emerald-950 sm:text-4xl">Latest updates</h2></div><button type="button" onClick={() => chooseTab('events')} className="inline-flex items-center gap-2 rounded-full border border-emerald-200 px-4 py-2 text-sm font-bold text-emerald-700 transition hover:bg-emerald-700 hover:text-white">View library life <Arrow /></button></div>{latest.length ? <div className="mt-9 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">{latest.map(post => <ResourceCard key={post.id} post={post} />)}</div> : <div className="mt-9"><EmptyState label="library updates" /></div>}</section></> : <section className="mx-auto max-w-7xl px-4 py-14 sm:px-6 lg:px-8"><div className="rounded-3xl bg-gradient-to-br from-emerald-950 to-emerald-800 px-6 py-10 text-white sm:px-10"><p className="text-sm font-black uppercase tracking-widest text-amber-300">Library collection</p><h1 className="mt-2 text-3xl font-extrabold sm:text-5xl">{activeLabel}</h1><p className="mt-3 max-w-2xl text-emerald-50/80">Explore resources curated for the Ansar English School community.</p><label className="mt-7 flex max-w-xl items-center gap-3 rounded-xl bg-white/10 px-4 py-3 ring-1 ring-white/20"><span className="text-xl text-amber-300">⌕</span><input value={search} onChange={event => setSearch(event.target.value)} placeholder={`Search ${activeLabel.toLowerCase()}`} className="min-w-0 flex-1 bg-transparent text-sm font-medium text-white outline-none placeholder:text-emerald-100/60" /></label></div>{activeTab === 'one-fact' ? (facts.length ? <><div className="mt-10 grid gap-5 sm:grid-cols-2 lg:grid-cols-4">{facts.slice(0, factLimit).map(fact => <article key={fact.id} className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">{fact.imageUrl && <a href={fact.imageUrl} target="_blank" rel="noreferrer" className="group relative block overflow-hidden"><img src={fact.imageUrl} alt={`Open ${fact.title || 'One Fact a Day'} poster`} className="aspect-square w-full object-cover transition duration-300 group-hover:scale-105" loading="lazy" /><span className="absolute inset-0 flex items-center justify-center bg-slate-950/0 text-sm font-extrabold text-white opacity-0 transition group-hover:bg-slate-950/40 group-hover:opacity-100">Click to view</span></a>}<div className="p-4"><p className="text-xs font-black uppercase tracking-widest text-emerald-700">{displayDate(fact.date)}</p><h3 className="mt-2 font-extrabold text-slate-900">{fact.title}</h3>{fact.description && <p className="mt-1 text-sm text-slate-500">{fact.description}</p>}</div></article>)}</div>{facts.length > factLimit && <div className="mt-10 text-center"><button type="button" onClick={() => setFactLimit(current => current + 12)} className="rounded-full bg-emerald-800 px-6 py-3 text-sm font-extrabold text-white shadow-lg transition hover:bg-emerald-700">Load previous facts ({facts.length - factLimit} remaining)</button></div>}</> : <div className="mt-10"><EmptyState label="facts" /></div>) : (tabPosts.length ? <div className={`mt-10 grid gap-5 ${activeTab === 'short-films' ? 'grid-cols-2 sm:grid-cols-3 lg:grid-cols-5' : 'sm:grid-cols-2 lg:grid-cols-3'}`}>{tabPosts.map(post => <ResourceCard key={post.id} post={post} film={activeTab === 'short-films'} />)}</div> : <div className="mt-10"><EmptyState label={activeLabel} /></div>)}</section>}</main></Layout>;
 }

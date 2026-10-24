@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
-import { collection, onSnapshot } from 'firebase/firestore';
+import { collection, onSnapshot, query, where } from 'firebase/firestore';
 import { Link } from 'react-router-dom';
 import { db } from './firebase-init';
 import { registerForSchoolPushNotifications } from './pushNotifications';
@@ -54,7 +54,7 @@ function relativeTime(millis) {
 const LAST_SEEN_KEY = 'ansar:lastSeenNotification';
 
 // The bell subscribes to four collections; see the subscription effect.
-const SUBSCRIBED_COLLECTIONS = 4;
+const SUBSCRIBED_COLLECTIONS = 6;
 
 /**
  * Show one local "new content" alert without ever throwing out of React.
@@ -117,6 +117,8 @@ export default function NotificationsBell() {
   const [achievements, setAchievements] = useState([]);
   const [magazines, setMagazines] = useState([]);
   const [ansarTimesEditions, setAnsarTimesEditions] = useState([]);
+  const [libraryPosts, setLibraryPosts] = useState([]);
+  const [libraryFacts, setLibraryFacts] = useState([]);
   const [showPermissionPrompt, setShowPermissionPrompt] = useState(false);
   const knownNotificationKeys = useRef(null);
   // Counts how many of the four subscriptions have delivered at least one
@@ -145,6 +147,8 @@ export default function NotificationsBell() {
     const achievementsQuery = collection(db, 'achievements');
     const magazinesQuery = collection(db, 'schoolMagazines');
     const ansarTimesQuery = collection(db, 'ansarTimes');
+    const libraryPostsQuery = query(collection(db, 'libraryPosts'), where('published', '==', true));
+    const libraryFactsQuery = query(collection(db, 'libraryOneFact'), where('published', '==', true));
 
     const unsubscribeUpdates = onSnapshot(updatesQuery, (snapshot) => {
       snapshotDeliveriesRef.current += 1;
@@ -165,12 +169,22 @@ export default function NotificationsBell() {
       snapshotDeliveriesRef.current += 1;
       setAnsarTimesEditions(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })));
     }, (error) => console.error('Unable to load Ansar Times notifications:', error));
+    const unsubscribeLibraryPosts = onSnapshot(libraryPostsQuery, (snapshot) => {
+      snapshotDeliveriesRef.current += 1;
+      setLibraryPosts(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })));
+    }, (error) => console.error('Unable to load Library notifications:', error));
+    const unsubscribeLibraryFacts = onSnapshot(libraryFactsQuery, (snapshot) => {
+      snapshotDeliveriesRef.current += 1;
+      setLibraryFacts(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })));
+    }, (error) => console.error('Unable to load One Fact notifications:', error));
 
     return () => {
       unsubscribeUpdates();
       unsubscribeAchievements();
       unsubscribeMagazines();
       unsubscribeAnsarTimes();
+      unsubscribeLibraryPosts();
+      unsubscribeLibraryFacts();
     };
   }, [idleReady]);
 
@@ -217,10 +231,26 @@ export default function NotificationsBell() {
         millis: getMillis(item)
       }));
 
-    return [...updateItems, ...achievementItems, ...magazineItems, ...ansarTimesItems]
+    const libraryItems = libraryPosts
+      .map(item => ({
+        id: item.id,
+        title: item.title || 'New library resource',
+        type: item.type === 'Announcement' ? 'Library' : (item.type || 'Library'),
+        href: `/library?tab=${item.type === 'Short Film' ? 'short-films' : item.type === 'New Arrival' || item.type === 'Publication' ? 'new-arrivals' : item.type === 'Question Paper' ? 'question-papers' : item.type === 'E-Book' ? 'e-books' : item.type === 'E-Learning' ? 'e-learning' : item.type === 'Event' || item.type === 'Activity' ? 'events' : item.type === 'Clipping' ? 'newspaper' : item.type === 'File' ? 'files' : 'overview'}`,
+        millis: getMillis(item)
+      }));
+    const factItems = libraryFacts.map(item => ({
+      id: item.id,
+      title: item.title || 'One Fact a Day',
+      type: 'One Fact a Day',
+      href: '/library?tab=one-fact',
+      millis: getMillis(item)
+    }));
+
+    return [...updateItems, ...achievementItems, ...magazineItems, ...ansarTimesItems, ...libraryItems, ...factItems]
       .sort((a, b) => b.millis - a.millis)
       .slice(0, 12);
-  }, [updates, achievements, magazines, ansarTimesEditions]);
+  }, [updates, achievements, magazines, ansarTimesEditions, libraryPosts, libraryFacts]);
 
   const newestMillis = notifications[0]?.millis || 0;
   const hasUnread = newestMillis > lastSeenMillis;

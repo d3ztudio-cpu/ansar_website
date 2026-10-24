@@ -22,7 +22,7 @@ const DEFAULT_SETTINGS = {
   heroImageUrl: '',
   resourceUrl: '',
   resourceLabel: 'Browse library posts',
-  openingHours: 'Open during school hours',
+  openingHours: 'Mon – Fri: 8:30 AM – 5:00 PM · Saturday: 8:30 AM – 4:00 PM',
   contactEmail: '',
   vision: 'To nurture confident, curious, and compassionate lifelong readers.',
   mission: 'To connect every learner with ideas, stories, and trusted information.',
@@ -30,6 +30,11 @@ const DEFAULT_SETTINGS = {
   libraryDays: 'Monday to Friday',
   libraryIndexUrl: '',
   quizUrl: '/ansar-media-production/add-ons/online-quiz',
+  staffMembers: JSON.stringify([
+    { name: 'SHYNI PK', role: 'Librarian', qualification: 'MLIS', contact: '9400566641', imageUrl: '' },
+    { name: 'DARSANA K KRISHNAN', role: 'Assistant librarian', qualification: 'BSC, B.Lib.I.Sc, MLIS, NET.', contact: '9656548908', imageUrl: '' },
+    { name: 'SUHARA M', role: 'Library Assistant', qualification: 'BA', contact: '8907533513', imageUrl: '' }
+  ]),
   published: true
 };
 
@@ -107,8 +112,10 @@ export default function AdminLibrary() {
 
   const startEdit = (item) => {
     setEditingId(item.id);
+    const itemText = `${item.title || ''} ${item.summary || ''} ${item.category || ''} ${item.venue || ''}`;
+    const normalizedOwnerType = /clipping|newspaper/i.test(`${item.type || ''} ${itemText}`) ? 'Clipping' : /event|activit/i.test(String(item.type || '')) || (/announcement/i.test(String(item.type || '')) && /book fair|event|activity|celebration|programme|program/i.test(itemText)) ? 'Event' : item.type;
     setPost({
-      type: item.type || 'Announcement',
+      type: normalizedOwnerType || 'Announcement',
       title: item.title || '',
       summary: item.summary || '',
       body: item.body || '',
@@ -127,7 +134,7 @@ export default function AdminLibrary() {
       venue: item.venue || '',
       published: item.published !== false
     });
-    const ownerTab = Object.entries(SECTION_TYPES).find(([, types]) => types.includes(item.type))?.[0] || 'published';
+    const ownerTab = Object.entries(SECTION_TYPES).find(([, types]) => types.includes(normalizedOwnerType))?.[0] || 'published';
     setTab(ownerTab);
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
@@ -153,8 +160,8 @@ export default function AdminLibrary() {
       return;
     }
     const needsFile = post.type === 'Question Paper' || post.type === 'File';
-    if (needsFile && !post.fileUrl && !post.linkUrl) {
-      alert('Add a document: upload a PDF or paste a Google Drive / file link.');
+    if (needsFile && !post.linkUrl.trim()) {
+      alert('Paste a Google Drive sharing link for this document.');
       return;
     }
     if (['E-Book', 'E-Learning', 'Short Film', 'Quiz'].includes(post.type) && !post.linkUrl.trim()) {
@@ -162,8 +169,9 @@ export default function AdminLibrary() {
       return;
     }
     try {
+      const normalizedType = /clipping|newspaper/i.test(`${post.type} ${post.title} ${post.category} ${post.venue}`) ? 'Clipping' : /event|activit/i.test(post.type) ? (/activit/i.test(post.type) ? 'Activity' : 'Event') : post.type;
       const payload = {
-        type: post.type,
+        type: normalizedType,
         title: post.title.trim(),
         summary: post.summary.trim(),
         body: post.body.trim(),
@@ -213,7 +221,7 @@ export default function AdminLibrary() {
         )}
         {showDate && <label className="text-sm font-bold text-slate-700">Date<input type="date" value={post.date} onChange={(e) => setPost(value => ({ ...value, date: e.target.value }))} className={fieldClass} /></label>}
         <label className="text-sm font-bold text-slate-700 md:col-span-2">Title<input required value={post.title} onChange={(e) => setPost(value => ({ ...value, title: e.target.value }))} className={fieldClass} /></label>
-        {showDescription && <label className="text-sm font-bold text-slate-700 md:col-span-2">Description (optional)<textarea value={post.summary} maxLength={10000} onChange={(e) => setPost(value => ({ ...value, summary: e.target.value }))} className={`${fieldClass} h-20`} /><span className="mt-1 block text-right text-xs font-medium text-slate-400">{post.summary.length.toLocaleString()} / 10,000</span></label>}
+        {showDescription && <label className="text-sm font-bold text-slate-700 md:col-span-2">Description (optional)<textarea value={post.summary} maxLength={10000} onChange={(e) => setPost(value => ({ ...value, summary: e.target.value }))} className={`${fieldClass} h-20`} /></label>}
         {showBookNumber && <label className="text-sm font-bold text-slate-700">Book number / accession number<input value={post.bookNumber} onChange={(e) => setPost(value => ({ ...value, bookNumber: e.target.value }))} placeholder="e.g. AES-3486" className={fieldClass} /><span className="mt-1 block text-xs font-medium text-slate-500">Students can search this number on the public Library page.</span></label>}
 
         {showAcademicFields && (
@@ -226,9 +234,8 @@ export default function AdminLibrary() {
         )}
         {showAcademicFields && (
           <div className="md:col-span-2">
-            <p className="text-sm font-bold text-slate-700">Question paper document (PDF upload or Google Drive link)</p>
-            <div className="mt-2"><LibraryMediaUploader mode="pdf" value={post.fileUrl} onChange={(url) => setPost(value => ({ ...value, fileUrl: url || '' }))} folder="question-papers" /></div>
-            <label className="mt-3 block text-sm font-bold text-slate-700">…or paste a document / Drive link<input type="url" value={post.linkUrl} onChange={(e) => setPost(value => ({ ...value, linkUrl: e.target.value }))} className={fieldClass} /></label>
+            <p className="text-sm font-bold text-slate-700">Question paper Google Drive sharing link</p>
+            <label className="mt-2 block text-sm font-bold text-slate-700"><input required type="url" value={post.linkUrl} onChange={(e) => setPost(value => ({ ...value, linkUrl: e.target.value }))} placeholder="https://drive.google.com/file/d/…/view?usp=sharing" className={fieldClass} /><span className="mt-1 block text-xs font-medium text-slate-500">Set the Drive file access to “Anyone with the link can view”.</span></label>
           </div>
         )}
 
@@ -237,9 +244,8 @@ export default function AdminLibrary() {
             <label className="text-sm font-bold text-slate-700">File type<select value={post.fileType} onChange={(e) => setPost(value => ({ ...value, fileType: e.target.value }))} className={fieldClass}>{LIBRARY_FILE_TYPES.map(name => <option key={name}>{name}</option>)}</select></label>
             <label className="text-sm font-bold text-slate-700">Category / collection<input value={post.category} onChange={(e) => setPost(value => ({ ...value, category: e.target.value }))} className={fieldClass} /></label>
             <div className="md:col-span-2">
-              <p className="text-sm font-bold text-slate-700">Document (PDF upload)</p>
-              <div className="mt-2"><LibraryMediaUploader mode="pdf" value={post.fileUrl} onChange={(url) => setPost(value => ({ ...value, fileUrl: url || '' }))} folder="files" /></div>
-              <label className="mt-3 block text-sm font-bold text-slate-700">…or paste a Google Drive / file URL<input type="url" value={post.linkUrl} onChange={(e) => setPost(value => ({ ...value, linkUrl: e.target.value }))} placeholder="https://drive.google.com/file/d/…/view?usp=sharing" className={fieldClass} /></label>
+              <p className="text-sm font-bold text-slate-700">Google Drive sharing link</p>
+              <label className="mt-2 block text-sm font-bold text-slate-700"><input required type="url" value={post.linkUrl} onChange={(e) => setPost(value => ({ ...value, linkUrl: e.target.value }))} placeholder="https://drive.google.com/file/d/…/view?usp=sharing" className={fieldClass} /><span className="mt-1 block text-xs font-medium text-slate-500">Set the Drive file access to “Anyone with the link can view”.</span></label>
             </div>
           </>
         )}
@@ -276,7 +282,7 @@ export default function AdminLibrary() {
   );
 
   const postList = (types) => {
-    const items = posts.filter(item => (types ? types.includes(item.type) : true));
+    const items = posts.filter(item => { const itemText = `${item.title || ''} ${item.summary || ''} ${item.category || ''} ${item.venue || ''}`; const normalized = /clipping|newspaper/i.test(`${item.type || ''} ${itemText}`) ? 'Clipping' : /event|activit/i.test(String(item.type || '')) || (/announcement/i.test(String(item.type || '')) && /book fair|event|activity|celebration|programme|program/i.test(itemText)) ? 'Event' : item.type; return types ? types.includes(normalized) : true; });
     if (!items.length) {
       return <p className="py-8 text-center text-slate-500">No items yet. Add the first one with the form above.</p>;
     }
@@ -521,6 +527,7 @@ function ProfileTab({ settingsItems, existingSettings, settingsLoading }) {
         libraryDays: settings.libraryDays.trim(),
         libraryIndexUrl: '',
         quizUrl: settings.quizUrl.trim(),
+        staffMembers: settings.staffMembers.trim(),
         published: !!settings.published,
         createdAt: existingSettings?.createdAt || serverTimestamp(),
         updatedAt: serverTimestamp()
@@ -555,6 +562,7 @@ function ProfileTab({ settingsItems, existingSettings, settingsLoading }) {
         <label className="text-sm font-bold text-slate-700 md:col-span-2">Vision<textarea value={settings.vision} onChange={(e) => setSettings(value => ({ ...value, vision: e.target.value }))} className={`${fieldClass} h-20`} /></label>
         <label className="text-sm font-bold text-slate-700 md:col-span-2">Mission<textarea value={settings.mission} onChange={(e) => setSettings(value => ({ ...value, mission: e.target.value }))} className={`${fieldClass} h-20`} /></label>
         <label className="text-sm font-bold text-slate-700 md:col-span-2">Library rules (one rule per line)<textarea value={settings.libraryRules} onChange={(e) => setSettings(value => ({ ...value, libraryRules: e.target.value }))} className={`${fieldClass} h-32`} /></label>
+        <label className="text-sm font-bold text-slate-700 md:col-span-2">Library staff directory (JSON)<textarea value={settings.staffMembers} onChange={(e) => setSettings(value => ({ ...value, staffMembers: e.target.value }))} className={`${fieldClass} h-32 font-mono text-xs`} /><span className="mt-1 block text-xs font-medium text-slate-500">Add members with name, role, qualification, contact and optional imageUrl.</span></label>
       </div>
       <div className="mt-6 flex justify-end"><button disabled={saving} className="rounded-lg bg-emerald-600 px-5 py-3 text-sm font-extrabold text-white hover:bg-emerald-700 disabled:opacity-50">{saving ? 'Saving…' : 'Save library profile'}</button></div>
     </form>
@@ -943,15 +951,16 @@ function OneFactTab() {
 // Generic post-section tab shell
 // --------------------------------------------------------------------
 function PostSectionTab({ intro, types, typeOptions, form, list, onAdd }) {
+  const labels = typeOptions?.length ? typeOptions : types;
   return (
     <div className="space-y-8">
       <div className="rounded-2xl border border-slate-100 bg-white p-6 shadow-sm">
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div>
-            <h3 className="text-lg font-extrabold text-slate-900">{typeOptions.join(' · ')}</h3>
+            <h3 className="text-lg font-extrabold text-slate-900">{labels.join(' · ')}</h3>
             <p className="mt-1 max-w-2xl text-sm leading-6 text-slate-600">{intro}</p>
           </div>
-          <button type="button" onClick={onAdd} className="rounded-lg bg-emerald-600 px-4 py-2.5 text-sm font-extrabold text-white hover:bg-emerald-700">+ New {typeOptions[0]}</button>
+          <button type="button" onClick={onAdd} className="rounded-lg bg-emerald-600 px-4 py-2.5 text-sm font-extrabold text-white hover:bg-emerald-700">+ New {labels[0]}</button>
         </div>
       </div>
       {form}

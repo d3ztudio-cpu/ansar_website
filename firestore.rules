@@ -239,8 +239,8 @@ service cloud.firestore {
     }
 
     function isValidLibrarySettings() {
-      return hasOnlyAllowedFields(['title', 'subtitle', 'intro', 'heroImageUrl', 'resourceUrl', 'resourceLabel', 'openingHours', 'contactEmail', 'vision', 'mission', 'libraryRules', 'libraryDays', 'libraryIndexUrl', 'quizUrl', 'published', 'createdAt', 'updatedAt']) &&
-             request.resource.data.keys().hasAll(['title', 'subtitle', 'intro', 'heroImageUrl', 'resourceUrl', 'resourceLabel', 'openingHours', 'contactEmail', 'vision', 'mission', 'libraryRules', 'libraryDays', 'libraryIndexUrl', 'quizUrl', 'published', 'createdAt', 'updatedAt']) &&
+      return hasOnlyAllowedFields(['title', 'subtitle', 'intro', 'heroImageUrl', 'resourceUrl', 'resourceLabel', 'openingHours', 'contactEmail', 'vision', 'mission', 'libraryRules', 'libraryDays', 'libraryIndexUrl', 'quizUrl', 'staffMembers', 'published', 'createdAt', 'updatedAt']) &&
+             request.resource.data.keys().hasAll(['title', 'subtitle', 'intro', 'heroImageUrl', 'resourceUrl', 'resourceLabel', 'openingHours', 'contactEmail', 'vision', 'mission', 'libraryRules', 'libraryDays', 'libraryIndexUrl', 'quizUrl', 'staffMembers', 'published', 'createdAt', 'updatedAt']) &&
              isValidStringLength('title', 1, 200) &&
              isValidStringLength('subtitle', 1, 1000) &&
              isValidStringLength('intro', 1, 10000) &&
@@ -249,7 +249,7 @@ service cloud.firestore {
              isValidStringLength('resourceLabel', 1, 200) &&
              isValidStringLength('openingHours', 1, 200) &&
              isValidEmailValue('contactEmail') &&
-             isValidStringLength('vision', 0, 1000) && isValidStringLength('mission', 0, 2000) && isValidStringLength('libraryRules', 0, 10000) && isValidStringLength('libraryDays', 0, 300) && isValidUrl('libraryIndexUrl') && isValidUrl('quizUrl') &&
+             isValidStringLength('vision', 0, 1000) && isValidStringLength('mission', 0, 2000) && isValidStringLength('libraryRules', 0, 10000) && isValidStringLength('libraryDays', 0, 300) && isValidUrl('libraryIndexUrl') && isValidUrl('quizUrl') && isValidStringLength('staffMembers', 0, 20000) &&
              request.resource.data.published is bool &&
              request.resource.data.createdAt is timestamp &&
              request.resource.data.updatedAt is timestamp;
