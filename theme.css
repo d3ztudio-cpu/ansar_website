@@ -1,3 +1,7 @@
+/* Preserve intentional line breaks in compact information cards, such as
+   the Library hours field maintained by the admin panel. */
+p { white-space: pre-line; }
+
 /* ========================================
    ANSAR ENGLISH SCHOOL - THEME SYSTEM
    ======================================== */

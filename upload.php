@@ -25,7 +25,11 @@ const HOST_BASE = 'upload.ansarschool.in';
 $allowed_origins = [
     'https://ansar-english-school.web.app',
     'https://ansar-english-school.firebaseapp.com',
-    'https://ansarschool.in'
+    'https://ansarschool.in',
+    // The public site is also commonly opened with the www host.  It is a
+    // different browser origin, so omitting it makes otherwise valid uploads
+    // fail at the CORS preflight stage before PHP receives the file.
+    'https://www.ansarschool.in'
 ];
 $origin = isset($_SERVER['HTTP_ORIGIN']) ? $_SERVER['HTTP_ORIGIN'] : '';
 if (in_array($origin, $allowed_origins, true)) {

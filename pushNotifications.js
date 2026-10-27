@@ -1,5 +1,7 @@
 import { getMessaging, getToken, isSupported } from 'firebase/messaging';
 import { app } from './firebase-init';
+import { db } from './firebase-init';
+import { doc, setDoc, serverTimestamp } from 'firebase/firestore';
 import { GOOGLE_SHEETS_DATABASE } from './googleSheetsConfig';
 
 // Public browser credential from Firebase Cloud Messaging. It identifies this
@@ -14,6 +16,12 @@ export async function registerForSchoolPushNotifications() {
   const messaging = getMessaging(app);
   const token = await getToken(messaging, { vapidKey: VAPID_KEY, serviceWorkerRegistration: registration });
   if (!token) return null;
+
+  // Keep the token in Firestore as well as the legacy Sheets registry. This
+  // lets the server send FCM messages while every browser is closed.
+  const digest = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(token));
+  const tokenId = Array.from(new Uint8Array(digest)).map(byte => byte.toString(16).padStart(2, '0')).join('');
+  await setDoc(doc(db, 'pushSubscriptions', tokenId), { token, updatedAt: serverTimestamp(), platform: 'web' }, { merge: true });
 
   // The Apps Script endpoint stores the FCM token without exposing its list to
   // browsers. A no-cors response is expected from the existing web app.

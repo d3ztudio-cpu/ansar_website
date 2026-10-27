@@ -1,5 +1,5 @@
 import React, { useRef, useState } from 'react';
-import { uploadLibraryFile, deleteLibraryFile, MAX_LIBRARY_IMAGE_BYTES, MAX_LIBRARY_PDF_BYTES } from './libraryStorage';
+import { uploadLibraryFile, uploadLibraryPdf, deleteLibraryFile, MAX_LIBRARY_IMAGE_BYTES, MAX_LIBRARY_PDF_BYTES } from './libraryStorage';
 import { normalizeImageUrl } from './imageUrlUtils';
 import { isImageFile } from './hostingerUpload';
 
@@ -36,7 +36,8 @@ export default function LibraryMediaUploader({ mode = 'image', multiple = false,
       setUploads(list => [...list, { id, file, name: file.name, size: file.size, progress: 0, status: 'uploading', error: '' }]);
     }
     try {
-      const { url, path } = await uploadLibraryFile(
+      const upload = isImage ? uploadLibraryFile : uploadLibraryPdf;
+      const { url, path } = await upload(
         Array.isArray(folder) ? folder : [folder].filter(Boolean),
         file,
         { onProgress: (progress) => updateUpload(id, { progress }) }

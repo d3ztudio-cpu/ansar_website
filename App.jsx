@@ -429,6 +429,24 @@ function getSeoForPath(pathname) {
         "CBSE school facilities Thrissur, smart classrooms Thrissur, school transport Perumpilavu",
     };
   }
+  // Public detail routes are valid indexable pages even though their content
+  // is loaded from Firestore after the initial shell render.
+  if (pathname.startsWith("/field-trips/")) {
+    return {
+      title: "Field Trip | Ansar English School",
+      description: "Explore an educational field trip from Ansar English School, Perumpilavu, Thrissur.",
+      keywords: "Ansar English School field trip, educational visit Thrissur",
+    };
+  }
+  if (pathname.startsWith("/alumni/") || pathname.startsWith("/ansar-times/")) {
+    return {
+      title: pathname.startsWith("/alumni/") ? "Alumni Story | Ansar English School" : "Ansar Times | Ansar English School",
+      description: pathname.startsWith("/alumni/")
+        ? "Read alumni stories and events from Ansar English School."
+        : "Read school magazines, newsletters, and student contributions from Ansar English School.",
+      keywords: "Ansar English School, alumni, school magazine, Thrissur",
+    };
+  }
   return (
     ROUTE_SEO[pathname] || {
       title: "Ansar English School | CBSE School in Thrissur, Kerala",

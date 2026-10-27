@@ -99,3 +99,6 @@ img {
 
 /* Let browsers defer layout and paint work for content below the viewport.
    This keeps long collection pages responsive on lower-powered phones. */
+/* Preserve deliberate line breaks in compact info cards, including Library hours. */
+.library-hours-value,
+.relative.z-10 > div:first-child > p.mt-2 { white-space: pre-line; }

@@ -6,6 +6,8 @@
 // at the server IP (82.25.121.102) and place upload.php in its document root.
 // The handler stores files in public_html/UPLOADS/ and they are served from:
 //   https://upload.ansarschool.in/UPLOADS/<file-name>
+import { compressImageForUpload } from './imageCompression';
+
 const HOSTINGER_UPLOAD_ENDPOINT = 'https://upload.ansarschool.in/upload.php';
 
 // Some Android and iOS gallery providers return an empty or generic MIME type
@@ -28,9 +30,10 @@ export function isImageFile(file) {
  */
 export async function uploadImageToHostinger(file) {
   if (!file) throw new Error('No file selected.');
+  const uploadFile = await compressImageForUpload(file);
 
   const formData = new FormData();
-  formData.append('file', file);
+  formData.append('file', uploadFile);
 
   let response;
   try {
