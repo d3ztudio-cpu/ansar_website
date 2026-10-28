@@ -85,6 +85,7 @@ const EMPTY_POST = {
   subject: "",
   year: "",
   author: "",
+  bookStatus: "EXISTING",
   venue: "",
   published: true,
 };
@@ -189,6 +190,9 @@ export default function AdminLibrary() {
               itemText,
             ))
         ? "Event"
+      : ["Announcement", "AnnouncementPublished"].includes(item.type) &&
+          ["NEW", "EXISTING"].includes(String(item.bookStatus || "").toUpperCase())
+        ? "New Arrival"
         : item.type;
     setPost({
       type: normalizedOwnerType || "Announcement",
@@ -207,6 +211,13 @@ export default function AdminLibrary() {
       subject: item.subject || "",
       year: item.year || "",
       author: item.author || "",
+      bookStatus:
+        item.bookStatus ||
+        item.publicationStatus ||
+        item.status ||
+        (["New Arrival", "Publication", "AnnouncementPublished"].includes(item.type)
+          ? "NEW"
+          : "EXISTING"),
       venue: item.venue || "",
       published: item.published !== false,
     });
@@ -285,7 +296,9 @@ export default function AdminLibrary() {
     }
     try {
       const normalizedType =
-        tab === "newspaper" ||
+        tab === "new-arrivals"
+          ? "New Arrival"
+          : tab === "newspaper" ||
         /clipping|newspaper|press cutting/i.test(
           `${post.type} ${post.title} ${post.category} ${post.venue}`,
         )
@@ -321,6 +334,7 @@ export default function AdminLibrary() {
         subject: post.subject.trim(),
         year: post.year.trim(),
         author: post.author.trim(),
+        bookStatus: post.bookStatus === "NEW" ? "NEW" : "EXISTING",
         venue: post.venue.trim(),
         published: !!post.published,
         updatedAt: serverTimestamp(),
@@ -363,6 +377,9 @@ export default function AdminLibrary() {
       showDate = true,
       showDescription = true,
       showImage = true,
+      showBookStatus = false,
+      showAuthor = false,
+      eventToggle = false,
     } = {},
   ) => (
     <form onSubmit={savePost} className={cardClass}>
@@ -391,7 +408,18 @@ export default function AdminLibrary() {
         )}
       </div>
       <div className="mt-6 grid gap-5 md:grid-cols-2">
-        {typeOptions && (
+        {eventToggle ? (
+          <div className="md:col-span-2">
+            <p className="text-sm font-bold text-slate-700">Content type</p>
+            <div className="mt-1 inline-flex rounded-xl border border-slate-200 bg-slate-50 p-1">
+              {["Event", "Activity"].map((kind) => (
+                <button key={kind} type="button" onClick={() => setPost((value) => ({ ...value, type: kind }))} className={`rounded-lg px-5 py-2 text-sm font-extrabold transition ${post.type === kind ? "bg-emerald-800 text-white shadow-sm" : "text-slate-600 hover:bg-white"}`}>
+                  {kind}
+                </button>
+              ))}
+            </div>
+          </div>
+        ) : typeOptions && (
           <label className="text-sm font-bold text-slate-700">
             Item type
             <select
@@ -421,7 +449,7 @@ export default function AdminLibrary() {
           </label>
         )}
         <label className="text-sm font-bold text-slate-700 md:col-span-2">
-          Title
+          {showAuthor ? "Title of the book" : "Title"}
           <input
             required
             value={post.title}
@@ -457,6 +485,25 @@ export default function AdminLibrary() {
             <span className="mt-1 block text-xs font-medium text-slate-500">
               Leave blank to automatically generate the next AES-E number.
               Students can search by this number.
+            </span>
+          </label>
+        )}
+
+        {showBookStatus && (
+          <label className="text-sm font-bold text-slate-700">
+            Book status
+            <select
+              value={post.bookStatus}
+              onChange={(e) =>
+                setPost((value) => ({ ...value, bookStatus: e.target.value }))
+              }
+              className={fieldClass}
+            >
+              <option value="NEW">NEW</option>
+              <option value="EXISTING">EXISTING</option>
+            </select>
+            <span className="mt-1 block text-xs font-medium text-slate-500">
+              NEW books receive a red stamp on their cover in the public library.
             </span>
           </label>
         )}
@@ -682,6 +729,20 @@ export default function AdminLibrary() {
           </div>
         )}
 
+        {showAuthor && (
+          <label className="text-sm font-bold text-slate-700">
+            Author
+            <input
+              required
+              value={post.author}
+              onChange={(e) =>
+                setPost((value) => ({ ...value, author: e.target.value }))
+              }
+              className={fieldClass}
+            />
+          </label>
+        )}
+
         {!showAcademicFields &&
           !showFile &&
           !showGallery &&
@@ -753,6 +814,10 @@ export default function AdminLibrary() {
         String(item.bookNumber || "").trim(),
       )
         ? "E-Book"
+        : String(item.bookStatus ?? item.publicationStatus ?? item.status ?? "").toUpperCase() !== "EXISTING" &&
+            (["NEW", "NEW ARRIVAL", "NEW ARRIVAL PUBLISHED", "TRUE"].includes(String(item.bookStatus ?? item.publicationStatus ?? item.status ?? "").toUpperCase()) ||
+              ["AnnouncementPublished", "New Arrival", "Publication"].includes(item.type))
+          ? "New Arrival"
         : /clipping|newspaper/i.test(`${item.type || ""} ${itemText}`)
           ? "Clipping"
           : /event|activit/i.test(String(item.type || "")) ||
@@ -869,7 +934,14 @@ export default function AdminLibrary() {
         intro="Recently added books and library publications, shown in the arrivals section of the public page."
         types={SECTION_TYPES["new-arrivals"]}
         typeOptions={SECTION_TYPES["new-arrivals"]}
-        form={postForm(SECTION_TYPES["new-arrivals"])}
+        form={postForm(SECTION_TYPES["new-arrivals"], {
+          formTitle: "new arrival",
+          formHint: "Add the book title, author, date, status and cover photo.",
+          showDescription: false,
+          showBookStatus: true,
+          showAuthor: true,
+          hideExtraFields: true,
+        })}
         list={postList(SECTION_TYPES["new-arrivals"])}
         onAdd={() => newPost("New Arrival")}
       />
@@ -958,7 +1030,7 @@ export default function AdminLibrary() {
         intro="Library events, author interactions, reading celebrations and student activities."
         types={SECTION_TYPES.events}
         typeOptions={SECTION_TYPES.events}
-        form={postForm(SECTION_TYPES.events)}
+        form={postForm(null, { eventToggle: true, formTitle: "an event or activity", formHint: "Choose Event or Activity, then add its name, description, date, venue and image." })}
         list={postList(SECTION_TYPES.events)}
         onAdd={() => newPost("Event")}
       />

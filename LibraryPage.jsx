@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import {
   collection,
   doc,
@@ -56,8 +56,8 @@ const PUBLIC_TABS = [
   ["events", "Events & Activities"],
   ["winners", "Winners & Gallery"],
   ["newspaper", "Clippings"],
-  ["files", "Files"],
   ["vocabulary", "Vocabulary"],
+  ["opac", "OPAC"],
 ];
 const TAB_POST_TYPES = {
   "new-arrivals": ["New Arrival", "Publication"],
@@ -69,7 +69,6 @@ const TAB_POST_TYPES = {
   events: ["Event", "Activity"],
   winners: ["Winner"],
   newspaper: ["Clipping"],
-  files: ["File"],
   vocabulary: ["Vocabulary"],
 };
 const COLLECTIONS = [
@@ -129,6 +128,12 @@ function libraryType(post) {
   const type = String(post.type || "").trim();
   const text = `${post.title || ""} ${post.summary || ""} ${post.category || ""} ${post.venue || ""}`;
   if (/^AES-E\d+$/i.test(String(post.bookNumber || "").trim())) return "E-Book";
+  if (
+    (["NEW", "EXISTING"].includes(String(post.bookStatus || "").toUpperCase()) ||
+      type === "AnnouncementPublished") &&
+    ["Announcement", "AnnouncementPublished", "Publication", "New Arrival"].includes(type)
+  )
+    return "New Arrival";
   if (/clipping|newspaper|press cutting|വാർത്ത/i.test(`${type} ${text}`))
     return "Clipping";
   if (
@@ -142,8 +147,14 @@ function libraryType(post) {
     (/announcement/i.test(type) &&
       /book fair|event|activity|celebration|programme|program/i.test(text))
   )
-    return "Event";
+    return type === "Activity" ? "Activity" : "Event";
   return type;
+}
+function isNewArrival(post) {
+  const status = String(post.bookStatus ?? post.publicationStatus ?? post.status ?? "").trim().toUpperCase();
+  if (status === "EXISTING") return false;
+  if (["NEW", "NEW ARRIVAL", "NEW ARRIVAL PUBLISHED", "TRUE"].includes(status)) return true;
+  return ["New Arrival", "Publication", "AnnouncementPublished"].includes(String(post.type || "").trim());
 }
 function postTime(post) {
   const date = Date.parse(post.date || "");
@@ -158,6 +169,30 @@ function displayDate(value) {
         month: "short",
         year: "numeric",
       }).format(date);
+}
+function factDateSearchText(value) {
+  const raw = String(value || "").trim();
+  const date = new Date(raw.length === 10 ? `${raw}T00:00:00` : raw);
+  if (Number.isNaN(date.getTime())) return raw.toLowerCase();
+  const day = String(date.getDate());
+  const year = String(date.getFullYear());
+  const monthLong = new Intl.DateTimeFormat("en-US", { month: "long" }).format(date).toLowerCase();
+  const monthShort = new Intl.DateTimeFormat("en-US", { month: "short" }).format(date).toLowerCase();
+  return [
+    raw,
+    `${monthLong} ${day} ${year}`,
+    `${monthShort} ${day} ${year}`,
+    `${day} ${monthLong} ${year}`,
+    `${day} ${monthShort} ${year}`,
+    `${monthLong} ${day}`,
+    `${monthShort} ${day}`,
+    `${day} ${monthLong}`,
+    `${day} ${monthShort}`,
+    day,
+    monthLong,
+    monthShort,
+    year,
+  ].join(" ").toLowerCase();
 }
 function Arrow() {
   return (
@@ -178,7 +213,7 @@ function Arrow() {
   );
 }
 
-function ResourceCard({ post, film = false, onOpenArticle, bookMode = false, fallbackBookNumber = "" }) {
+function ResourceCard({ post, film = false, onOpenArticle, bookMode = false, arrivalMode = false, fallbackBookNumber = "" }) {
   const image = film
     ? videoPreview(post.linkUrl, post.imageUrl || post.imageUrls?.[0])
     : post.imageUrl || post.imageUrls?.[0];
@@ -196,13 +231,13 @@ function ResourceCard({ post, film = false, onOpenArticle, bookMode = false, fal
       className="group flex min-w-0 flex-col overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm transition duration-300 hover:-translate-y-1 hover:border-emerald-200 hover:shadow-xl"
     >
       <div
-        className={`relative ${film ? "aspect-video" : "aspect-[16/10]"} overflow-hidden bg-slate-100`}
+        className={`relative ${film ? "aspect-video" : arrivalMode ? "" : "aspect-[16/10]"} overflow-hidden bg-slate-100`}
       >
         {image ? (
           <img
             src={image}
             alt=""
-            className="h-full w-full object-contain transition duration-500 group-hover:scale-[1.02]"
+            className={`${arrivalMode ? "h-auto w-full" : "h-full w-full object-contain"} transition duration-500 group-hover:scale-[1.02]`}
             loading="lazy"
           />
         ) : (
@@ -215,18 +250,28 @@ function ResourceCard({ post, film = false, onOpenArticle, bookMode = false, fal
             ▶
           </span>
         )}
-        <span className="absolute left-3 top-3 rounded-full bg-white/95 px-3 py-1 text-[10px] font-black uppercase tracking-widest text-emerald-800 shadow-sm">
+        {arrivalMode && isNewArrival(post) && (
+          <span className="absolute left-2 top-2 z-10 flex h-11 w-11 rotate-[-8deg] items-center justify-center rounded-full border-2 border-red-700 bg-red-600 text-[10px] font-black uppercase tracking-tight text-white shadow-lg ring-2 ring-white/90">
+            <span className="flex h-8 w-8 items-center justify-center rounded-full border border-dashed border-white">NEW</span>
+          </span>
+        )}
+        <span className={`absolute ${arrivalMode ? "right-3" : "left-3"} top-3 rounded-full bg-white/95 px-3 py-1 text-[10px] font-black uppercase tracking-widest text-emerald-800 shadow-sm`}>
           {film ? "Short Film" : libraryType(post)}
         </span>
       </div>
-      <div className="flex flex-1 flex-col p-5">
+      <div className={`flex flex-1 flex-col ${arrivalMode ? "p-3" : "p-5"}`}>
         {post.date && (
           <p className="text-xs font-bold text-slate-400">
             {displayDate(post.date)}
           </p>
         )}
+        {post.author && (
+          <p className="mt-1 line-clamp-1 text-xs font-semibold text-slate-500">
+            {post.author}
+          </p>
+        )}
         {isBook && <p className="mt-2 text-xs font-black uppercase tracking-widest text-emerald-700">Book no. {post.bookNumber || fallbackBookNumber || "Not assigned"}</p>}
-        <h3 className="mt-2 line-clamp-2 text-lg font-extrabold leading-snug text-slate-900 transition group-hover:text-emerald-700">
+        <h3 className={`mt-2 line-clamp-2 font-extrabold leading-snug text-slate-900 transition group-hover:text-emerald-700 ${arrivalMode ? "text-sm" : "text-lg"}`}>
           {post.title}
         </h3>
         {post.summary && (
@@ -234,14 +279,14 @@ function ResourceCard({ post, film = false, onOpenArticle, bookMode = false, fal
             {post.summary}
           </p>
         )}
-        {(destination || isBook) &&
+        {(destination || isBook || isClipping) &&
           (isClipping || isBook ? (
             <button
               type="button"
               onClick={() => onOpenArticle?.(post)}
               className="mt-4 inline-flex w-full items-center justify-center gap-2 rounded-lg bg-emerald-800 px-4 py-3 text-sm font-extrabold text-white transition hover:bg-emerald-700"
             >
-              {isBook ? "Open Book" : "View article"} <Arrow />
+              {isBook ? "Open Book" : "Read article"} <Arrow />
             </button>
           ) : (
             <span className="mt-4 inline-flex w-full items-center justify-center gap-2 rounded-lg bg-emerald-800 px-4 py-3 text-sm font-extrabold text-white transition group-hover:bg-emerald-700">
@@ -290,6 +335,8 @@ export default function LibraryPage() {
   const [selectedArticle, setSelectedArticle] = useState(null);
   const [previewImage, setPreviewImage] = useState(null);
   const [factLimit, setFactLimit] = useState(100000);
+  const arrivalsScroller = useRef(null);
+  const [arrivalsPaused, setArrivalsPaused] = useState(false);
   useEffect(() => {
     const requestedTab = new URLSearchParams(location.search).get("tab");
     if (
@@ -388,7 +435,34 @@ export default function LibraryPage() {
     () => (term ? posts.filter(matches).slice(0, 12) : posts.filter((post) => libraryType(post) === "Vocabulary").slice(0, 1)),
     [posts, term],
   );
+  const filteredFacts = useMemo(
+    () => facts.filter((fact) =>
+      !term || [factDateSearchText(fact.date), fact.title, fact.description]
+        .some((value) => String(value || "").toLowerCase().includes(term)),
+    ),
+    [facts, term],
+  );
   const films = posts.filter((post) => libraryType(post) === "Short Film");
+  const newArrivals = posts.filter(
+    (post) => ["New Arrival", "Publication"].includes(libraryType(post)),
+  );
+  const libraryEvents = posts.filter((post) => libraryType(post) === "Event").slice(0, 3);
+  const libraryActivities = posts.filter((post) => libraryType(post) === "Activity").slice(0, 3);
+  const latestLibraryLife = posts
+    .filter((post) => ["Event", "Activity"].includes(libraryType(post)) && post.createdAt?.toMillis?.())
+    .sort((a, b) => b.createdAt.toMillis() - a.createdAt.toMillis())[0] || null;
+  useEffect(() => {
+    const scroller = arrivalsScroller.current;
+    if (!scroller || newArrivals.length < 5 || arrivalsPaused) return undefined;
+    const timer = window.setInterval(() => {
+      const atEnd = scroller.scrollLeft + scroller.clientWidth >= scroller.scrollWidth - 8;
+      scroller.scrollBy({ left: atEnd ? -scroller.scrollWidth / 2 : 1, behavior: "smooth" });
+    }, 45);
+    return () => window.clearInterval(timer);
+  }, [arrivalsPaused, newArrivals.length]);
+  const scrollArrivals = (direction) => {
+    arrivalsScroller.current?.scrollBy({ left: direction * 260, behavior: "smooth" });
+  };
   const activeLabel =
     PUBLIC_TABS.find(([key]) => key === activeTab)?.[1] || "Library";
   return (
@@ -399,16 +473,29 @@ export default function LibraryPage() {
           className="border-b border-slate-200 bg-white shadow-sm"
         >
           <div className="mx-auto grid max-w-7xl grid-cols-2 gap-2 px-4 py-3 sm:grid-cols-3 sm:px-6 lg:grid-cols-5 lg:px-8 xl:grid-cols-7">
-            {PUBLIC_TABS.map(([key, label]) => (
-              <button
-                key={key}
-                type="button"
-                onClick={() => chooseTab(key)}
-                className={`min-w-0 rounded-xl border px-3 py-3 text-center text-sm font-extrabold leading-tight transition ${activeTab === key ? "border-emerald-800 bg-emerald-800 text-white shadow-md shadow-emerald-900/15" : "border-slate-200 bg-white text-slate-700 hover:border-emerald-300 hover:bg-emerald-50 hover:text-emerald-800"}`}
-              >
-                {label}
-              </button>
-            ))}
+            {PUBLIC_TABS.map(([key, label]) =>
+              key === "opac" ? (
+                <a
+                  key={key}
+                  href="http://192.168.0.100/"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="min-w-0 rounded-xl border border-amber-500 bg-amber-100 px-3 py-3 text-center text-sm font-extrabold leading-tight text-amber-900 shadow-sm transition hover:border-amber-600 hover:bg-amber-200 hover:text-amber-950"
+                  title="Open the library management portal"
+                >
+                  {label}
+                </a>
+              ) : (
+                <button
+                  key={key}
+                  type="button"
+                  onClick={() => chooseTab(key)}
+                  className={`min-w-0 rounded-xl border px-3 py-3 text-center text-sm font-extrabold leading-tight transition ${activeTab === key ? "border-emerald-800 bg-emerald-800 text-white shadow-md shadow-emerald-900/15" : "border-slate-200 bg-white text-slate-700 hover:border-emerald-300 hover:bg-emerald-50 hover:text-emerald-800"}`}
+                >
+                  {label}
+                </button>
+              ),
+            )}
           </div>
         </nav>
         {activeTab === "overview" ? (
@@ -562,6 +649,19 @@ export default function LibraryPage() {
                         8:30 AM to 4:00 PM
                       </p>
                     </div>
+                    {latestLibraryLife && (
+                      <div className="mt-4 rounded-2xl border border-white/15 bg-white/10 p-4">
+                        <p className="text-xs font-black uppercase tracking-widest text-amber-300">Latest events &amp; activities</p>
+                        <article className="mt-3 overflow-hidden rounded-xl border border-white/10 bg-white/10">
+                          {latestLibraryLife.imageUrl && <img src={latestLibraryLife.imageUrl} alt="" className="h-52 w-full bg-emerald-950 object-contain object-center sm:h-64" />}
+                          <div className="p-3">
+                            <p className="text-[10px] font-black uppercase tracking-widest text-amber-200">{libraryType(latestLibraryLife)}</p>
+                            <h3 className="mt-1 font-extrabold text-white">{latestLibraryLife.title}</h3>
+                            {latestLibraryLife.date && <p className="mt-1 text-xs text-emerald-50/75">{displayDate(latestLibraryLife.date)}</p>}
+                          </div>
+                        </article>
+                      </div>
+                    )}
                   </div>
                   <ol className="grid gap-3 sm:grid-cols-2">
                     {LIBRARY_RULES.map((rule, index) => (
@@ -579,6 +679,34 @@ export default function LibraryPage() {
                 </div>
               </div>
             </section>
+            {newArrivals.length > 0 && (
+              <section className="overflow-hidden bg-amber-50 py-10">
+                <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+                  <div className="flex flex-wrap items-end justify-between gap-4">
+                    <div>
+                      <p className="text-sm font-black uppercase tracking-widest text-amber-700">Fresh on the shelves</p>
+                      <h2 className="mt-2 text-3xl font-extrabold text-emerald-950 sm:text-4xl">New arrivals</h2>
+                    </div>
+                    <button type="button" onClick={() => chooseTab("new-arrivals")} className="inline-flex max-w-full shrink-0 items-center justify-center gap-2 whitespace-nowrap rounded-full bg-emerald-800 px-5 py-3 text-sm font-extrabold text-white shadow-sm transition hover:bg-emerald-700">
+                      View all new arrivals <Arrow />
+                    </button>
+                  </div>
+                  <div className="library-arrivals-controls relative">
+                    <button type="button" aria-label="Previous new arrivals" onClick={() => scrollArrivals(-1)} className="rounded-full border border-emerald-200 bg-white px-3 py-2 text-lg font-black text-emerald-800 shadow-sm hover:bg-emerald-50">‹</button>
+                    <div ref={arrivalsScroller} onMouseEnter={() => setArrivalsPaused(true)} onMouseLeave={() => setArrivalsPaused(false)} className="library-arrivals-scrollbar min-w-0 overflow-x-auto pb-3" aria-label="New arrivals carousel">
+                    <div className="flex w-max cursor-grab gap-3 active:cursor-grabbing">
+                      {newArrivals.map((post) => (
+                        <div key={post.id} className="w-44 shrink-0 sm:w-56">
+                          <ResourceCard post={post} arrivalMode />
+                        </div>
+                      ))}
+                    </div>
+                    </div>
+                    <button type="button" aria-label="Next new arrivals" onClick={() => scrollArrivals(1)} className="rounded-full border border-emerald-200 bg-white px-3 py-2 text-lg font-black text-emerald-800 shadow-sm hover:bg-emerald-50">›</button>
+                  </div>
+                </div>
+              </section>
+            )}
             <section id="library-collections" className="bg-white py-16">
               <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
                 <div className="flex flex-wrap items-end justify-between gap-4">
@@ -653,10 +781,10 @@ export default function LibraryPage() {
               </label>
             </div>
             {activeTab === "one-fact" ? (
-              facts.length ? (
+              filteredFacts.length ? (
                 <>
                   <div className="mt-10 grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
-                    {facts.slice(0, factLimit).map((fact) => (
+                    {filteredFacts.slice(0, factLimit).map((fact) => (
                       <article
                         key={fact.id}
                         className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm"
@@ -695,14 +823,14 @@ export default function LibraryPage() {
                       </article>
                     ))}
                   </div>
-                  {facts.length > factLimit && (
+                  {filteredFacts.length > factLimit && (
                     <div className="mt-10 text-center">
                       <button
                         type="button"
                         onClick={() => setFactLimit((current) => current + 12)}
                         className="rounded-full bg-emerald-800 px-6 py-3 text-sm font-extrabold text-white shadow-lg transition hover:bg-emerald-700"
                       >
-                        Load previous facts ({facts.length - factLimit}{" "}
+                        Load previous facts ({filteredFacts.length - factLimit}{" "}
                         remaining)
                       </button>
                     </div>
@@ -715,7 +843,7 @@ export default function LibraryPage() {
               )
             ) : tabPosts.length ? (
               <div
-                className={`mt-10 grid gap-5 ${activeTab === "short-films" ? "grid-cols-2 sm:grid-cols-3 lg:grid-cols-5" : "sm:grid-cols-2 lg:grid-cols-3"}`}
+                className={`mt-10 grid gap-5 ${activeTab === "short-films" || activeTab === "new-arrivals" ? "grid-cols-2 sm:grid-cols-3 lg:grid-cols-5" : "sm:grid-cols-2 lg:grid-cols-3"}`}
               >
                 {tabPosts.map((post, index) => (
                   <ResourceCard
@@ -724,6 +852,7 @@ export default function LibraryPage() {
                     film={activeTab === "short-films"}
                     onOpenArticle={setSelectedArticle}
                     bookMode={activeTab === "e-books"}
+                    arrivalMode={activeTab === "new-arrivals"}
                     fallbackBookNumber={activeTab === "e-books" ? `AES-E${String(index + 1).padStart(2, "0")}` : ""}
                   />
                 ))}
@@ -735,7 +864,7 @@ export default function LibraryPage() {
             )}
           </section>
         )}
-        {selectedArticle && <div className="fixed inset-0 z-50 overflow-y-auto bg-slate-950/70 p-4" role="dialog" aria-modal="true"><article className="mx-auto mt-10 max-w-3xl rounded-3xl bg-white p-6 shadow-2xl sm:p-10"><button type="button" onClick={() => setSelectedArticle(null)} className="float-right rounded-full px-3 py-1 text-sm font-bold text-slate-500 hover:bg-slate-100">Close</button>{selectedArticle.imageUrl && <img src={selectedArticle.imageUrl} alt="" className="mx-auto max-h-[28rem] w-full object-contain" />}<p className="mt-6 text-xs font-black uppercase tracking-widest text-emerald-700">{selectedArticle.bookNumber || "E-Book"}</p><h2 className="mt-2 text-3xl font-extrabold text-slate-900">{selectedArticle.title}</h2>{selectedArticle.summary && <p className="mt-4 whitespace-pre-line text-base leading-7 text-slate-600">{selectedArticle.summary}</p>}<div className="mt-8 flex flex-wrap gap-3">{selectedArticle.linkUrl && <a href={selectedArticle.linkUrl} target="_blank" rel="noreferrer" className="rounded-lg bg-emerald-800 px-5 py-3 text-sm font-extrabold text-white">View E-Book</a>}{selectedArticle.linkUrl && <a href={selectedArticle.linkUrl} download className="rounded-lg border border-emerald-800 px-5 py-3 text-sm font-extrabold text-emerald-800">Download E-Book</a>}</div></article></div>}
+        {selectedArticle && <div className="fixed inset-0 z-50 overflow-y-auto bg-slate-950/70 p-4" role="dialog" aria-modal="true"><article className="mx-auto mt-10 max-w-3xl rounded-3xl bg-white p-6 shadow-2xl sm:p-10"><button type="button" onClick={() => setSelectedArticle(null)} className="float-right rounded-full bg-slate-100 px-4 py-2 text-sm font-bold text-slate-700 hover:bg-slate-200">Close</button>{(selectedArticle.imageUrl || selectedArticle.imageUrls?.[0]) && <img src={selectedArticle.imageUrl || selectedArticle.imageUrls[0]} alt={selectedArticle.title || "Article image"} className="mx-auto max-h-[28rem] w-full object-contain" />}<p className="mt-6 text-xs font-black uppercase tracking-widest text-emerald-700">{libraryType(selectedArticle)}</p><h2 className="mt-2 text-3xl font-extrabold text-slate-900">{selectedArticle.title}</h2>{(selectedArticle.summary || selectedArticle.body) && <p className="mt-4 whitespace-pre-line text-base leading-7 text-slate-600">{selectedArticle.summary || selectedArticle.body}</p>}<div className="mt-8 flex flex-wrap gap-3">{selectedArticle.linkUrl && <a href={selectedArticle.linkUrl} target="_blank" rel="noreferrer" className="rounded-lg bg-emerald-800 px-5 py-3 text-sm font-extrabold text-white">Open resource</a>}</div></article></div>}
       </main>
     </Layout>
   );

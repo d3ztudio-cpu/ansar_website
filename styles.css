@@ -374,6 +374,20 @@ button, input, textarea { font: inherit; }
 
 .content-card { overflow: hidden; }
 .content-card img { width: 100%; height: 180px; object-fit: cover; background: var(--soft); }
+
+/* Keep uploaded library team portraits fully visible inside their card frame. */
+section[aria-labelledby="library-contact-title"] img {
+  height: 16rem !important;
+  aspect-ratio: auto !important;
+  object-fit: contain !important;
+  object-position: center top;
+  background: #123f5f;
+}
+
+section[aria-labelledby="library-contact-title"] article > div:first-child {
+  height: auto !important;
+  aspect-ratio: 1 / 1 !important;
+}
 .content-card div { padding: 18px; }
 .content-card span { color: var(--red); font-weight: 800; font-size: .78rem; text-transform: uppercase; }
 .content-card h3 { margin: 6px 0 8px; }
@@ -989,4 +1003,48 @@ header, section, footer, main, .container, .row, .grid-wrapper {
   display: none;
   width: 0;
   height: 0;
+}
+.library-arrivals-scrollbar {
+  scrollbar-color: #047857 #fde68a;
+  scrollbar-width: thin;
+}
+
+.library-arrivals-scrollbar::-webkit-scrollbar {
+  height: 8px;
+}
+
+.library-arrivals-scrollbar::-webkit-scrollbar-track {
+  background: #fde68a;
+  border-radius: 999px;
+}
+
+.library-arrivals-scrollbar::-webkit-scrollbar-thumb {
+  background: #047857;
+  border-radius: 999px;
+}
+
+.library-arrivals-controls > button {
+  display: none;
+  position: absolute;
+  top: 50%;
+  z-index: 20;
+  transform: translateY(-50%);
+  border: 1px solid #a7f3d0;
+  border-radius: 999px;
+  background: white;
+  padding: 0.65rem 0.8rem;
+  color: #065f46;
+  font-size: 1.125rem;
+  font-weight: 900;
+  line-height: 1;
+  box-shadow: 0 4px 12px rgb(15 23 42 / 0.14);
+}
+
+.library-arrivals-controls > button:first-child { left: 0.25rem; }
+.library-arrivals-controls > button:last-child { right: 0.25rem; }
+.library-arrivals-controls > button:hover { transform: translateY(-50%) scale(1.05); background: #ecfdf5; }
+
+button[aria-label="Previous new arrivals"],
+button[aria-label="Next new arrivals"] {
+  display: none !important;
 }

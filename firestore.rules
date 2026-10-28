@@ -256,7 +256,7 @@ service cloud.firestore {
     }
 
     function isValidLibraryPost() {
-      return hasOnlyAllowedFields(['type', 'title', 'summary', 'body', 'date', 'imageUrl', 'linkUrl', 'bookNumber', 'category', 'author', 'venue', 'fileUrl', 'fileType', 'className', 'subject', 'year', 'imageUrls', 'published', 'createdAt', 'updatedAt']) &&
+      return hasOnlyAllowedFields(['type', 'title', 'summary', 'body', 'date', 'imageUrl', 'linkUrl', 'bookNumber', 'bookStatus', 'category', 'author', 'venue', 'fileUrl', 'fileType', 'className', 'subject', 'year', 'imageUrls', 'published', 'createdAt', 'updatedAt']) &&
              request.resource.data.keys().hasAll(['type', 'title', 'summary', 'body', 'date', 'imageUrl', 'linkUrl', 'category', 'author', 'venue', 'published', 'createdAt', 'updatedAt']) &&
              request.resource.data.type in ['Event', 'Activity', 'New Arrival', 'Resource', 'Publication', 'Announcement', 'E-Book', 'E-Learning', 'Short Film', 'Quiz', 'Winner', 'Clipping', 'Question Paper', 'File', 'Vocabulary'] &&
              isValidStringLength('title', 1, 200) &&
@@ -266,7 +266,9 @@ service cloud.firestore {
              isValidStringLength('date', 0, 50) &&
              isValidUrl('imageUrl') &&
              isValidUrl('linkUrl') &&
-             isValidOptionalString('bookNumber', 0, 100) && isValidStringLength('category', 0, 120) && isValidStringLength('author', 0, 200) && isValidStringLength('venue', 0, 300) &&
+             isValidOptionalString('bookNumber', 0, 100) &&
+             (!(('bookStatus') in request.resource.data) || request.resource.data.bookStatus in ['NEW', 'EXISTING']) &&
+             isValidStringLength('category', 0, 120) && isValidStringLength('author', 0, 200) && isValidStringLength('venue', 0, 300) &&
              // Optional document/paper fields (backwards compatible with older posts)
              isValidOptionalString('fileType', 0, 120) &&
              isValidOptionalString('className', 0, 120) &&
