@@ -256,10 +256,11 @@ service cloud.firestore {
     }
 
     function isValidLibraryPost() {
-      return hasOnlyAllowedFields(['type', 'title', 'summary', 'body', 'date', 'imageUrl', 'linkUrl', 'bookNumber', 'bookStatus', 'category', 'author', 'venue', 'fileUrl', 'fileType', 'className', 'subject', 'year', 'imageUrls', 'published', 'createdAt', 'updatedAt']) &&
+      return hasOnlyAllowedFields(['type', 'libraryCategory', 'title', 'summary', 'body', 'date', 'imageUrl', 'linkUrl', 'bookNumber', 'bookStatus', 'category', 'author', 'venue', 'fileUrl', 'fileType', 'className', 'subject', 'year', 'imageUrls', 'published', 'createdAt', 'updatedAt']) &&
              request.resource.data.keys().hasAll(['type', 'title', 'summary', 'body', 'date', 'imageUrl', 'linkUrl', 'category', 'author', 'venue', 'published', 'createdAt', 'updatedAt']) &&
              request.resource.data.type in ['Event', 'Activity', 'New Arrival', 'Resource', 'Publication', 'Announcement', 'E-Book', 'E-Learning', 'Short Film', 'Quiz', 'Winner', 'Clipping', 'Question Paper', 'File', 'Vocabulary'] &&
              isValidStringLength('title', 1, 200) &&
+             isValidOptionalString('libraryCategory', 0, 40) &&
              // Library descriptions are intentionally unrestricted by the UI.
              isValidStringLength('summary', 0, 50000) &&
              isValidStringLength('body', 0, 50000) &&

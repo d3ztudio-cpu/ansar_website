@@ -125,8 +125,24 @@ function videoPreview(url, imageUrl) {
 // Earlier Library uploads sometimes reached Firestore as an Announcement even
 // when their link was a video. Treat those legacy entries as Short Films too.
 function libraryType(post) {
+  const canonical = String(post?.libraryCategory || "").trim().toLowerCase();
+  const canonicalTypes = {
+    new_arrival: "New Arrival", question_paper: "Question Paper", ebook: "E-Book",
+    e_learning: "E-Learning", short_film: "Short Film", quiz: "Quiz",
+    event: "Event", activity: "Activity", winner: "Winner", clipping: "Clipping",
+    file: "File", vocabulary: "Vocabulary",
+  };
+  if (canonicalTypes[canonical]) return canonicalTypes[canonical];
   const type = String(post.type || "").trim();
   const text = `${post.title || ""} ${post.summary || ""} ${post.category || ""} ${post.venue || ""}`;
+  // Event/activity is the owning section. Check it before the legacy
+  // new-arrival metadata so older event posts cannot leak into arrivals.
+  if (
+    /event|activit/i.test(type) ||
+    (/announcement/i.test(type) &&
+      /book fair|event|activity|celebration|programme|program/i.test(text))
+  )
+    return type === "Activity" ? "Activity" : "Event";
   if (/^AES-E\d+$/i.test(String(post.bookNumber || "").trim())) return "E-Book";
   if (
     (["NEW", "EXISTING"].includes(String(post.bookStatus || "").toUpperCase()) ||
@@ -142,13 +158,16 @@ function libraryType(post) {
       VIMEO_ID.test(String(post.linkUrl || "")))
   )
     return "Short Film";
-  if (
+  return type;
+}
+function isLibraryEventOrActivity(post) {
+  const type = String(post?.type || "").trim();
+  const text = `${post?.title || ""} ${post?.summary || ""} ${post?.category || ""} ${post?.venue || ""}`;
+  return (
     /event|activit/i.test(type) ||
     (/announcement/i.test(type) &&
       /book fair|event|activity|celebration|programme|program/i.test(text))
-  )
-    return type === "Activity" ? "Activity" : "Event";
-  return type;
+  );
 }
 function isNewArrival(post) {
   const status = String(post.bookStatus ?? post.publicationStatus ?? post.status ?? "").trim().toUpperCase();
@@ -169,6 +188,11 @@ function displayDate(value) {
         month: "short",
         year: "numeric",
       }).format(date);
+}
+function drivePreviewUrl(value) {
+  const url = String(value || "");
+  const match = url.match(/drive\.google\.com\/file\/d\/([^/]+)/i);
+  return match ? `https://drive.google.com/file/d/${match[1]}/preview` : url;
 }
 function factDateSearchText(value) {
   const raw = String(value || "").trim();
@@ -334,6 +358,7 @@ export default function LibraryPage() {
   const [search, setSearch] = useState("");
   const [selectedArticle, setSelectedArticle] = useState(null);
   const [previewImage, setPreviewImage] = useState(null);
+  const [questionFilters, setQuestionFilters] = useState({ className: "", year: "", category: "", subject: "" });
   const [factLimit, setFactLimit] = useState(100000);
   const arrivalsScroller = useRef(null);
   const [arrivalsPaused, setArrivalsPaused] = useState(false);
@@ -356,7 +381,7 @@ export default function LibraryPage() {
               ? {
                   ...DEFAULT_LIBRARY,
                   ...shot.data(),
-                  openingHours: LIBRARY_HOURS,
+                  openingHours: shot.data().openingHours || LIBRARY_HOURS,
                 }
               : DEFAULT_LIBRARY,
           ),
@@ -367,6 +392,7 @@ export default function LibraryPage() {
   useEffect(
     () =>
       onSnapshot(
+        // Public Firestore rules require this constraint for collection reads.
         query(collection(db, "libraryPosts"), where("published", "==", true)),
         (shot) =>
           setPosts(
@@ -431,6 +457,19 @@ export default function LibraryPage() {
         : [],
     [activeTab, posts, term],
   );
+  const questionPapers = useMemo(() => {
+    const source = posts.filter((post) => libraryType(post) === "Question Paper");
+    const values = (key) => [...new Set(source.map((post) => String(post[key] || "").trim()).filter(Boolean))].sort();
+    return { source, classes: values("className"), years: values("year"), categories: values("category"), subjects: values("subject") };
+  }, [posts]);
+  const filteredQuestionPapers = useMemo(() => questionPapers.source.filter((post) => {
+    const matchesSearch = matches(post);
+    return matchesSearch &&
+      (!questionFilters.className || post.className === questionFilters.className) &&
+      (!questionFilters.year || post.year === questionFilters.year) &&
+      (!questionFilters.category || post.category === questionFilters.category) &&
+      (!questionFilters.subject || post.subject === questionFilters.subject);
+  }), [questionPapers.source, questionFilters, term]);
   const latest = useMemo(
     () => (term ? posts.filter(matches).slice(0, 12) : posts.filter((post) => libraryType(post) === "Vocabulary").slice(0, 1)),
     [posts, term],
@@ -444,13 +483,18 @@ export default function LibraryPage() {
   );
   const films = posts.filter((post) => libraryType(post) === "Short Film");
   const newArrivals = posts.filter(
-    (post) => ["New Arrival", "Publication"].includes(libraryType(post)),
+    (post) =>
+      !isLibraryEventOrActivity(post) &&
+      ["New Arrival", "Publication"].includes(libraryType(post)) &&
+      !/event|activit|celebration|programme|program|book fair/i.test(
+        `${post.title || ""} ${post.summary || ""} ${post.category || ""} ${post.venue || ""}`,
+      ),
   );
   const libraryEvents = posts.filter((post) => libraryType(post) === "Event").slice(0, 3);
   const libraryActivities = posts.filter((post) => libraryType(post) === "Activity").slice(0, 3);
   const latestLibraryLife = posts
-    .filter((post) => ["Event", "Activity"].includes(libraryType(post)) && post.createdAt?.toMillis?.())
-    .sort((a, b) => b.createdAt.toMillis() - a.createdAt.toMillis())[0] || null;
+    .filter((post) => ["Event", "Activity"].includes(libraryType(post)))
+    .sort((a, b) => postTime(b) - postTime(a))[0] || null;
   useEffect(() => {
     const scroller = arrivalsScroller.current;
     if (!scroller || newArrivals.length < 5 || arrivalsPaused) return undefined;
@@ -841,6 +885,35 @@ export default function LibraryPage() {
                   <EmptyState label="facts" />
                 </div>
               )
+            ) : activeTab === "question-papers" ? (
+              <div className="mt-8">
+                <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm sm:p-5">
+                  <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+                    {[['className', 'Class / Grade', questionPapers.classes], ['year', 'Academic Year', questionPapers.years], ['category', 'Exam Type', questionPapers.categories], ['subject', 'Subject', questionPapers.subjects]].map(([key, label, options]) => (
+                      <label key={key} className="text-xs font-black uppercase tracking-wider text-slate-500">
+                        {label}
+                        <select value={questionFilters[key]} onChange={(event) => setQuestionFilters((current) => ({ ...current, [key]: event.target.value }))} className="mt-2 w-full rounded-xl border border-slate-200 bg-white px-3 py-3 text-sm font-bold normal-case tracking-normal text-slate-800 outline-none focus:border-emerald-500">
+                          <option value="">All {label}</option>
+                          {options.map((option) => <option key={option} value={option}>{option}</option>)}
+                        </select>
+                      </label>
+                    ))}
+                  </div>
+                  <button type="button" onClick={() => { setSearch(""); setQuestionFilters({ className: "", year: "", category: "", subject: "" }); }} className="mt-4 text-sm font-extrabold text-emerald-700 hover:text-emerald-900">Reset search and filters</button>
+                </div>
+                {filteredQuestionPapers.length ? (
+                  <div className="mt-6 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
+                    {filteredQuestionPapers.map((post) => <article key={post.id} className="flex flex-col overflow-hidden rounded-2xl border border-slate-200 bg-white p-5 shadow-sm transition hover:-translate-y-1 hover:shadow-lg">
+                      <div className="flex items-start justify-between gap-3"><span className="rounded-full bg-amber-100 px-3 py-1 text-[10px] font-black uppercase tracking-widest text-amber-800">Question Paper</span><span className="text-xs font-bold text-slate-400">{post.fileType || "PDF"}</span></div>
+                      <h2 className="mt-5 text-xl font-extrabold text-slate-900">{post.subject || post.title}</h2>
+                      <p className="mt-1 text-sm font-bold text-emerald-700">{post.title}</p>
+                      <dl className="mt-5 grid grid-cols-2 gap-3 text-xs"><div className="rounded-xl bg-slate-50 p-3"><dt className="font-bold text-slate-400">Class</dt><dd className="mt-1 font-extrabold text-slate-700">{post.className || "—"}</dd></div><div className="rounded-xl bg-slate-50 p-3"><dt className="font-bold text-slate-400">Exam</dt><dd className="mt-1 font-extrabold text-slate-700">{post.category || "—"}</dd></div></dl>
+                      <p className="mt-4 text-xs font-bold text-slate-400">{post.date ? displayDate(post.date) : post.year || "Academic resource"} · {post.fileType || "PDF"}</p>
+                      <div className="mt-5 flex gap-2"><button type="button" onClick={() => setSelectedArticle(post)} className="flex-1 rounded-xl bg-emerald-800 px-3 py-3 text-sm font-extrabold text-white hover:bg-emerald-700">View / Preview</button>{post.linkUrl && <a href={post.linkUrl} target="_blank" rel="noreferrer" className="flex-1 rounded-xl border border-emerald-200 px-3 py-3 text-center text-sm font-extrabold text-emerald-800 hover:bg-emerald-50">Download</a>}</div>
+                    </article>)}
+                  </div>
+                ) : <div className="mt-6"><EmptyState label="question papers matching these filters" /></div>}
+              </div>
             ) : tabPosts.length ? (
               <div
                 className={`mt-10 grid gap-5 ${activeTab === "short-films" || activeTab === "new-arrivals" ? "grid-cols-2 sm:grid-cols-3 lg:grid-cols-5" : "sm:grid-cols-2 lg:grid-cols-3"}`}
@@ -864,7 +937,7 @@ export default function LibraryPage() {
             )}
           </section>
         )}
-        {selectedArticle && <div className="fixed inset-0 z-50 overflow-y-auto bg-slate-950/70 p-4" role="dialog" aria-modal="true"><article className="mx-auto mt-10 max-w-3xl rounded-3xl bg-white p-6 shadow-2xl sm:p-10"><button type="button" onClick={() => setSelectedArticle(null)} className="float-right rounded-full bg-slate-100 px-4 py-2 text-sm font-bold text-slate-700 hover:bg-slate-200">Close</button>{(selectedArticle.imageUrl || selectedArticle.imageUrls?.[0]) && <img src={selectedArticle.imageUrl || selectedArticle.imageUrls[0]} alt={selectedArticle.title || "Article image"} className="mx-auto max-h-[28rem] w-full object-contain" />}<p className="mt-6 text-xs font-black uppercase tracking-widest text-emerald-700">{libraryType(selectedArticle)}</p><h2 className="mt-2 text-3xl font-extrabold text-slate-900">{selectedArticle.title}</h2>{(selectedArticle.summary || selectedArticle.body) && <p className="mt-4 whitespace-pre-line text-base leading-7 text-slate-600">{selectedArticle.summary || selectedArticle.body}</p>}<div className="mt-8 flex flex-wrap gap-3">{selectedArticle.linkUrl && <a href={selectedArticle.linkUrl} target="_blank" rel="noreferrer" className="rounded-lg bg-emerald-800 px-5 py-3 text-sm font-extrabold text-white">Open resource</a>}</div></article></div>}
+        {selectedArticle && <div className="fixed inset-0 z-50 overflow-y-auto bg-slate-950/80 p-4" role="dialog" aria-modal="true" aria-label="Question paper preview"><article className="mx-auto mt-6 max-w-5xl rounded-3xl bg-white p-4 shadow-2xl sm:p-6"><div className="flex items-center justify-between gap-3"><div><p className="text-xs font-black uppercase tracking-widest text-emerald-700">{libraryType(selectedArticle)}</p><h2 className="mt-1 text-xl font-extrabold text-slate-900">{selectedArticle.title}</h2></div><button type="button" onClick={() => setSelectedArticle(null)} className="rounded-full bg-slate-100 px-4 py-2 text-sm font-bold text-slate-700 hover:bg-slate-200">Close</button></div>{selectedArticle.linkUrl ? <iframe title={`Preview ${selectedArticle.title}`} src={drivePreviewUrl(selectedArticle.linkUrl)} className="mt-5 h-[70vh] w-full rounded-2xl border border-slate-200" /> : <p className="mt-5 rounded-xl bg-amber-50 p-5 text-amber-800">No document link is available for preview.</p>}<div className="mt-4 flex justify-end">{selectedArticle.linkUrl && <a href={selectedArticle.linkUrl} target="_blank" rel="noreferrer" className="rounded-xl bg-emerald-800 px-5 py-3 text-sm font-extrabold text-white">Open / Download PDF</a>}</div></article></div>}
       </main>
     </Layout>
   );

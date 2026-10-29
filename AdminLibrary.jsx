@@ -108,6 +108,35 @@ function displayDate(value) {
       }).format(date);
 }
 
+// Keep admin section routing aligned with the public Library page. Some older
+// records were stored as Announcement/AnnouncementPublished even though their
+// content was an event or activity.
+function normalizedLibraryType(item) {
+  const canonical = String(item?.libraryCategory || "").trim().toLowerCase();
+  const canonicalTypes = {
+    new_arrival: "New Arrival", question_paper: "Question Paper", ebook: "E-Book",
+    e_learning: "E-Learning", short_film: "Short Film", quiz: "Quiz",
+    event: "Event", activity: "Activity", winner: "Winner", clipping: "Clipping",
+    file: "File", vocabulary: "Vocabulary",
+  };
+  if (canonicalTypes[canonical]) return canonicalTypes[canonical];
+  const type = String(item?.type || "").trim();
+  const text = `${item?.title || ""} ${item?.summary || ""} ${item?.category || ""} ${item?.venue || ""}`;
+  if (
+    /event|activit/i.test(type) ||
+    (/announcement/i.test(type) &&
+      /book fair|event|activity|celebration|programme|program/i.test(text))
+  ) return type === "Activity" ? "Activity" : "Event";
+  if (/^AES-E\d+$/i.test(String(item?.bookNumber || "").trim())) return "E-Book";
+  const status = String(item?.bookStatus ?? item?.publicationStatus ?? item?.status ?? "").trim().toUpperCase();
+  if (
+    (["NEW", "EXISTING"].includes(status) || type === "AnnouncementPublished") &&
+    ["Announcement", "AnnouncementPublished", "Publication", "New Arrival"].includes(type)
+  ) return "New Arrival";
+  if (/clipping|newspaper/i.test(`${type} ${text}`)) return "Clipping";
+  return type || "Announcement";
+}
+
 const TABS = [
   ["overview", "Overview"],
   ["profile", "Library Profile"],
@@ -140,6 +169,12 @@ const SECTION_TYPES = {
   files: ["File"],
   vocabulary: ["Vocabulary"],
 };
+const TAB_LIBRARY_CATEGORIES = {
+  "new-arrivals": "new_arrival", "question-papers": "question_paper", "e-books": "ebook",
+  "e-learning": "e_learning", "short-films": "short_film", quizzes: "quiz",
+  events: "event", winners: "winner", newspaper: "clipping", files: "file",
+  "vocabulary-vault": "vocabulary",
+};
 
 const fieldClass =
   "mt-1 w-full rounded-lg border border-slate-200 bg-white p-3 outline-none focus:ring-2 focus:ring-emerald-500";
@@ -169,31 +204,24 @@ export default function AdminLibrary() {
   const postsByType = useMemo(() => {
     const grouped = {};
     for (const item of posts) {
-      const key = item.type || "Announcement";
+      const key = normalizedLibraryType(item);
       (grouped[key] = grouped[key] || []).push(item);
     }
     return grouped;
   }, [posts]);
 
   const draftCount = posts.filter((item) => item.published === false).length;
+  const subjectOptions = useMemo(
+    () => [...new Set(posts
+      .filter((item) => item.type === "Question Paper" && item.subject)
+      .map((item) => String(item.subject).trim())
+      .filter(Boolean))].sort((a, b) => a.localeCompare(b)),
+    [posts],
+  );
 
   const startEdit = (item) => {
     setEditingId(item.id);
-    const itemText = `${item.title || ""} ${item.summary || ""} ${item.category || ""} ${item.venue || ""}`;
-    const normalizedOwnerType = /clipping|newspaper/i.test(
-      `${item.type || ""} ${itemText}`,
-    )
-      ? "Clipping"
-      : /event|activit/i.test(String(item.type || "")) ||
-          (/announcement/i.test(String(item.type || "")) &&
-            /book fair|event|activity|celebration|programme|program/i.test(
-              itemText,
-            ))
-        ? "Event"
-      : ["Announcement", "AnnouncementPublished"].includes(item.type) &&
-          ["NEW", "EXISTING"].includes(String(item.bookStatus || "").toUpperCase())
-        ? "New Arrival"
-        : item.type;
+    const normalizedOwnerType = normalizedLibraryType(item);
     setPost({
       type: normalizedOwnerType || "Announcement",
       title: item.title || "",
@@ -269,6 +297,19 @@ export default function AdminLibrary() {
     }
   };
 
+  const moveToEvents = async (item) => {
+    if (!window.confirm(`Move “${item.title || "this item"}” to Events & Activities?`)) return;
+    try {
+      await updateDoc(doc(db, "libraryPosts", item.id), {
+        type: "Event",
+        bookStatus: "EXISTING",
+        updatedAt: serverTimestamp(),
+      });
+    } catch (error) {
+      alert(`Could not move this item to Events & Activities: ${error.message}`);
+    }
+  };
+
   // ------------------------------------------------------------------
   // Shared library post form (used by every post section tab)
   // ------------------------------------------------------------------
@@ -282,7 +323,7 @@ export default function AdminLibrary() {
     }
     const needsFile = post.type === "Question Paper" || post.type === "File";
     if (needsFile && !post.linkUrl.trim()) {
-      alert("Paste a Google Drive sharing link for this document.");
+      alert("Paste the Google Drive link before saving this document.");
       return;
     }
     if (
@@ -312,8 +353,13 @@ export default function AdminLibrary() {
                   ? "Activity"
                   : "Event"
                 : post.type;
+      const libraryCategory =
+        normalizedType === "Activity" ? "activity" :
+        normalizedType === "Event" ? "event" :
+        TAB_LIBRARY_CATEGORIES[tab] || "announcement";
       const payload = {
         type: normalizedType,
+        libraryCategory,
         title: post.title.trim(),
         summary: post.summary.trim(),
         body: post.body.trim(),
@@ -334,7 +380,12 @@ export default function AdminLibrary() {
         subject: post.subject.trim(),
         year: post.year.trim(),
         author: post.author.trim(),
-        bookStatus: post.bookStatus === "NEW" ? "NEW" : "EXISTING",
+        // Book status belongs to arrivals only. Keeping event/activity posts
+        // as EXISTING prevents their legacy metadata from changing sections.
+        bookStatus:
+          normalizedType === "New Arrival" || normalizedType === "Publication"
+            ? post.bookStatus === "NEW" ? "NEW" : "EXISTING"
+            : "EXISTING",
         venue: post.venue.trim(),
         published: !!post.published,
         updatedAt: serverTimestamp(),
@@ -440,6 +491,7 @@ export default function AdminLibrary() {
             Date
             <input
               type="date"
+              required={eventToggle}
               value={post.date}
               onChange={(e) =>
                 setPost((value) => ({ ...value, date: e.target.value }))
@@ -459,7 +511,7 @@ export default function AdminLibrary() {
             className={fieldClass}
           />
         </label>
-        {showDescription && (
+        {showDescription && !eventToggle && (
           <label className="text-sm font-bold text-slate-700 md:col-span-2">
             Description (optional)
             <textarea
@@ -528,6 +580,7 @@ export default function AdminLibrary() {
             <label className="text-sm font-bold text-slate-700">
               Subject
               <input
+                list="library-question-paper-subjects"
                 value={post.subject}
                 onChange={(e) =>
                   setPost((value) => ({ ...value, subject: e.target.value }))
@@ -535,6 +588,9 @@ export default function AdminLibrary() {
                 placeholder="Mathematics, Science…"
                 className={fieldClass}
               />
+              <datalist id="library-question-paper-subjects">
+                {subjectOptions.map((subject) => <option key={subject} value={subject} />)}
+              </datalist>
             </label>
             <label className="text-sm font-bold text-slate-700">
               Exam category
@@ -567,7 +623,7 @@ export default function AdminLibrary() {
         {showAcademicFields && (
           <div className="md:col-span-2">
             <p className="text-sm font-bold text-slate-700">
-              Question paper Google Drive sharing link
+              Question paper Google Drive link
             </p>
             <label className="mt-2 block text-sm font-bold text-slate-700">
               <input
@@ -584,25 +640,6 @@ export default function AdminLibrary() {
                 Set the Drive file access to “Anyone with the link can view”.
               </span>
             </label>
-          </div>
-        )}
-
-        {showAcademicFields && (
-          <div className="md:col-span-2">
-            <LibraryMediaUploader
-              mode="pdf"
-              value={post.linkUrl}
-              onChange={(url) =>
-                setPost((value) => ({ ...value, linkUrl: url || "" }))
-              }
-              folder={[
-                "question-papers",
-                post.className,
-                post.subject,
-                post.year,
-              ].filter(Boolean)}
-              label="Upload question paper PDF"
-            />
           </div>
         )}
 
@@ -743,7 +780,7 @@ export default function AdminLibrary() {
           </label>
         )}
 
-        {!showAcademicFields &&
+        {!eventToggle && !showAcademicFields &&
           !showFile &&
           !showGallery &&
           !hideExtraFields && (
@@ -780,9 +817,21 @@ export default function AdminLibrary() {
               </label>
             </>
           )}
+        {eventToggle && (
+          <label className="text-sm font-bold text-slate-700 md:col-span-2">
+            Venue
+            <input
+              value={post.venue}
+              onChange={(e) =>
+                setPost((value) => ({ ...value, venue: e.target.value }))
+              }
+              className={fieldClass}
+            />
+          </label>
+        )}
       </div>
       <div className="mt-6 flex flex-wrap items-center justify-between gap-4 border-t border-slate-100 pt-5">
-        <label className="flex items-center gap-2 text-sm font-bold text-slate-700">
+        {!eventToggle && <label className="flex items-center gap-2 text-sm font-bold text-slate-700">
           <input
             type="checkbox"
             checked={post.published}
@@ -792,7 +841,7 @@ export default function AdminLibrary() {
             className="h-4 w-4"
           />
           Publish on the Library page
-        </label>
+        </label>}
         <button
           disabled={postsLoading}
           className="rounded-lg bg-[#15324a] px-5 py-3 text-sm font-extrabold text-white hover:bg-[#0d2639] disabled:opacity-50"
@@ -809,24 +858,7 @@ export default function AdminLibrary() {
         const query = librarySearch.trim().toLowerCase();
         if (![item.title, item.bookNumber].some((value) => String(value || "").toLowerCase().includes(query))) return false;
       }
-      const itemText = `${item.title || ""} ${item.summary || ""} ${item.category || ""} ${item.venue || ""}`;
-      const normalized = /^AES-E\d+$/i.test(
-        String(item.bookNumber || "").trim(),
-      )
-        ? "E-Book"
-        : String(item.bookStatus ?? item.publicationStatus ?? item.status ?? "").toUpperCase() !== "EXISTING" &&
-            (["NEW", "NEW ARRIVAL", "NEW ARRIVAL PUBLISHED", "TRUE"].includes(String(item.bookStatus ?? item.publicationStatus ?? item.status ?? "").toUpperCase()) ||
-              ["AnnouncementPublished", "New Arrival", "Publication"].includes(item.type))
-          ? "New Arrival"
-        : /clipping|newspaper/i.test(`${item.type || ""} ${itemText}`)
-          ? "Clipping"
-          : /event|activit/i.test(String(item.type || "")) ||
-              (/announcement/i.test(String(item.type || "")) &&
-                /book fair|event|activity|celebration|programme|program/i.test(
-                  itemText,
-                ))
-            ? "Event"
-            : item.type;
+      const normalized = normalizedLibraryType(item);
       return types ? types.includes(normalized) : true;
     });
     if (!items.length) {
@@ -847,7 +879,7 @@ export default function AdminLibrary() {
           >
             <div className="min-w-0">
               <div className="flex flex-wrap items-center gap-2 text-xs font-black uppercase tracking-[0.13em] text-emerald-700">
-                <span>{item.type}</span>
+                <span>{normalizedLibraryType(item)}</span>
                 <span
                   className={
                     item.published !== false
@@ -881,13 +913,13 @@ export default function AdminLibrary() {
               )}
             </div>
             <div className="flex gap-2">
-              {types === SECTION_TYPES.events && (
+              {types?.includes("New Arrival") && (
                 <button
                   type="button"
-                  onClick={() => moveToClippings(item)}
-                  className="rounded-lg px-3 py-2 text-sm font-bold text-orange-700 hover:bg-orange-50"
+                  onClick={() => moveToEvents(item)}
+                  className="rounded-lg px-3 py-2 text-sm font-bold text-blue-700 hover:bg-blue-50"
                 >
-                  Move to Clippings
+                  Move to Events & Activities
                 </button>
               )}
               <button
@@ -951,7 +983,7 @@ export default function AdminLibrary() {
         intro="Previous question papers with class, subject, category, year and document. The public page offers filters for class, subject, category and year."
         types={SECTION_TYPES["question-papers"]}
         typeOptions={SECTION_TYPES["question-papers"]}
-        form={postForm(["Question Paper"], { showAcademicFields: true })}
+        form={postForm(["Question Paper"], { showAcademicFields: true, showImage: false, showDescription: false })}
         list={postList(SECTION_TYPES["question-papers"])}
         onAdd={() => newPost("Question Paper")}
       />
@@ -1538,6 +1570,7 @@ function VocabularyTab() {
       if (editingId) {
         await updateDoc(doc(db, "libraryPosts", editingId), {
           type: "Vocabulary",
+          libraryCategory: "vocabulary",
           date: entry.date,
           title: entry.title.trim(),
           summary: "",
@@ -1554,7 +1587,7 @@ function VocabularyTab() {
           subject: "",
           year: "",
           imageUrls: [],
-          published: !!entry.published,
+          published: true,
           createdAt: existing?.createdAt || now,
           updatedAt: now,
         });
@@ -1567,6 +1600,7 @@ function VocabularyTab() {
         await setDoc(doc(db, "libraryPosts", editingId || entry.date), {
           date: entry.date,
           type: "Vocabulary",
+          libraryCategory: "vocabulary",
           title: entry.title.trim(),
           summary: "",
           body: "",
@@ -1582,7 +1616,7 @@ function VocabularyTab() {
           subject: "",
           year: "",
           imageUrls: [],
-          published: !!entry.published,
+          published: true,
           createdAt: now,
           updatedAt: now,
         });
@@ -2255,11 +2289,12 @@ function OneFactTab() {
 // --------------------------------------------------------------------
 // Generic post-section tab shell
 // --------------------------------------------------------------------
-function PostSectionTab({ intro, types, typeOptions, form, list, onAdd }) {
-  const labels = typeOptions?.length ? typeOptions : types;
+function PostSectionTab({ types, form, list }) {
   return (
     <div className="space-y-8">
-      <div className="rounded-2xl border border-slate-100 bg-white p-6 shadow-sm">
+      {/* Section-specific add controls are part of the form below. */}
+      {/* The former repeated section header card was intentionally removed. */}
+      {false && <div className="rounded-2xl border border-slate-100 bg-white p-6 shadow-sm">
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div>
             <h3 className="text-lg font-extrabold text-slate-900">
@@ -2277,7 +2312,7 @@ function PostSectionTab({ intro, types, typeOptions, form, list, onAdd }) {
             + New {labels[0]}
           </button>
         </div>
-      </div>
+      </div>}
       {form}
       <section className={cardClass}>
         <h3 className="text-xl font-extrabold text-slate-900">
