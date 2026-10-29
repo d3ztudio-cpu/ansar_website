@@ -135,6 +135,11 @@ function youtubeEmbedUrl(url) {
   const id = String(url || "").match(YOUTUBE_ID)?.[1];
   return id ? `https://www.youtube.com/embed/${id}` : "";
 }
+function imageUrl(value) {
+  if (!value) return "";
+  if (typeof value === "string") return value;
+  return value.url || value.downloadURL || "";
+}
 // Earlier Library uploads sometimes reached Firestore as an Announcement even
 // when their link was a video. Treat those legacy entries as Short Films too.
 function libraryType(post) {
@@ -251,17 +256,18 @@ function Arrow() {
   );
 }
 
-function ResourceCard({ post, film = false, onOpenArticle, bookMode = false, arrivalMode = false, fallbackBookNumber = "" }) {
+function ResourceCard({ post, film = false, onOpenArticle, bookMode = false, arrivalMode = false, fallbackBookNumber = "", forceArticle = false, featureMode = false }) {
   const image = film
-    ? videoPreview(post.linkUrl, post.imageUrl || post.imageUrls?.[0])
-    : post.imageUrl || post.imageUrls?.[0];
+    ? videoPreview(post.linkUrl, imageUrl(post.imageUrl) || imageUrl(post.imageUrls?.[0]))
+    : imageUrl(post.imageUrl) || imageUrl(post.imageUrls?.[0]) || imageUrl(post.galleryImageUrl);
   const destination = post.linkUrl || post.fileUrl;
   const isClipping = libraryType(post) === "Clipping";
   const isCreative = libraryType(post) === "Creative Corner";
   const isBook = bookMode || libraryType(post) === "E-Book";
-  const Card = destination && !isClipping && !isBook && !isCreative ? "a" : "article";
+  const shouldOpenArticle = forceArticle || isClipping || isBook || isCreative;
+  const Card = destination && !shouldOpenArticle ? "a" : "article";
   const props =
-    destination && !isClipping && !isBook && !isCreative
+    destination && !shouldOpenArticle
       ? { href: destination, target: "_blank", rel: "noreferrer" }
       : {};
   return (
@@ -270,7 +276,7 @@ function ResourceCard({ post, film = false, onOpenArticle, bookMode = false, arr
       className="group flex min-w-0 flex-col overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm transition duration-300 hover:-translate-y-1 hover:border-emerald-200 hover:shadow-xl"
     >
       <div
-        className={`relative ${film ? "aspect-video" : arrivalMode ? "" : "aspect-[16/10]"} overflow-hidden bg-slate-100`}
+        className={`relative ${film ? "aspect-video" : arrivalMode ? "" : featureMode ? "aspect-[4/5]" : "aspect-[4/5]"} overflow-hidden bg-slate-100`}
       >
         {image ? (
           <img
@@ -318,14 +324,14 @@ function ResourceCard({ post, film = false, onOpenArticle, bookMode = false, arr
             {post.summary}
           </p>
         )}
-        {(destination || isBook || isClipping || isCreative) &&
-          (isClipping || isBook || isCreative ? (
+        {(destination || isBook || isClipping || isCreative || forceArticle) &&
+          (shouldOpenArticle ? (
             <button
               type="button"
               onClick={() => onOpenArticle?.(post)}
               className="mt-4 inline-flex w-full items-center justify-center gap-2 rounded-lg bg-emerald-800 px-4 py-3 text-sm font-extrabold text-white transition hover:bg-emerald-700"
             >
-              {isBook ? "Open Book" : isCreative ? "OPEN ARTICLE" : "Read article"} <Arrow />
+              {isBook ? "Open Book" : "Read more"} <Arrow />
             </button>
           ) : (
             <span className="mt-4 inline-flex w-full items-center justify-center gap-2 rounded-lg bg-emerald-800 px-4 py-3 text-sm font-extrabold text-white transition group-hover:bg-emerald-700">
@@ -816,8 +822,8 @@ export default function LibraryPage() {
             </section>
             <section className="mx-auto max-w-7xl px-4 py-16 sm:px-6 lg:px-8">
               <div className="grid gap-8 md:grid-cols-2">
-                <div><p className="text-sm font-black uppercase tracking-widest text-emerald-700">Daily discovery</p><h2 className="mt-2 text-3xl font-extrabold text-emerald-950">Latest One Fact a Day</h2>{facts[0] ? <article className="mt-5 overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm"><img src={facts[0].imageUrl} alt="" className="max-h-96 w-full object-contain" /><div className="p-4"><p className="text-xs font-black uppercase tracking-widest text-emerald-700">{displayDate(facts[0].date)}</p><h3 className="mt-2 font-extrabold text-slate-900">{facts[0].title || "One Fact a Day"}</h3></div></article> : <EmptyState label="facts" />}</div>
-                <div><p className="text-sm font-black uppercase tracking-widest text-emerald-700">Word power</p><h2 className="mt-2 text-3xl font-extrabold text-emerald-950">Latest vocabulary</h2>{latest[0] ? <div className="mt-5"><ResourceCard post={latest[0]} /></div> : <EmptyState label="vocabulary" />}</div>
+              <div><p className="text-sm font-black uppercase tracking-widest text-emerald-700">Daily discovery</p><h2 className="mt-2 text-3xl font-extrabold text-emerald-950">Latest One Fact a Day</h2>{facts[0] ? <article className="mt-5 overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm"><div className="aspect-[4/5] w-full bg-slate-100"><img src={facts[0].imageUrl} alt="" className="h-full w-full object-contain" /></div><div className="p-4"><p className="text-xs font-black uppercase tracking-widest text-emerald-700">{displayDate(facts[0].date)}</p><h3 className="mt-2 font-extrabold uppercase text-slate-900">{facts[0].title || "One Fact a Day"}</h3></div></article> : <EmptyState label="facts" />}</div>
+                <div><p className="text-sm font-black uppercase tracking-widest text-emerald-700">Word power</p><h2 className="mt-2 text-3xl font-extrabold text-emerald-950">Latest vocabulary</h2>{latest[0] ? <div className="mt-5"><ResourceCard post={latest[0]} featureMode /></div> : <EmptyState label="vocabulary" />}</div>
               </div>
             </section>
           </>
@@ -958,6 +964,7 @@ export default function LibraryPage() {
                     film={activeTab === "short-films"}
                     onOpenArticle={setSelectedArticle}
                     bookMode={activeTab === "e-books"}
+                    forceArticle={activeTab === "winners"}
                     arrivalMode={activeTab === "new-arrivals"}
                     fallbackBookNumber={activeTab === "e-books" ? `AES-E${String(index + 1).padStart(2, "0")}` : ""}
                   />
@@ -970,7 +977,7 @@ export default function LibraryPage() {
             )}
           </section>
         )}
-        {selectedArticle && <div className="fixed inset-0 z-50 overflow-y-auto bg-slate-950/80 p-4" role="dialog" aria-modal="true" aria-label="Article preview"><article className="mx-auto mt-6 max-w-5xl rounded-3xl bg-white p-4 shadow-2xl sm:p-6"><div className="flex items-center justify-between gap-3"><div><p className="text-xs font-black uppercase tracking-widest text-fuchsia-700">{libraryType(selectedArticle)}</p><h2 className="mt-1 text-xl font-extrabold text-slate-900">{selectedArticle.title}</h2></div><button type="button" onClick={() => setSelectedArticle(null)} className="rounded-full bg-slate-100 px-4 py-2 text-sm font-bold text-slate-700 hover:bg-slate-200">Close</button></div><div className="mt-5 grid gap-5 lg:grid-cols-[1.15fr_.85fr]">{selectedArticle.imageUrl && <img src={selectedArticle.imageUrl} alt="" className="max-h-[60vh] w-full rounded-2xl bg-slate-100 object-contain" />}{youtubeEmbedUrl(selectedArticle.linkUrl) && <iframe title={`Watch ${selectedArticle.title}`} src={youtubeEmbedUrl(selectedArticle.linkUrl)} className="aspect-video w-full rounded-2xl" allowFullScreen />}</div><div className="mt-5"><p className="text-sm font-bold text-fuchsia-700">{selectedArticle.author}{selectedArticle.contributorType ? ` · ${selectedArticle.contributorType}` : ""}</p>{selectedArticle.date && <p className="mt-1 text-xs font-bold text-slate-400">{displayDate(selectedArticle.date)}{selectedArticle.className ? ` · ${selectedArticle.className}` : ""}</p>} {selectedArticle.body || selectedArticle.summary ? <p className="mt-4 whitespace-pre-wrap text-base leading-8 text-slate-700">{selectedArticle.body || selectedArticle.summary}</p> : null}</div></article></div>}
+        {selectedArticle && <div className="fixed inset-0 z-50 overflow-y-auto bg-slate-950/80 p-4" role="dialog" aria-modal="true" aria-label="Article preview"><article className="mx-auto mt-6 max-w-5xl rounded-3xl bg-white p-4 shadow-2xl sm:p-6"><div className="flex items-center justify-between gap-3"><div><p className="text-xs font-black uppercase tracking-widest text-fuchsia-700">{libraryType(selectedArticle)}</p><h2 className="mt-1 text-xl font-extrabold text-slate-900">{selectedArticle.title}</h2></div><button type="button" onClick={() => setSelectedArticle(null)} className="rounded-full bg-slate-100 px-4 py-2 text-sm font-bold text-slate-700 hover:bg-slate-200">Close</button></div><div className="mt-5 grid gap-5 lg:grid-cols-[1.15fr_.85fr]">{imageUrl(selectedArticle.imageUrl) || imageUrl(selectedArticle.imageUrls?.[0]) || imageUrl(selectedArticle.galleryImageUrl) ? <img src={imageUrl(selectedArticle.imageUrl) || imageUrl(selectedArticle.imageUrls?.[0]) || imageUrl(selectedArticle.galleryImageUrl)} alt={selectedArticle.title || "Article image"} className="max-h-[60vh] w-full rounded-2xl bg-slate-100 object-contain" /> : null}{youtubeEmbedUrl(selectedArticle.linkUrl) && <iframe title={`Watch ${selectedArticle.title}`} src={youtubeEmbedUrl(selectedArticle.linkUrl)} className="aspect-video w-full rounded-2xl" allowFullScreen />}</div><div className="mt-5"><p className="text-sm font-bold text-fuchsia-700">{selectedArticle.author}{selectedArticle.contributorType ? ` · ${selectedArticle.contributorType}` : ""}</p>{selectedArticle.date && <p className="mt-1 text-xs font-bold text-slate-400">{displayDate(selectedArticle.date)}{selectedArticle.className ? ` · ${selectedArticle.className}` : ""}</p>} {selectedArticle.body || selectedArticle.summary ? <p className="mt-4 whitespace-pre-wrap text-base leading-8 text-slate-700">{selectedArticle.body || selectedArticle.summary}</p> : null}</div></article></div>}
       </main>
     </Layout>
   );

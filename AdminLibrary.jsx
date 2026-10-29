@@ -378,7 +378,7 @@ export default function AdminLibrary() {
         date: post.date,
         imageUrl: normalizeImageUrl(post.imageUrl),
         imageUrls: (post.imageUrls || [])
-          .map(normalizeImageUrl)
+          .map((entry) => normalizeImageUrl(typeof entry === "string" ? entry : entry?.url))
           .filter(Boolean),
         linkUrl: post.linkUrl.trim(),
         fileUrl: post.fileUrl.trim(),

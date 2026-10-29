@@ -201,7 +201,7 @@ export default function Gallery() {
               className="absolute top-6 right-6 text-white/70 hover:text-white p-2 z-50 bg-white/10 rounded-full backdrop-blur-sm transition-colors"
               onClick={() => setSelectedImg(null)}
             >
-              <svg className="w-6 h-6 sm:w-8 sm:h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+              <span className="flex items-center gap-2 px-2 text-sm font-extrabold"><svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12"></path></svg>Close</span>
             </button>
 
             <motion.img 

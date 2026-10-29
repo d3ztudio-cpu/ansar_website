@@ -403,9 +403,9 @@ export default function About() {
       <div className="mx-auto max-w-7xl px-4 py-12 lg:py-20">
         <section className="relative overflow-hidden rounded-2xl bg-slate-950 text-white shadow-2xl">
           <img
-            src="/school-logo.webp"
-            alt="About Ansar English School"
-            className="absolute inset-0 h-full w-full object-cover opacity-35"
+            src="/campus-aerial.png"
+            alt="Ansar English School campus aerial view"
+            className="absolute inset-0 h-full w-full object-cover object-[center_68%] opacity-35"
           />
           <div className="absolute inset-0 bg-gradient-to-r from-slate-950 via-slate-950/86 to-emerald-950/45" />
           <div className="relative grid min-h-[28rem] grid-cols-1 items-end gap-10 px-6 py-12 sm:px-10 lg:grid-cols-[minmax(0,1fr)_24rem] lg:px-14 lg:py-16">
