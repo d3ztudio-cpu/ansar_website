@@ -256,9 +256,9 @@ service cloud.firestore {
     }
 
     function isValidLibraryPost() {
-      return hasOnlyAllowedFields(['type', 'libraryCategory', 'title', 'summary', 'body', 'date', 'imageUrl', 'linkUrl', 'bookNumber', 'bookStatus', 'category', 'author', 'venue', 'fileUrl', 'fileType', 'className', 'subject', 'year', 'imageUrls', 'published', 'createdAt', 'updatedAt']) &&
+      return hasOnlyAllowedFields(['type', 'libraryCategory', 'title', 'summary', 'body', 'date', 'imageUrl', 'linkUrl', 'bookNumber', 'bookStatus', 'category', 'author', 'venue', 'fileUrl', 'fileType', 'className', 'subject', 'year', 'imageUrls', 'contributorType', 'published', 'createdAt', 'updatedAt']) &&
              request.resource.data.keys().hasAll(['type', 'title', 'summary', 'body', 'date', 'imageUrl', 'linkUrl', 'category', 'author', 'venue', 'published', 'createdAt', 'updatedAt']) &&
-             request.resource.data.type in ['Event', 'Activity', 'New Arrival', 'Resource', 'Publication', 'Announcement', 'E-Book', 'E-Learning', 'Short Film', 'Quiz', 'Winner', 'Clipping', 'Question Paper', 'File', 'Vocabulary'] &&
+             request.resource.data.type in ['Event', 'Activity', 'New Arrival', 'Resource', 'Publication', 'Announcement', 'E-Book', 'E-Learning', 'Short Film', 'Quiz', 'Winner', 'Clipping', 'Question Paper', 'File', 'Vocabulary', 'Creative Corner'] &&
              isValidStringLength('title', 1, 200) &&
              isValidOptionalString('libraryCategory', 0, 40) &&
              // Library descriptions are intentionally unrestricted by the UI.
@@ -277,6 +277,7 @@ service cloud.firestore {
              isValidOptionalString('year', 0, 20) &&
              isValidUrl('fileUrl') &&
              isOptionalUrlList('imageUrls', 30) &&
+             isValidOptionalString('contributorType', 0, 30) &&
              request.resource.data.published is bool &&
              request.resource.data.createdAt is timestamp &&
              request.resource.data.updatedAt is timestamp;

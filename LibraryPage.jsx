@@ -52,6 +52,7 @@ const PUBLIC_TABS = [
   ["e-books", "E-Books"],
   ["e-learning", "E-Learning"],
   ["short-films", "Short Films"],
+  ["creative-corner", "Creative Corner"],
   ["quizzes", "Quizzes"],
   ["events", "Events & Activities"],
   ["winners", "Winners & Gallery"],
@@ -65,6 +66,7 @@ const TAB_POST_TYPES = {
   "e-books": ["E-Book"],
   "e-learning": ["E-Learning"],
   "short-films": ["Short Film"],
+  "creative-corner": ["Creative Corner"],
   quizzes: ["Quiz"],
   events: ["Event", "Activity"],
   winners: ["Winner"],
@@ -101,6 +103,13 @@ const COLLECTIONS = [
     "from-violet-500 to-indigo-600",
   ],
   [
+    "creative-corner",
+    "Creative Corner",
+    "Stories, art and ideas from our school family.",
+    "✦",
+    "from-fuchsia-500 to-violet-600",
+  ],
+  [
     "question-papers",
     "Question papers",
     "Prepare with past papers and resources.",
@@ -122,6 +131,10 @@ function videoPreview(url, imageUrl) {
   const id = String(url || "").match(YOUTUBE_ID)?.[1];
   return imageUrl || (id ? `https://i.ytimg.com/vi/${id}/hqdefault.jpg` : "");
 }
+function youtubeEmbedUrl(url) {
+  const id = String(url || "").match(YOUTUBE_ID)?.[1];
+  return id ? `https://www.youtube.com/embed/${id}` : "";
+}
 // Earlier Library uploads sometimes reached Firestore as an Announcement even
 // when their link was a video. Treat those legacy entries as Short Films too.
 function libraryType(post) {
@@ -131,6 +144,7 @@ function libraryType(post) {
     e_learning: "E-Learning", short_film: "Short Film", quiz: "Quiz",
     event: "Event", activity: "Activity", winner: "Winner", clipping: "Clipping",
     file: "File", vocabulary: "Vocabulary",
+    creative_corner: "Creative Corner",
   };
   if (canonicalTypes[canonical]) return canonicalTypes[canonical];
   const type = String(post.type || "").trim();
@@ -243,10 +257,11 @@ function ResourceCard({ post, film = false, onOpenArticle, bookMode = false, arr
     : post.imageUrl || post.imageUrls?.[0];
   const destination = post.linkUrl || post.fileUrl;
   const isClipping = libraryType(post) === "Clipping";
+  const isCreative = libraryType(post) === "Creative Corner";
   const isBook = bookMode || libraryType(post) === "E-Book";
-  const Card = destination && !isClipping && !isBook ? "a" : "article";
+  const Card = destination && !isClipping && !isBook && !isCreative ? "a" : "article";
   const props =
-    destination && !isClipping && !isBook
+    destination && !isClipping && !isBook && !isCreative
       ? { href: destination, target: "_blank", rel: "noreferrer" }
       : {};
   return (
@@ -303,14 +318,14 @@ function ResourceCard({ post, film = false, onOpenArticle, bookMode = false, arr
             {post.summary}
           </p>
         )}
-        {(destination || isBook || isClipping) &&
-          (isClipping || isBook ? (
+        {(destination || isBook || isClipping || isCreative) &&
+          (isClipping || isBook || isCreative ? (
             <button
               type="button"
               onClick={() => onOpenArticle?.(post)}
               className="mt-4 inline-flex w-full items-center justify-center gap-2 rounded-lg bg-emerald-800 px-4 py-3 text-sm font-extrabold text-white transition hover:bg-emerald-700"
             >
-              {isBook ? "Open Book" : "Read article"} <Arrow />
+              {isBook ? "Open Book" : isCreative ? "OPEN ARTICLE" : "Read article"} <Arrow />
             </button>
           ) : (
             <span className="mt-4 inline-flex w-full items-center justify-center gap-2 rounded-lg bg-emerald-800 px-4 py-3 text-sm font-extrabold text-white transition group-hover:bg-emerald-700">
@@ -498,17 +513,23 @@ export default function LibraryPage() {
   useEffect(() => {
     const scroller = arrivalsScroller.current;
     if (!scroller || newArrivals.length < 5 || arrivalsPaused) return undefined;
-    const timer = window.setInterval(() => {
-      const atEnd = scroller.scrollLeft + scroller.clientWidth >= scroller.scrollWidth - 8;
-      scroller.scrollBy({ left: atEnd ? -scroller.scrollWidth / 2 : 1, behavior: "smooth" });
-    }, 45);
-    return () => window.clearInterval(timer);
+    let frame;
+    const tick = () => {
+      const loopWidth = scroller.scrollWidth / 2;
+      scroller.scrollLeft += 0.75;
+      if (loopWidth > 0 && scroller.scrollLeft >= loopWidth) {
+        scroller.scrollLeft -= loopWidth;
+      }
+      frame = window.requestAnimationFrame(tick);
+    };
+    frame = window.requestAnimationFrame(tick);
+    return () => window.cancelAnimationFrame(frame);
   }, [arrivalsPaused, newArrivals.length]);
-  const scrollArrivals = (direction) => {
-    arrivalsScroller.current?.scrollBy({ left: direction * 260, behavior: "smooth" });
-  };
   const activeLabel =
     PUBLIC_TABS.find(([key]) => key === activeTab)?.[1] || "Library";
+  const creativeEntries = useMemo(() => posts.filter((post) => libraryType(post) === "Creative Corner" && post.published !== false), [posts]);
+  const creativeStudents = creativeEntries.filter((post) => String(post.contributorType || post.category || "Student").toLowerCase() === "student");
+  const creativeStaff = creativeEntries.filter((post) => String(post.contributorType || post.category || "Staff").toLowerCase() === "staff");
   return (
     <Layout fullWidth>
       <main className="min-h-screen bg-[#f7faf8] text-slate-900">
@@ -534,7 +555,8 @@ export default function LibraryPage() {
                   key={key}
                   type="button"
                   onClick={() => chooseTab(key)}
-                  className={`min-w-0 rounded-xl border px-3 py-3 text-center text-sm font-extrabold leading-tight transition ${activeTab === key ? "border-emerald-800 bg-emerald-800 text-white shadow-md shadow-emerald-900/15" : "border-slate-200 bg-white text-slate-700 hover:border-emerald-300 hover:bg-emerald-50 hover:text-emerald-800"}`}
+                  style={key === "creative-corner" ? (activeTab === key ? { background: "linear-gradient(90deg, #c026d3, #7c3aed)", borderColor: "#a21caf", color: "#ffffff" } : { background: "linear-gradient(90deg, #fdf4ff, #f5f3ff)", borderColor: "#d946ef", color: "#86198f" }) : undefined}
+                  className={`min-w-0 rounded-xl border px-3 py-3 text-center text-sm font-extrabold leading-tight transition ${key === "creative-corner" ? (activeTab === key ? "border-fuchsia-700 bg-gradient-to-r from-fuchsia-600 to-violet-600 text-white shadow-md shadow-fuchsia-900/25" : "border-fuchsia-300 bg-gradient-to-r from-fuchsia-50 to-violet-50 text-fuchsia-800 hover:border-fuchsia-500 hover:from-fuchsia-100 hover:to-violet-100") : activeTab === key ? "border-emerald-800 bg-emerald-800 text-white shadow-md shadow-emerald-900/15" : "border-slate-200 bg-white text-slate-700 hover:border-emerald-300 hover:bg-emerald-50 hover:text-emerald-800"}`}
                 >
                   {label}
                 </button>
@@ -736,17 +758,15 @@ export default function LibraryPage() {
                     </button>
                   </div>
                   <div className="library-arrivals-controls relative">
-                    <button type="button" aria-label="Previous new arrivals" onClick={() => scrollArrivals(-1)} className="rounded-full border border-emerald-200 bg-white px-3 py-2 text-lg font-black text-emerald-800 shadow-sm hover:bg-emerald-50">‹</button>
-                    <div ref={arrivalsScroller} onMouseEnter={() => setArrivalsPaused(true)} onMouseLeave={() => setArrivalsPaused(false)} className="library-arrivals-scrollbar min-w-0 overflow-x-auto pb-3" aria-label="New arrivals carousel">
+                    <div ref={arrivalsScroller} onMouseEnter={() => setArrivalsPaused(true)} onMouseLeave={() => setArrivalsPaused(false)} style={{ scrollbarWidth: "none", msOverflowStyle: "none" }} className="library-arrivals-scrollbar min-w-0 overflow-x-auto pb-3" aria-label="New arrivals carousel">
                     <div className="flex w-max cursor-grab gap-3 active:cursor-grabbing">
-                      {newArrivals.map((post) => (
-                        <div key={post.id} className="w-44 shrink-0 sm:w-56">
+                      {[...newArrivals, ...newArrivals].map((post, index) => (
+                        <div key={`${post.id}-${index}`} className="w-44 shrink-0 sm:w-56">
                           <ResourceCard post={post} arrivalMode />
                         </div>
                       ))}
                     </div>
                     </div>
-                    <button type="button" aria-label="Next new arrivals" onClick={() => scrollArrivals(1)} className="rounded-full border border-emerald-200 bg-white px-3 py-2 text-lg font-black text-emerald-800 shadow-sm hover:bg-emerald-50">›</button>
                   </div>
                 </div>
               </section>
@@ -885,6 +905,19 @@ export default function LibraryPage() {
                   <EmptyState label="facts" />
                 </div>
               )
+            ) : activeTab === "creative-corner" ? (
+              <div className="mt-10 space-y-14">
+                <div className="rounded-3xl border border-fuchsia-100 bg-gradient-to-br from-fuchsia-50 via-white to-violet-50 p-6 sm:p-9">
+                  <p className="text-sm font-black uppercase tracking-widest text-fuchsia-700">Our school family creates</p>
+                  <p className="mt-3 max-w-4xl text-base leading-8 text-slate-600">Creative Corner is our school library’s shared space for students, staff, and parents to express themselves and celebrate a love for reading. Here, you will find honest book reviews, original writing, artwork, and creative projects contributed by our entire school family. Explore popular reads, discover local talent, and share your own creative work with us!</p>
+                </div>
+                {[['Student voices', creativeStudents], ['Staff voices', creativeStaff]].map(([heading, entries]) => (
+                  <section key={heading}>
+                    <div className="flex items-end justify-between gap-4"><div><p className="text-sm font-black uppercase tracking-widest text-fuchsia-700">Creative Corner</p><h2 className="mt-2 text-3xl font-extrabold text-emerald-950">{heading}</h2></div><span className="rounded-full bg-fuchsia-100 px-3 py-1 text-xs font-black text-fuchsia-700">{entries.length} {entries.length === 1 ? 'entry' : 'entries'}</span></div>
+                    {entries.length ? <div className="mt-6 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">{entries.map((entry) => <ResourceCard key={entry.id} post={{...entry, type: 'Creative Corner'}} onOpenArticle={setSelectedArticle} />)}</div> : <div className="mt-6"><EmptyState label={heading.toLowerCase()} /></div>}
+                  </section>
+                ))}
+              </div>
             ) : activeTab === "question-papers" ? (
               <div className="mt-8">
                 <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm sm:p-5">
@@ -937,7 +970,7 @@ export default function LibraryPage() {
             )}
           </section>
         )}
-        {selectedArticle && <div className="fixed inset-0 z-50 overflow-y-auto bg-slate-950/80 p-4" role="dialog" aria-modal="true" aria-label="Question paper preview"><article className="mx-auto mt-6 max-w-5xl rounded-3xl bg-white p-4 shadow-2xl sm:p-6"><div className="flex items-center justify-between gap-3"><div><p className="text-xs font-black uppercase tracking-widest text-emerald-700">{libraryType(selectedArticle)}</p><h2 className="mt-1 text-xl font-extrabold text-slate-900">{selectedArticle.title}</h2></div><button type="button" onClick={() => setSelectedArticle(null)} className="rounded-full bg-slate-100 px-4 py-2 text-sm font-bold text-slate-700 hover:bg-slate-200">Close</button></div>{selectedArticle.linkUrl ? <iframe title={`Preview ${selectedArticle.title}`} src={drivePreviewUrl(selectedArticle.linkUrl)} className="mt-5 h-[70vh] w-full rounded-2xl border border-slate-200" /> : <p className="mt-5 rounded-xl bg-amber-50 p-5 text-amber-800">No document link is available for preview.</p>}<div className="mt-4 flex justify-end">{selectedArticle.linkUrl && <a href={selectedArticle.linkUrl} target="_blank" rel="noreferrer" className="rounded-xl bg-emerald-800 px-5 py-3 text-sm font-extrabold text-white">Open / Download PDF</a>}</div></article></div>}
+        {selectedArticle && <div className="fixed inset-0 z-50 overflow-y-auto bg-slate-950/80 p-4" role="dialog" aria-modal="true" aria-label="Article preview"><article className="mx-auto mt-6 max-w-5xl rounded-3xl bg-white p-4 shadow-2xl sm:p-6"><div className="flex items-center justify-between gap-3"><div><p className="text-xs font-black uppercase tracking-widest text-fuchsia-700">{libraryType(selectedArticle)}</p><h2 className="mt-1 text-xl font-extrabold text-slate-900">{selectedArticle.title}</h2></div><button type="button" onClick={() => setSelectedArticle(null)} className="rounded-full bg-slate-100 px-4 py-2 text-sm font-bold text-slate-700 hover:bg-slate-200">Close</button></div><div className="mt-5 grid gap-5 lg:grid-cols-[1.15fr_.85fr]">{selectedArticle.imageUrl && <img src={selectedArticle.imageUrl} alt="" className="max-h-[60vh] w-full rounded-2xl bg-slate-100 object-contain" />}{youtubeEmbedUrl(selectedArticle.linkUrl) && <iframe title={`Watch ${selectedArticle.title}`} src={youtubeEmbedUrl(selectedArticle.linkUrl)} className="aspect-video w-full rounded-2xl" allowFullScreen />}</div><div className="mt-5"><p className="text-sm font-bold text-fuchsia-700">{selectedArticle.author}{selectedArticle.contributorType ? ` · ${selectedArticle.contributorType}` : ""}</p>{selectedArticle.date && <p className="mt-1 text-xs font-bold text-slate-400">{displayDate(selectedArticle.date)}{selectedArticle.className ? ` · ${selectedArticle.className}` : ""}</p>} {selectedArticle.body || selectedArticle.summary ? <p className="mt-4 whitespace-pre-wrap text-base leading-8 text-slate-700">{selectedArticle.body || selectedArticle.summary}</p> : null}</div></article></div>}
       </main>
     </Layout>
   );

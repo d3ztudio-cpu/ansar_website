@@ -66,6 +66,7 @@ const DEFAULT_SETTINGS = {
     },
   ]),
   published: true,
+  contributorType: "Student",
 };
 
 const EMPTY_POST = {
@@ -118,6 +119,7 @@ function normalizedLibraryType(item) {
     e_learning: "E-Learning", short_film: "Short Film", quiz: "Quiz",
     event: "Event", activity: "Activity", winner: "Winner", clipping: "Clipping",
     file: "File", vocabulary: "Vocabulary",
+    creative_corner: "Creative Corner",
   };
   if (canonicalTypes[canonical]) return canonicalTypes[canonical];
   const type = String(item?.type || "").trim();
@@ -134,6 +136,12 @@ function normalizedLibraryType(item) {
     ["Announcement", "AnnouncementPublished", "Publication", "New Arrival"].includes(type)
   ) return "New Arrival";
   if (/clipping|newspaper/i.test(`${type} ${text}`)) return "Clipping";
+  // Older short films were saved as Announcement/Video records. Keep the
+  // admin list aligned with the public Library page so they remain editable.
+  if (
+    (type === "Announcement" || type === "AnnouncementPublished" || type === "Video") &&
+    /(?:youtube\.com\/(?:watch\?v=|shorts\/|embed\/)|youtu\.be\/|vimeo\.com\/)/i.test(String(item?.linkUrl || ""))
+  ) return "Short Film";
   return type || "Announcement";
 }
 
@@ -146,6 +154,7 @@ const TABS = [
   ["e-books", "E-Books"],
   ["e-learning", "E-Learning"],
   ["short-films", "Short Films"],
+  ["creative-corner", "Creative Corner"],
   ["quizzes", "Quizzes"],
   ["events", "Events & Activities"],
   ["winners", "Winners & Gallery"],
@@ -162,6 +171,7 @@ const SECTION_TYPES = {
   "e-books": ["E-Book"],
   "e-learning": ["E-Learning"],
   "short-films": ["Short Film"],
+  "creative-corner": ["Creative Corner"],
   quizzes: ["Quiz"],
   events: ["Event", "Activity"],
   winners: ["Winner"],
@@ -174,6 +184,7 @@ const TAB_LIBRARY_CATEGORIES = {
   "e-learning": "e_learning", "short-films": "short_film", quizzes: "quiz",
   events: "event", winners: "winner", newspaper: "clipping", files: "file",
   "vocabulary-vault": "vocabulary",
+  "creative-corner": "creative_corner",
 };
 
 const fieldClass =
@@ -247,6 +258,7 @@ export default function AdminLibrary() {
           ? "NEW"
           : "EXISTING"),
       venue: item.venue || "",
+      contributorType: item.contributorType || "Student",
       published: item.published !== false,
     });
     const ownerTab =
@@ -390,6 +402,9 @@ export default function AdminLibrary() {
         published: !!post.published,
         updatedAt: serverTimestamp(),
       };
+      if (tab === "creative-corner") {
+        payload.contributorType = post.contributorType || "Student";
+      }
       if (editingId) {
         const currentItem = posts.find((item) => item.id === editingId);
         await updateDoc(doc(db, "libraryPosts", editingId), {
@@ -431,6 +446,7 @@ export default function AdminLibrary() {
       showBookStatus = false,
       showAuthor = false,
       eventToggle = false,
+      creativeCorner = false,
     } = {},
   ) => (
     <form onSubmit={savePost} className={cardClass}>
@@ -500,6 +516,25 @@ export default function AdminLibrary() {
             />
           </label>
         )}
+        {creativeCorner && (
+          <>
+            <label className="text-sm font-bold text-slate-700">
+              Contributor type
+              <select value={post.contributorType} onChange={(e) => setPost((value) => ({ ...value, contributorType: e.target.value }))} className={fieldClass}>
+                <option>Student</option><option>Staff</option>
+              </select>
+            </label>
+            <label className="text-sm font-bold text-slate-700">
+              Name
+              <input required value={post.author} onChange={(e) => setPost((value) => ({ ...value, author: e.target.value }))} className={fieldClass} />
+            </label>
+            <label className="text-sm font-bold text-slate-700">
+              Section
+              <input required value={post.category} onChange={(e) => setPost((value) => ({ ...value, category: e.target.value }))} placeholder="English, Art, Reading…" className={fieldClass} />
+            </label>
+            {post.contributorType === "Student" && <label className="text-sm font-bold text-slate-700">Class &amp; division<input required value={post.className} onChange={(e) => setPost((value) => ({ ...value, className: e.target.value }))} placeholder="VII A" className={fieldClass} /></label>}
+          </>
+        )}
         <label className="text-sm font-bold text-slate-700 md:col-span-2">
           {showAuthor ? "Title of the book" : "Title"}
           <input
@@ -511,7 +546,7 @@ export default function AdminLibrary() {
             className={fieldClass}
           />
         </label>
-        {showDescription && !eventToggle && (
+        {showDescription && !eventToggle && !creativeCorner && (
           <label className="text-sm font-bold text-slate-700 md:col-span-2">
             Description (optional)
             <textarea
@@ -705,7 +740,7 @@ export default function AdminLibrary() {
 
         {showLink && (
           <label className="text-sm font-bold text-slate-700 md:col-span-2">
-            {post.type === "Short Film"
+            {post.type === "Short Film" || post.type === "Creative Corner"
               ? "Video URL (YouTube, Vimeo or another video platform)"
               : "Resource link (website, e-book viewer…)"}
             <input
@@ -715,14 +750,14 @@ export default function AdminLibrary() {
                 setPost((value) => ({ ...value, linkUrl: e.target.value }))
               }
               placeholder={
-                post.type === "Short Film"
+                post.type === "Short Film" || post.type === "Creative Corner"
                   ? "https://www.youtube.com/watch?v=…"
                   : "https://…"
               }
               className={fieldClass}
             />
             <span className="mt-1 block text-xs font-medium text-slate-500">
-              {post.type === "Short Film"
+              {post.type === "Short Film" || post.type === "Creative Corner"
                 ? "YouTube and Vimeo are embedded directly. For other links, paste the video URL or add a video cover image. The public page opens other links in a new tab."
                 : "This opens the selected resource in a new tab."}
             </span>
@@ -783,7 +818,7 @@ export default function AdminLibrary() {
         {!eventToggle && !showAcademicFields &&
           !showFile &&
           !showGallery &&
-          !hideExtraFields && (
+          !hideExtraFields && !creativeCorner && (
             <>
               <label className="text-sm font-bold text-slate-700">
                 Category / programme
@@ -1041,6 +1076,16 @@ export default function AdminLibrary() {
         onAdd={() => newPost("Short Film")}
       />
     ),
+    "creative-corner": (
+      <PostSectionTab
+        intro="Publish student and staff book reviews, writing, artwork and creative projects. Add an optional image and YouTube URL for the article preview."
+        types={SECTION_TYPES["creative-corner"]}
+        typeOptions={SECTION_TYPES["creative-corner"]}
+        form={postForm(null, { creativeCorner: true, showLink: true, hideExtraFields: true, showDescription: false, formTitle: "a Creative Corner entry", formHint: "Required: title, name, date, section and class & division for students. Image and YouTube URL are optional." })}
+        list={postList(SECTION_TYPES["creative-corner"])}
+        onAdd={() => newPost("Creative Corner")}
+      />
+    ),
     quizzes: (
       <PostSectionTab
         intro="Publish quizzes and learning activities. Required: title and the quiz URL. Use the website’s quiz portal link or an approved external quiz link."
@@ -1072,7 +1117,7 @@ export default function AdminLibrary() {
         intro="Competition winners and photo galleries. Upload several photos at once — they are shown as a collage when published."
         types={SECTION_TYPES.winners}
         typeOptions={SECTION_TYPES.winners}
-        form={postForm(SECTION_TYPES.winners, { showGallery: true })}
+        form={postForm(SECTION_TYPES.winners, { showGallery: true, showImage: false })}
         list={postList(SECTION_TYPES.winners)}
         onAdd={() => newPost("Winner")}
       />
@@ -1181,6 +1226,8 @@ export default function AdminLibrary() {
         tabsByKey["e-learning"]
       ) : tab === "short-films" ? (
         tabsByKey["short-films"]
+      ) : tab === "creative-corner" ? (
+        tabsByKey["creative-corner"]
       ) : tab === "quizzes" ? (
         tabsByKey.quizzes
       ) : tab === "events" ? (
