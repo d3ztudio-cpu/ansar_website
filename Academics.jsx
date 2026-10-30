@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import Layout from './Layout';
 import { useSettings } from './SettingsContext';
 import { DEFAULT_ACADEMICS_PAGE, DEFAULT_ACADEMIC_SECTIONS, mergeListWithDefaults } from './contentDefaults';
@@ -18,7 +18,8 @@ function ImagePlaceholder({ label, className = '' }) {
 }
 
 function ContentImage({ src, alt, placeholder }) {
-  return src ? <img src={src} alt={alt} className="h-full min-h-64 w-full object-cover" loading="lazy" decoding="async" /> : <ImagePlaceholder label={placeholder} />;
+  const [failed, setFailed] = useState(false);
+  return src && !failed ? <img src={src} alt={alt} onError={() => setFailed(true)} className="h-full min-h-64 w-full object-cover" loading="lazy" decoding="async" /> : <ImagePlaceholder label={placeholder} />;
 }
 
 export default function Academics() {

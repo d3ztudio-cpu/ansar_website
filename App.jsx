@@ -46,6 +46,8 @@ import {
   resolveLearningFeatureImage,
 } from "./learningFeaturesDocumentContent";
 import { mergeTransportStaff } from "./transportStaffData";
+import AdmissionDesk from "./AdmissionDesk";
+import AdmissionPortal from "./AdmissionPortal";
 
 // Keep the first visit small: secondary pages and all admin modules are fetched only
 // when their route is opened instead of delaying the homepage on mobile networks.
@@ -108,6 +110,7 @@ const AdminQuizCorner = lazy(() => import("./AdminQuizCorner"));
 const AdminStaffExams = lazy(() => import("./AdminStaffExams"));
 const AdminAnalytics = lazy(() => import("./AdminAnalytics"));
 const AdminForms = lazy(() => import("./AdminForms"));
+const DeveloperOptions = lazy(() => import("./DeveloperOptions"));
 
 const BOOT_SPLASH_ID = "boot-splash";
 let bootSplashHidden = false;
@@ -2140,7 +2143,7 @@ function AdminRouteObserver({ onRouteChange }) {
   const { pathname } = useLocation();
 
   useLayoutEffect(() => {
-    onRouteChange(pathname.startsWith("/admin"));
+    onRouteChange(pathname.startsWith("/admin") || pathname.startsWith("/admissions-desk"));
   }, [pathname, onRouteChange]);
 
   return null;
@@ -2310,7 +2313,7 @@ export default function App() {
   const [user, setUser] = useState(null);
   const [authLoading, setAuthLoading] = useState(false);
   const [isAdminRoute, setIsAdminRoute] = useState(() =>
-    window.location.pathname.startsWith("/admin"),
+    window.location.pathname.startsWith("/admin") || window.location.pathname.startsWith("/admissions-desk"),
   );
   const [deniedEmail, setDeniedEmail] = useState(null);
   const isSproutsAdmin =
@@ -2441,6 +2444,8 @@ export default function App() {
             <Route path="/about" element={<About />} />
             <Route path="/academics" element={<Academics />} />
             <Route path="/admission" element={<Admission />} />
+            <Route path="/admissions-portal" element={<AdmissionPortal />} />
+            <Route path="/admissions-desk" element={<AdmissionDesk user={user} />} />
             <Route path="/news" element={<News />} />
             <Route path="/events" element={<Events />} />
             <Route path="/contact" element={<Contact />} />
@@ -2672,6 +2677,7 @@ export default function App() {
                               path="/settings"
                               element={<AdminSettings />}
                             />
+                            <Route path="/developer-options" element={<DeveloperOptions />} />
                             <Route
                               path="*"
                               element={

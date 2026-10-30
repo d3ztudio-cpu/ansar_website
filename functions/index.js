@@ -10,11 +10,86 @@ const db = admin.firestore();
 const normalize = value => String(value || '').trim().toLowerCase();
 const driveServiceAccount = defineSecret('GOOGLE_DRIVE_SERVICE_ACCOUNT');
 const driveRootFolderId = defineSecret('GOOGLE_DRIVE_ROOT_FOLDER_ID');
+const resendApiKey = defineSecret('RESEND_API_KEY');
 const DEFAULT_DRIVE_ROOT_FOLDER_ID = '1emaD9t5jJouaD34ltMd4FuTnDZKw3HwO';
 const DRIVE_FOLDER_MIME = 'application/vnd.google-apps.folder';
 const MAX_PDF_BYTES = 25 * 1024 * 1024;
 const allowedOrigins = new Set(['https://ansar-english-school.web.app', 'https://ansar-english-school.firebaseapp.com', 'https://ansarschool.in', 'https://www.ansarschool.in']);
 const safeSegment = value => String(value || '').trim().replace(/[^a-zA-Z0-9 _.-]/g, '').slice(0, 80);
+
+const ADMISSION_EMAIL_FROM = process.env.ADMISSION_EMAIL_FROM || 'Admissions Office <admissions@ansarschool.in>';
+
+function admissionName(application) {
+  return application.studentName || application.fullName || 'Applicant';
+}
+
+function admissionStatusText(status) {
+  return String(status || 'Under Review');
+}
+
+function admissionNotificationText(application) {
+  const name = admissionName(application);
+  const status = admissionStatusText(application.status);
+  const reference = application.referenceNumber || application.id || 'your application';
+  return `Dear parent/guardian, ${name}'s admission application (${reference}) has been ${status.toLowerCase()}. The Ansar English School admissions office will contact you with the next steps.`;
+}
+
+async function sendAdmissionEmail(application) {
+  const recipient = String(application.email || '').trim();
+  if (!recipient) return { skipped: true, reason: 'No parent email address was submitted.' };
+  const text = admissionNotificationText(application);
+  const response = await fetch('https://api.resend.com/emails', {
+    method: 'POST',
+    headers: { Authorization: `Bearer ${resendApiKey.value()}`, 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      from: ADMISSION_EMAIL_FROM,
+      to: [recipient],
+      subject: `Admission application update - ${application.referenceNumber || 'Ansar English School'}`,
+      text,
+      html: `<p>${text}</p><p>Regards,<br>Ansar English School Admissions Office</p>`,
+    }),
+  });
+  if (!response.ok) throw new Error(`Resend returned HTTP ${response.status}: ${await response.text()}`);
+  return { sent: true };
+}
+
+
+// Sends the first acknowledgement when a parent submits an application. Later
+// status changes are handled by the status-update trigger below.
+exports.sendAdmissionNotification = onDocumentCreated({
+  document: 'admissionApplications/{applicationId}',
+  region: 'asia-south1',
+  secrets: [resendApiKey],
+}, async event => {
+  const application = event.data?.data();
+  if (!application) return;
+  try {
+    const emailResult = await sendAdmissionEmail({ ...application, status: application.status || 'Under Review' });
+    await event.data.ref.set({ notificationState: { submitted: { email: emailResult, at: admin.firestore.FieldValue.serverTimestamp() } } }, { merge: true });
+    logger.info('Admission submission email processed', { applicationId: event.params.applicationId, email: emailResult.sent === true });
+  } catch (error) {
+    logger.error('Admission submission notification failed', { applicationId: event.params.applicationId, error: error.message });
+  }
+});
+
+// Sends the matching email/WhatsApp update after the admissions desk changes status.
+exports.sendAdmissionStatusNotification = onDocumentUpdated({
+  document: 'admissionApplications/{applicationId}',
+  region: 'asia-south1',
+  secrets: [resendApiKey],
+}, async event => {
+  const before = event.data.before.data();
+  const application = event.data.after.data();
+  if (!application || before.status === application.status || !application.status) return;
+  try {
+    const emailResult = await sendAdmissionEmail(application);
+    await event.data.after.ref.set({ notificationState: { [String(application.status).replace(/[^a-zA-Z0-9]/g, '_')]: { email: emailResult, at: admin.firestore.FieldValue.serverTimestamp() } } }, { merge: true });
+    logger.info('Admission status email processed', { applicationId: event.params.applicationId, status: application.status, email: emailResult.sent === true });
+  } catch (error) {
+    logger.error('Admission status notification failed', { applicationId: event.params.applicationId, status: application.status, error: error.message });
+  }
+});
+
 
 async function assertLibraryEditor(request) {
   const token = String(request.get('authorization') || '').match(/^Bearer (.+)$/i)?.[1];

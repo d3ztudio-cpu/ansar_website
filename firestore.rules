@@ -74,6 +74,13 @@ service cloud.firestore {
       return isAdmin() && request.auth.token.email_verified == true;
     }
 
+    // Unofficial admission-desk users are explicitly assigned in the portal
+    // settings. Keep this scope limited to admission applications only.
+    function isAdmissionDeskUser() {
+      return isAuthenticated() && request.auth.token.email != null &&
+        (isAdmin() || request.auth.token.email in ['d3ztudio@gmail.com', 'ansarmedia@ansarschool.in', 'aesmedia2025@gmail.com']);
+    }
+
     // Library content editors are explicitly scoped to Library-only writes.
     // This keeps the Library operational even if an otherwise valid admin
     // document is incomplete, without granting access to other collections.
@@ -807,6 +814,14 @@ service cloud.firestore {
       allow read: if true;
       allow create, update: if isAdmin();
       allow delete: if false; // Settings documents should not be deleted, only updated
+    }
+
+    // Unofficial admission portal applications. Access remains restricted to
+    // authenticated admins; the portal itself additionally checks the
+    // developer toggle and assigned admission-desk emails.
+    match /admissionApplications/{applicationId} {
+      allow read, update, delete: if isAdmissionDeskUser();
+      allow create: if request.resource.data.status == 'Under Review' && request.resource.data.referenceNumber is string;
     }
 
     // Analytics snapshots are written only by a trusted server-side bridge.

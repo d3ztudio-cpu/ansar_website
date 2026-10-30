@@ -52,6 +52,7 @@ export default function AdminLayout({ children, user, onLogout, sproutsOnly = fa
     if (path.includes('/gallery')) return 'Gallery';
     if (path.includes('/notices')) return 'Notices';
     if (path.includes('/settings')) return 'Settings';
+    if (path.includes('/developer-options')) return 'Developer Options';
     if (path.includes('/analytics')) return 'Analytics & SEO';
     return 'Dashboard';
   };
@@ -108,6 +109,7 @@ export default function AdminLayout({ children, user, onLogout, sproutsOnly = fa
           <Link to="/admin/forms" className={`block px-4 py-3 rounded-lg font-medium transition-colors ${currentModule === 'School Forms' ? 'bg-emerald-600 text-white' : 'text-slate-300 hover:bg-slate-800 hover:text-white'}`}><span className="mr-3" aria-hidden="true">▤</span>Forms</Link>
           <Link to="/admin/gallery" className={`block px-4 py-3 rounded-lg font-medium transition-colors ${currentModule === 'Gallery' ? 'bg-emerald-600 text-white' : 'text-slate-300 hover:bg-slate-800 hover:text-white'}`}><span className="mr-3" aria-hidden="true">▣</span>Gallery</Link>
           <Link to="/admin/notices" className={`block px-4 py-3 rounded-lg font-medium transition-colors ${currentModule === 'Notices' ? 'bg-emerald-600 text-white' : 'text-slate-300 hover:bg-slate-800 hover:text-white'}`}><span className="mr-3" aria-hidden="true">!</span>Notices</Link>
+          <Link to="/admin/developer-options" className={`mt-4 block border-t border-slate-700 px-4 pt-4 pb-3 font-medium transition-colors ${currentModule === 'Developer Options' ? 'text-amber-300' : 'text-slate-400 hover:text-white'}`}><span className="mr-3" aria-hidden="true">⌘</span>Developer Options</Link>
           </>}
         </nav>
       </aside>

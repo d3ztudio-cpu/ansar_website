@@ -33,11 +33,28 @@ const FALLBACK_LEADERS = [
 ];
 
 function AnimatedSection({ children, className = "", ...props }) {
-  // Important homepage sections must be available as soon as the browser lays
-  // them out. The old intersection-observer fade left the next section pale
-  // or blank while scrolling on slower phones.
+  const [isVisible, setIsVisible] = useState(false);
+  const ref = useRef(null);
+
+  useEffect(() => {
+    const observer = new IntersectionObserver(([entry]) => {
+      if (entry.isIntersecting) {
+        setIsVisible(true);
+        observer.unobserve(entry.target);
+      }
+    }, { threshold: 0.12 });
+
+    if (ref.current) observer.observe(ref.current);
+    return () => observer.disconnect();
+  }, []);
+
   return (
-    <section className={className} {...props}>
+    <section
+      ref={ref}
+      className={`transition-all duration-700 ease-out ${isVisible ? 'translate-y-0 opacity-100' : 'translate-y-8 opacity-0'} ${className}`}
+      style={{ contentVisibility: 'auto', containIntrinsicSize: '0 720px' }}
+      {...props}
+    >
       {children}
     </section>
   );

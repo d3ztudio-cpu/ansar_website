@@ -20,8 +20,10 @@ function getDateTime(item) {
 
 export default function AdminUpdates({ fixedCategory = '' }) {
   const [refreshKey, setRefreshKey] = useState(0);
+  const [visibleCount, setVisibleCount] = useState(24);
   const { data: items, loading } = useContentCollection('updates', null, 'asc', { refreshKey });
-  const dateOrderedItems = items.filter((item) => !fixedCategory || item.category === fixedCategory).sort((a, b) => getDateTime(b) - getDateTime(a));
+  const allDateOrderedItems = items.filter((item) => !fixedCategory || item.category === fixedCategory).sort((a, b) => getDateTime(b) - getDateTime(a));
+  const dateOrderedItems = allDateOrderedItems.slice(0, visibleCount);
   
   const initialFormState = { category: fixedCategory || 'News', title: '', description: '', date: '', coverImageUrl: '', eventImages: [''], instagramUrl: '', facebookUrl: '', youtubeUrl: '', published: true };
   const [formData, setFormData] = useState(initialFormState);
@@ -351,6 +353,8 @@ export default function AdminUpdates({ fixedCategory = '' }) {
                 <img 
                   src={item.coverImageUrl || item.imageUrl || item.imageUrls?.[0] || item.eventImages?.[0]}
                   alt="Thumbnail" 
+                  loading="lazy"
+                  decoding="async"
                   className="w-full h-full object-cover" 
                   onError={(e) => { e.target.onerror = null; e.target.src = "data:image/svg+xml;charset=UTF-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='100' height='100' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' fill='%23f1f5f9'/%3E%3Ctext x='50%25' y='50%25' dominant-baseline='middle' text-anchor='middle' font-family='sans-serif' font-size='12' font-weight='bold' fill='%2394a3b8'%3EError%3C/text%3E%3C/svg%3E"; }} 
                 />
@@ -373,6 +377,7 @@ export default function AdminUpdates({ fixedCategory = '' }) {
             </div>
           </div>
         ))}
+        {!loading && visibleCount < allDateOrderedItems.length && <button type="button" onClick={() => setVisibleCount((count) => count + 24)} className="w-full rounded-xl border border-emerald-200 bg-white px-5 py-3 font-bold text-emerald-700 hover:bg-emerald-50">Load older publications ({allDateOrderedItems.length - visibleCount} remaining)</button>}
       </div>
     </div>
   );
