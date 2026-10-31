@@ -321,16 +321,23 @@ export default function SchoolChatbot() {
   // Firestore collections update instantly. This key also rechecks sheet-backed
   // content every five minutes and whenever a visitor returns to the tab.
   const [contentRefreshKey, setContentRefreshKey] = useState(0);
+  const [lastRefreshAt, setLastRefreshAt] = useState(() => new Date());
   useEffect(() => {
-    const refresh = () => setContentRefreshKey(value => value + 1);
-    const intervalId = window.setInterval(refresh, 5 * 60 * 1000);
+    const refresh = () => {
+      setContentRefreshKey(value => value + 1);
+      setLastRefreshAt(new Date());
+    };
+    const intervalId = window.setInterval(refresh, 60 * 1000);
     const handleVisibility = () => {
       if (document.visibilityState === 'visible') refresh();
     };
+    const handleFocus = () => refresh();
     document.addEventListener('visibilitychange', handleVisibility);
+    window.addEventListener('focus', handleFocus);
     return () => {
       window.clearInterval(intervalId);
       document.removeEventListener('visibilitychange', handleVisibility);
+      window.removeEventListener('focus', handleFocus);
     };
   }, []);
 
@@ -351,6 +358,8 @@ export default function SchoolChatbot() {
     () => buildSiteContext({ settings, updates, achievements, disclosures, ansarTimes, pages, leadership, learningLabs, sportsAchievements, fieldTrips, sproutsActivities, gallery, learningFeatures }),
     [settings, updates, achievements, disclosures, ansarTimes, pages, leadership, learningLabs, sportsAchievements, fieldTrips, sproutsActivities, gallery, learningFeatures]
   );
+
+  const liveSiteContext = useMemo(() => `${siteContext}\nLive website data refresh requested at: ${lastRefreshAt.toISOString()}.`, [siteContext, lastRefreshAt]);
 
   const suggestedLinks = useMemo(() => {
     const lastUserMessage = [...messages].reverse().find(message => message.role === 'user')?.text || '';
@@ -382,7 +391,7 @@ export default function SchoolChatbot() {
           : 'Keep replies concise, polite, and navigation-oriented. Mention relevant page names and paths when useful.',
         'Do not answer in one line when the visitor asks to explain the institution, leaders, or website. Use clear headings or short paragraphs when that makes the answer easier to read.',
         'Do not invent dates, fees, phone numbers, or policies.',
-        `Website context:\n${siteContext}`,
+        `Website context:\n${liveSiteContext}`,
         `Conversation:\n${conversation.map(message => `${message.role}: ${message.text}`).join('\n')}`,
         `Visitor question: ${question}`
       ].join('\n\n');
@@ -420,7 +429,7 @@ export default function SchoolChatbot() {
               </span>
               <div className="min-w-0">
                 <h2 className="truncate text-sm font-extrabold">Ansar AI Assistant</h2>
-                <p className="truncate text-xs text-emerald-100">Website guidance</p>
+                <p className="truncate text-xs text-emerald-100">Live website knowledge</p>
               </div>
             </div>
             <button type="button" onClick={() => setIsOpen(false)} className="rounded-full p-2 text-white/80 transition-colors hover:bg-white/10 hover:text-white" aria-label="Close assistant">
@@ -486,7 +495,9 @@ export default function SchoolChatbot() {
         aria-label={isOpen ? 'Close Ansar AI Assistant' : 'Open Ansar AI Assistant'}
       >
         <svg className="h-7 w-7" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 10h.01M12 10h.01M16 10h.01M9 16H7a4 4 0 0 1-4-4V8a4 4 0 0 1 4-4h10a4 4 0 0 1 4 4v4a4 4 0 0 1-4 4h-3l-4 4v-4H9Z" />
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.8" d="M4 20V9.5L12 4l8 5.5V20H4Z" />
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.8" d="M8 20v-5h8v5M9 10h.01M15 10h.01" />
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.8" d="m18.5 4.5.4 1.1 1.1.4-1.1.4-.4 1.1-.4-1.1-1.1-.4 1.1-.4.4-1.1Z" />
         </svg>
       </button>
     </div>

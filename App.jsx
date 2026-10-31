@@ -48,6 +48,7 @@ import {
 import { mergeTransportStaff } from "./transportStaffData";
 import AdmissionDesk from "./AdmissionDesk";
 import AdmissionPortal from "./AdmissionPortal";
+import SchoolChatbot from "./SchoolChatbot";
 
 // Keep the first visit small: secondary pages and all admin modules are fetched only
 // when their route is opened instead of delaying the homepage on mobile networks.
@@ -2729,6 +2730,8 @@ export default function App() {
             />
           </Routes>
         </Suspense>
+
+        {!isAdminRoute && !isAdmissionsPortalHost && <SchoolChatbot />}
 
         {/* "Admins only" popup: shown when a signed-in account is not authorized. */}
         {deniedEmail && (
