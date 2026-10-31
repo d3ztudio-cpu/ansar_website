@@ -16,6 +16,7 @@ import { normalizeImageUrl } from "./imageUrlUtils";
 import {
   QUESTION_PAPER_CATEGORIES,
   QUESTION_PAPER_CLASSES,
+  QUESTION_PAPER_YEARS,
   LIBRARY_FILE_TYPES,
   TOTAL_ARCHIVE_POSTERS,
   todayKey,
@@ -204,6 +205,7 @@ export default function AdminLibrary() {
   const [tab, setTab] = useState("overview");
   const [post, setPost] = useState(EMPTY_POST);
   const [editingId, setEditingId] = useState(null);
+  const [editingStaticId, setEditingStaticId] = useState(null);
   const [librarySearch, setLibrarySearch] = useState("");
 
   const existingSettings = useMemo(
@@ -231,7 +233,9 @@ export default function AdminLibrary() {
   );
 
   const startEdit = (item) => {
-    setEditingId(item.id);
+    const isBundledQuestionPaper = String(item.id || "").startsWith("static-");
+    setEditingId(isBundledQuestionPaper ? null : item.id);
+    setEditingStaticId(isBundledQuestionPaper ? item.id : null);
     const normalizedOwnerType = normalizedLibraryType(item);
     setPost({
       type: normalizedOwnerType || "Announcement",
@@ -271,6 +275,7 @@ export default function AdminLibrary() {
 
   const newPost = (type) => {
     setEditingId(null);
+    setEditingStaticId(null);
     setPost({ ...EMPTY_POST, type, date: "" });
   };
 
@@ -286,7 +291,26 @@ export default function AdminLibrary() {
     if (!window.confirm(`Delete “${item.title}”? This cannot be undone.`))
       return;
     try {
-      await deleteDoc(doc(db, "libraryPosts", item.id));
+      if (String(item.id || "").startsWith("static-")) {
+        await addDoc(collection(db, "libraryPosts"), {
+          type: "Question Paper",
+          libraryCategory: "question-paper",
+          title: item.title || "Question Paper",
+          summary: "",
+          body: "",
+          linkUrl: item.linkUrl || "",
+          fileType: item.fileType || "Document",
+          category: item.category || "Pre-Midterm",
+          className: item.className || "",
+          subject: item.subject || "",
+          year: item.year || "2026 - 2027",
+          staticId: item.id,
+          published: false,
+          createdAt: serverTimestamp(),
+        });
+      } else {
+        await deleteDoc(doc(db, "libraryPosts", item.id));
+      }
     } catch (error) {
       alert(`Could not delete this post: ${error.message}`);
     }
@@ -405,7 +429,13 @@ export default function AdminLibrary() {
       if (tab === "creative-corner") {
         payload.contributorType = post.contributorType || "Student";
       }
-      if (editingId) {
+      if (editingStaticId) {
+        await addDoc(collection(db, "libraryPosts"), {
+          ...payload,
+          staticId: editingStaticId,
+          createdAt: serverTimestamp(),
+        });
+      } else if (editingId) {
         const currentItem = posts.find((item) => item.id === editingId);
         await updateDoc(doc(db, "libraryPosts", editingId), {
           ...payload,
@@ -419,6 +449,7 @@ export default function AdminLibrary() {
       }
       setPost(EMPTY_POST);
       setEditingId(null);
+      setEditingStaticId(null);
       alert(editingId ? "Library item updated." : "Library item published.");
     } catch (error) {
       console.error(error);
@@ -644,14 +675,18 @@ export default function AdminLibrary() {
             </label>
             <label className="text-sm font-bold text-slate-700">
               Year
-              <input
+              <select
                 value={post.year}
                 onChange={(e) =>
                   setPost((value) => ({ ...value, year: e.target.value }))
                 }
-                placeholder="2026"
                 className={fieldClass}
-              />
+              >
+                <option value="">Select year</option>
+                {QUESTION_PAPER_YEARS.map((year) => (
+                  <option key={year} value={year}>{year}</option>
+                ))}
+              </select>
             </label>
           </>
         )}
@@ -881,7 +916,7 @@ export default function AdminLibrary() {
           disabled={postsLoading}
           className="rounded-lg bg-[#15324a] px-5 py-3 text-sm font-extrabold text-white hover:bg-[#0d2639] disabled:opacity-50"
         >
-          {editingId ? "Update item" : "Save item"}
+          {editingId || editingStaticId ? "Update item" : "Save item"}
         </button>
       </div>
     </form>
@@ -912,6 +947,10 @@ export default function AdminLibrary() {
             key={item.id}
             className="flex flex-wrap items-center justify-between gap-4 py-4"
           >
+            {(() => {
+              const isBundledQuestionPaper = String(item.id || "").startsWith("static-");
+              return (
+                <>
             <div className="min-w-0">
               <div className="flex flex-wrap items-center gap-2 text-xs font-black uppercase tracking-[0.13em] text-emerald-700">
                 <span>{normalizedLibraryType(item)}</span>
@@ -948,6 +987,11 @@ export default function AdminLibrary() {
               )}
             </div>
             <div className="flex gap-2">
+              {isBundledQuestionPaper && item.linkUrl && (
+                <a href={item.linkUrl} target="_blank" rel="noreferrer" className="rounded-lg px-3 py-2 text-sm font-bold text-blue-700 hover:bg-blue-50">
+                  View paper
+                </a>
+              )}
               {types?.includes("New Arrival") && (
                 <button
                   type="button"
@@ -972,6 +1016,9 @@ export default function AdminLibrary() {
                 Delete
               </button>
             </div>
+                </>
+              );
+            })()}
           </article>
         ))}
       </div></>

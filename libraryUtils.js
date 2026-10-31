@@ -172,7 +172,7 @@ export const LIBRARY_POST_TYPES = [
 ];
 
 export const QUESTION_PAPER_CATEGORIES = [
-  'Model Exam', 'First Terminal', 'Second Terminal', 'Annual', 'Unit Test',
+  'Model Exam', 'Pre-Midterm', 'First Terminal', 'Second Terminal', 'Annual', 'Unit Test',
   'Periodic Test', 'Practice Paper', 'Olympiad', 'Entrance', 'Other'
 ];
 
@@ -183,6 +183,14 @@ export const QUESTION_PAPER_CLASSES = [
   'Class 1', 'Class 2', 'Class 3', 'Class 4', 'Class 5',
   'Class 6', 'Class 7', 'Class 8', 'Class 9', 'Class 10',
   'Class 11', 'Class 12'
+];
+
+export const QUESTION_PAPER_YEARS = [
+  "2026 - ’27",
+  "2027 - ’28",
+  "2028 - ’29",
+  "2029 - ’30",
+  "2030 - ’31",
 ];
 
 export const PUBLIC_CATEGORIES = [
