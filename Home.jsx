@@ -42,7 +42,7 @@ function AnimatedSection({ children, className = "", ...props }) {
         setIsVisible(true);
         observer.unobserve(entry.target);
       }
-    }, { threshold: 0.12 });
+    }, { threshold: 0.01, rootMargin: '0px 0px 180px 0px' });
 
     if (ref.current) observer.observe(ref.current);
     return () => observer.disconnect();
@@ -51,7 +51,7 @@ function AnimatedSection({ children, className = "", ...props }) {
   return (
     <section
       ref={ref}
-      className={`transition-all duration-700 ease-out ${isVisible ? 'translate-y-0 opacity-100' : 'translate-y-8 opacity-0'} ${className}`}
+      className={`will-change-[opacity,transform] motion-reduce:transition-none transition-[opacity,transform] duration-500 ease-out ${isVisible ? 'translate-y-0 opacity-100' : 'translate-y-4 opacity-0'} ${className}`}
       style={{ contentVisibility: 'auto', containIntrinsicSize: '0 720px' }}
       {...props}
     >
@@ -92,59 +92,73 @@ const getContentYear = item => getDisplayYear(item.date, 'Sports');
 
 function VerticalCarousel({ images, onImageClick }) {
   const [index, setIndex] = useState(0);
+  const [paused, setPaused] = useState(false);
   const validImages = (images || []).filter(img => img && img.trim() !== '');
 
   useEffect(() => {
-    if (validImages.length <= 1) return;
+    if (validImages.length <= 1 || paused) return;
     const timer = setInterval(() => setIndex(prev => (prev + 1) % validImages.length), 4000);
     return () => clearInterval(timer);
-  }, [validImages.length]);
+  }, [validImages.length, paused]);
+
+  useEffect(() => {
+    if (index >= validImages.length) setIndex(0);
+  }, [index, validImages.length]);
 
   if (validImages.length === 0) return <div className="w-full h-full bg-slate-100 flex items-center justify-center text-slate-400">Media Pending</div>;
 
   return (
-    <div className="relative w-full h-full bg-slate-900 group">
-      <div className="absolute inset-0 motion-safe:animate-[flow-fade_420ms_ease-out]">
+    <div className="group relative h-full w-full overflow-hidden bg-slate-950" onMouseEnter={() => setPaused(true)} onMouseLeave={() => setPaused(false)}>
+      <div className="absolute inset-0 bg-slate-900">
         <img
-          key={index}
+          key={`${validImages[index]}-${index}`}
           src={validImages[index]}
-          className="absolute inset-0 w-full h-full object-cover cursor-pointer opacity-80 group-hover:opacity-100 transition-opacity motion-reduce:transition-none"
+          className="absolute inset-0 h-full w-full cursor-pointer object-cover opacity-90 motion-safe:animate-[home-image-in_700ms_ease-out] motion-safe:after:animate-none group-hover:opacity-100 motion-reduce:animate-none"
           loading="lazy"
           decoding="async"
           onClick={() => onImageClick(validImages[index])}
+          alt="Ansar English School campus and student life"
         />
       </div>
+      <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-slate-950/85 via-transparent to-slate-950/10" />
+      {validImages.length > 1 && <div className="absolute left-5 top-5 rounded-full border border-white/25 bg-slate-950/35 px-3 py-1 text-[10px] font-bold uppercase tracking-[0.2em] text-white backdrop-blur-md">{paused ? 'Paused' : 'School moments'}</div>}
+      {validImages.length > 1 && <div className="absolute right-5 top-5 rounded-full border border-white/25 bg-slate-950/35 px-3 py-1 text-xs font-bold text-white backdrop-blur-md">{String(index + 1).padStart(2, '0')} / {String(validImages.length).padStart(2, '0')}</div>}
       {validImages.length > 1 && (
-        <div className="absolute right-4 top-1/2 -translate-y-1/2 flex flex-col gap-2 z-10">
-          {validImages.map((_, i) => (
-            <button key={i} onClick={() => setIndex(i)} className={`w-2.5 h-2.5 rounded-full transition-all shadow-md ${i === index ? 'bg-amber-400 scale-125' : 'bg-white/50 hover:bg-white/80'}`} aria-label={`Go to slide ${i + 1}`} />
-          ))}
-        </div>
+        <>
+          <button type="button" onClick={() => setIndex((index - 1 + validImages.length) % validImages.length)} className="absolute left-4 top-1/2 z-10 grid h-9 w-9 -translate-y-1/2 place-items-center rounded-full border border-white/30 bg-slate-950/35 text-lg text-white backdrop-blur-md transition hover:bg-amber-400 hover:text-slate-950" aria-label="Previous image">‹</button>
+          <button type="button" onClick={() => setIndex((index + 1) % validImages.length)} className="absolute right-4 top-1/2 z-10 grid h-9 w-9 -translate-y-1/2 place-items-center rounded-full border border-white/30 bg-slate-950/35 text-lg text-white backdrop-blur-md transition hover:bg-amber-400 hover:text-slate-950" aria-label="Next image">›</button>
+          <div className="absolute bottom-4 left-1/2 z-10 flex max-w-[78%] -translate-x-1/2 gap-2 overflow-hidden rounded-2xl border border-white/20 bg-slate-950/35 p-2 backdrop-blur-md">
+            {validImages.map((image, i) => <button key={image} type="button" onClick={() => setIndex(i)} className={`h-9 w-12 shrink-0 overflow-hidden rounded-lg border-2 transition ${i === index ? 'scale-105 border-amber-400' : 'border-transparent opacity-60 hover:opacity-100'}`} aria-label={`Show image ${i + 1}`}><img src={image} alt="" className="h-full w-full object-cover" /></button>)}
+          </div>
+        </>
       )}
     </div>
   );
 }
 
 function VisionMissionLoop({ vision, mission }) {
-  const [showVision, setShowVision] = useState(true);
-  useEffect(() => {
-    const timer = setInterval(() => setShowVision(prev => !prev), 5000);
-    return () => clearInterval(timer);
-  }, []);
-  const panelClassName = "absolute inset-0 flex flex-col justify-center";
   return (
-    <div className="relative w-full h-[22rem] sm:h-64 overflow-hidden">
-      {showVision ? (
-          <div className={`${panelClassName} motion-safe:animate-[flow-fade_350ms_ease-out]`}>
-            <h3 className="text-2xl sm:text-3xl font-extrabold mb-4">Our Vision</h3>
-            <p className="text-emerald-50/80 text-base sm:text-xl leading-relaxed font-light border-l-4 border-amber-400 pl-4 sm:pl-6 whitespace-pre-wrap">{vision}</p>
+    <div className="relative w-full space-y-4">
+      <div className="rounded-3xl border border-white/10 bg-white/[0.07] p-5 backdrop-blur-sm transition hover:-translate-y-1 hover:bg-white/[0.11] sm:p-6">
+        <div className="mb-4 flex items-center gap-3">
+          <span className="grid h-9 w-9 place-items-center rounded-xl bg-amber-400 text-sm font-black text-emerald-950">01</span>
+          <div>
+            <p className="text-[10px] font-bold uppercase tracking-[0.25em] text-amber-300">Direction</p>
+            <h3 className="text-2xl font-extrabold text-white sm:text-3xl">Our Vision</h3>
           </div>
-        ) : (
-          <div className={`${panelClassName} motion-safe:animate-[flow-fade_350ms_ease-out]`}>
-            <h3 className="text-2xl sm:text-3xl font-extrabold mb-4">Our Mission</h3>
-            <p className="text-emerald-50/80 text-base sm:text-lg leading-relaxed font-light border-l-4 border-amber-400 pl-4 sm:pl-6 whitespace-pre-wrap">{mission}</p>
+        </div>
+        <p className="border-l-4 border-amber-400 pl-4 text-base font-light leading-relaxed text-emerald-50/85 sm:text-lg">{vision}</p>
+      </div>
+      <div className="rounded-3xl border border-white/10 bg-slate-950/20 p-5 backdrop-blur-sm transition hover:-translate-y-1 hover:bg-slate-950/35 sm:p-6">
+        <div className="mb-4 flex items-center gap-3">
+          <span className="grid h-9 w-9 place-items-center rounded-xl bg-white text-sm font-black text-emerald-950">02</span>
+          <div>
+            <p className="text-[10px] font-bold uppercase tracking-[0.25em] text-amber-300">Action plan</p>
+            <h3 className="text-2xl font-extrabold text-white sm:text-3xl">Our Mission</h3>
           </div>
-        )}
+        </div>
+        <p className="border-l-4 border-amber-400 pl-4 text-base font-light leading-relaxed text-emerald-50/85 sm:text-lg whitespace-pre-wrap">{mission}</p>
+      </div>
     </div>
   );
 }

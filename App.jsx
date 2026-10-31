@@ -2310,6 +2310,8 @@ function AdminDashboard() {
 }
 
 export default function App() {
+  const isAdmissionsPortalHost =
+    window.location.hostname.toLowerCase() === "admissions.ansarschool.in";
   const [user, setUser] = useState(null);
   const [authLoading, setAuthLoading] = useState(false);
   const [isAdminRoute, setIsAdminRoute] = useState(() =>
@@ -2440,7 +2442,10 @@ export default function App() {
         <Suspense fallback={<RouteFallback />}>
           <Routes>
             {/* Public Website Routes */}
-            <Route path="/" element={<Home />} />
+            <Route
+              path="/"
+              element={isAdmissionsPortalHost ? <AdmissionPortal /> : <Home />}
+            />
             <Route path="/about" element={<About />} />
             <Route path="/academics" element={<Academics />} />
             <Route path="/admission" element={<Admission />} />

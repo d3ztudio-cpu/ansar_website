@@ -39,7 +39,52 @@ export default function AdmissionDesk() {
   };
   const detail = (label, keys) => <div><dt className="font-bold text-slate-400">{label}</dt><dd className="break-words text-slate-800">{get(selected, keys)}</dd></div>;
   const student = get(selected, ['studentName', 'fullName', 'field1']);
-  const exportApplications = () => { const pdf = new jsPDF({ unit: 'mm', format: 'a4' }); const rows = filtered; pdf.setFontSize(16); pdf.text('ANSAR ENGLISH SCHOOL - ADMISSION APPLICATIONS', 14, 16); pdf.setFontSize(9); pdf.text(`Exported: ${new Date().toLocaleString('en-IN')} | Category: ${status}`, 14, 23); let y = 34; rows.forEach((item, index) => { if (y > 270) { pdf.addPage(); y = 18; } pdf.setFontSize(11); pdf.text(`${index + 1}. ${get(item, ['referenceNumber', 'id'])} - ${get(item, ['studentName', 'fullName', 'field1'])}`, 14, y); pdf.setFontSize(9); pdf.text(`Class: ${get(item, ['classApplied', 'className', 'field5'])} | Status: ${item.status || 'Under Review'}`, 18, y + 6); pdf.text(`DOB: ${get(item, ['dateOfBirth', 'field2'])} | Parent: ${get(item, ['fatherName', 'parentName', 'field6'])}`, 18, y + 12); pdf.text(`Email: ${get(item, ['email', 'field10'])} | Phone: ${get(item, ['fatherMobile', 'parentMobile', 'phone', 'field8'])}`, 18, y + 18); pdf.line(14, y + 23, 196, y + 23); y += 31; }); pdf.save(`ansar-admissions-${status === 'All' ? 'all' : status.toLowerCase().replaceAll(' ', '-')}.pdf`); };
+  const exportApplications = () => {
+    const pdf = new jsPDF({ unit: 'mm', format: 'a4' });
+    const page = { left: 14, right: 196, top: 18, bottom: 282 };
+    const rows = [...filtered].sort((a, b) => {
+      const classA = String(get(a, ['classApplied', 'className', 'field5']));
+      const classB = String(get(b, ['classApplied', 'className', 'field5']));
+      return classA.localeCompare(classB, undefined, { numeric: true }) || String(a.studentName || '').localeCompare(String(b.studentName || ''));
+    });
+    const classGroups = rows.reduce((groups, item) => {
+      const key = String(get(item, ['classApplied', 'className', 'field5']));
+      (groups[key] ||= []).push(item);
+      return groups;
+    }, {});
+    const safe = value => String(value || '—').replace(/[\u0000-\u001f]/g, ' ').trim();
+    const wrap = (value, width = 176) => pdf.splitTextToSize(safe(value), width);
+    const footer = () => { pdf.setDrawColor(210, 222, 224); pdf.line(page.left, 287, page.right, 287); pdf.setFontSize(7.5); pdf.setTextColor(100, 116, 139); pdf.text('ANSAR ENGLISH SCHOOL  |  Confidential admissions report', page.left, 292); pdf.text(`Page ${pdf.getNumberOfPages()}`, page.right, 292, { align: 'right' }); };
+    const header = (title, subtitle = '') => { pdf.setFillColor(7, 63, 66); pdf.rect(0, 0, 210, 13, 'F'); pdf.setTextColor(7, 63, 66); pdf.setFont('helvetica', 'bold'); pdf.setFontSize(17); pdf.text(title, page.left, 25); pdf.setFont('helvetica', 'normal'); pdf.setFontSize(8.5); pdf.setTextColor(71, 85, 105); pdf.text(subtitle, page.left, 31); footer(); };
+    const newPage = (title, subtitle) => { pdf.addPage(); header(title, subtitle); return 40; };
+    const labelValue = (label, value, x, y, width = 82) => { pdf.setFont('helvetica', 'bold'); pdf.setFontSize(7.5); pdf.setTextColor(100, 116, 139); pdf.text(label.toUpperCase(), x, y); pdf.setFont('helvetica', 'normal'); pdf.setFontSize(9); pdf.setTextColor(30, 41, 59); const lines = wrap(value, width); pdf.text(lines, x, y + 4); return y + 4 + lines.length * 4.2; };
+    const title = status === 'All' ? 'Admission Applications Report' : `${status} Applications Report`;
+    header(title, `Generated ${new Date().toLocaleString('en-IN')}  |  ${rows.length} application${rows.length === 1 ? '' : 's'}  |  Filter: ${status}`);
+    let y = 43;
+    pdf.setFillColor(239, 248, 245); pdf.roundedRect(page.left, y - 8, 182, 25, 3, 3, 'F');
+    pdf.setFont('helvetica', 'bold'); pdf.setFontSize(9); pdf.setTextColor(7, 63, 66); pdf.text('REPORT SUMMARY', page.left + 6, y);
+    pdf.setFont('helvetica', 'normal'); pdf.setFontSize(8.5); pdf.setTextColor(51, 65, 85); pdf.text(`Total in this export: ${rows.length}`, page.left + 6, y + 7); pdf.text(`Classes represented: ${Object.keys(classGroups).length}`, page.left + 82, y + 7); pdf.text(`Statuses represented: ${new Set(rows.map(x => x.status || 'Under Review')).size}`, page.left + 6, y + 14); pdf.text('Applications are grouped by class below.', page.left + 82, y + 14);
+    y += 29;
+    Object.entries(classGroups).forEach(([className, group]) => {
+      if (y > 255) { y = newPage(`Class ${className}`, `${group.length} application${group.length === 1 ? '' : 's'} in this class`); }
+      pdf.setFillColor(16, 45, 53); pdf.roundedRect(page.left, y - 5, 182, 10, 2, 2, 'F'); pdf.setFont('helvetica', 'bold'); pdf.setFontSize(10); pdf.setTextColor(255, 255, 255); pdf.text(`CLASS ${className.toUpperCase()}`, page.left + 5, y + 2); pdf.setFontSize(8.5); pdf.text(`${group.length} application${group.length === 1 ? '' : 's'}`, page.right - 5, y + 2, { align: 'right' }); y += 13;
+      group.forEach((item, groupIndex) => {
+        const studentName = get(item, ['studentName', 'fullName', 'field1']); const itemStatus = item.status || 'Under Review';
+        const blocks = [wrap(`${groupIndex + 1}. ${studentName}  |  ${get(item, ['referenceNumber', 'id'])}`, 170).length * 5, 18, 18, 18, 18, 16]; const height = Math.max(70, blocks.reduce((a, b) => a + b, 0));
+        if (y + height > page.bottom) { y = newPage(`Class ${className}`, `Continuing class ${className}  |  ${group.length} applications`); }
+        pdf.setFillColor(groupIndex % 2 ? 248 : 255, 250, 250); pdf.setDrawColor(220, 231, 232); pdf.roundedRect(page.left, y, 182, height - 4, 2, 2, 'FD');
+        pdf.setFont('helvetica', 'bold'); pdf.setFontSize(10.5); pdf.setTextColor(7, 63, 66); pdf.text(wrap(`${groupIndex + 1}. ${studentName}`, 120), page.left + 6, y + 8); pdf.setFontSize(8); pdf.setTextColor(71, 85, 105); pdf.text(safe(get(item, ['referenceNumber', 'id'])), page.right - 6, y + 8, { align: 'right' });
+        pdf.setFillColor(itemStatus === 'Admitted' || itemStatus === 'Admission Approved' ? 220 : 254, itemStatus === 'Admitted' || itemStatus === 'Admission Approved' ? 252 : 243, itemStatus === 'Admitted' || itemStatus === 'Admission Approved' ? 231 : 199); pdf.roundedRect(page.left + 6, y + 12, 48, 6, 2, 2, 'F'); pdf.setFontSize(7.5); pdf.setTextColor(71, 85, 105); pdf.text(itemStatus, page.left + 9, y + 16);
+        let cy = y + 25; cy = labelValue('Date of birth', get(item, ['dateOfBirth', 'field2']), page.left + 6, cy, 50); labelValue('Gender', get(item, ['gender', 'field3']), page.left + 68, y + 25, 45); labelValue('Academic year', get(item, ['academicYear']), page.left + 130, y + 25, 45);
+        cy = y + 38; cy = labelValue('Parent / guardian', get(item, ['fatherName', 'parentName', 'field6']), page.left + 6, cy, 80); labelValue('Father mobile', get(item, ['fatherMobile', 'parentMobile', 'phone', 'field8']), page.left + 100, y + 38, 76);
+        labelValue('Email', get(item, ['email', 'field10']), page.left + 6, y + 51, 80); labelValue('Address', get(item, ['address', 'field11']), page.left + 100, y + 51, 76);
+        y += height;
+      });
+      y += 8;
+    });
+    footer();
+    pdf.save(`ansar-admissions-${status === 'All' ? 'categorised-all' : status.toLowerCase().replaceAll(' ', '-')}.pdf`);
+  };
 
   return <main className="min-h-screen bg-[#eef4f2] text-slate-900">
     <div className="bg-[#082f35] px-5 py-4 text-white lg:px-8"><div className="mx-auto flex max-w-[1600px] items-center justify-between gap-4"><div><p className="text-[10px] font-black uppercase tracking-[.25em] text-lime-300">Ansar English School · Admissions Office</p><p className="mt-1 text-sm text-teal-100">Live application workspace</p></div><a href="/" className="rounded-xl border border-white/25 px-4 py-2 text-sm font-bold text-white hover:bg-white/10">Exit portal</a></div></div>

@@ -73,6 +73,26 @@ const TAB_POST_TYPES = {
   newspaper: ["Clipping"],
   vocabulary: ["Vocabulary"],
 };
+
+const EXTERNAL_QUIZZES = [
+  { title: 'Science Quiz', category: 'Science', description: 'Physics, chemistry, biology, and space science questions.', slug: 'science-quiz.php' },
+  { title: 'Biology Quiz', category: 'Science', description: 'Cells, the human body, plants, and ecosystems.', slug: 'biology-quiz.php' },
+  { title: 'Chemistry Quiz', category: 'Science', description: 'Elements, compounds, reactions, and the periodic table.', slug: 'chemistry-quiz.php' },
+  { title: 'Physics Quiz', category: 'Science', description: 'Motion, force, energy, and physical laws.', slug: 'physics-quiz.php' },
+  { title: 'Ultimate Space Quiz', category: 'Science', description: 'Planets, astronauts, ISRO, NASA, missions, and astronomy.', slug: 'space-quiz.php' },
+  { title: 'India Quiz', category: 'General Knowledge', description: 'Indian history, culture, geography, and current affairs.', slug: 'india-quiz.php' },
+  { title: 'History Quiz', category: 'History', description: 'Indian and world history, empires, movements, and events.', slug: 'history-quiz-world-history-indian-history-mcqs.php' },
+  { title: 'General Mathematics Quiz', category: 'Mathematics', description: 'Numbers, geometry, formulas, symbols, and mathematicians.', slug: 'general-mathematics-quiz.php' },
+  { title: 'Ultimate Sports Quiz', category: 'Sports', description: 'Cricket, football, Olympics, tennis, athletics, and more.', slug: 'ultimate-sports-quiz.php' },
+  { title: 'Ultimate Cricket Quiz', category: 'Sports', description: 'World Cups, IPL, players, records, and cricket history.', slug: 'cricket-quiz.php' },
+  { title: 'Football Quiz', category: 'Sports', description: 'World Cups, clubs, players, stadiums, and records.', slug: 'football-quiz.php' },
+  { title: 'Wildlife Quiz', category: 'Environment', description: 'Animals, forests, ecosystems, and nature.', slug: 'wildlife-quiz.php' },
+  { title: 'Environment Quiz', category: 'Environment', description: 'Climate, pollution, conservation, and renewable energy.', slug: 'environment-quiz.php' },
+  { title: 'Great Personalities Quiz', category: 'Personalities', description: 'Leaders, scientists, inventors, authors, and reformers.', slug: 'personalities-quiz.php' },
+  { title: 'Abbreviations Quiz', category: 'General Knowledge', description: 'Popular abbreviations, acronyms, and their full forms.', slug: 'abbreviations-quiz.php' },
+  { title: 'Padma Awards Quiz', category: 'General Knowledge', description: 'Padma Vibhushan, Padma Bhushan, and Padma Shri.', slug: 'padma-awards-mcq-quiz.php' },
+];
+const EXTERNAL_QUIZ_ORIGIN = 'https://studentsgkquiz.in/quizzes/';
 const COLLECTIONS = [
   [
     "new-arrivals",
@@ -326,13 +346,25 @@ function ResourceCard({ post, film = false, onOpenArticle, bookMode = false, arr
         )}
         {(destination || isBook || isClipping || isCreative || forceArticle) &&
           (shouldOpenArticle ? (
-            <button
-              type="button"
-              onClick={() => onOpenArticle?.(post)}
-              className="mt-4 inline-flex w-full items-center justify-center gap-2 rounded-lg bg-emerald-800 px-4 py-3 text-sm font-extrabold text-white transition hover:bg-emerald-700"
-            >
-              {isBook ? "Open Book" : "Read more"} <Arrow />
-            </button>
+            <div className="mt-4 flex gap-2">
+              {isBook && destination && (
+                <a
+                  href={destination}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="inline-flex min-w-0 flex-1 items-center justify-center gap-1 rounded-lg bg-emerald-800 px-2 py-3 text-xs font-extrabold whitespace-nowrap text-white transition hover:bg-emerald-700 sm:px-3 sm:text-sm"
+                >
+                  Read <Arrow />
+                </a>
+              )}
+              <button
+                type="button"
+                onClick={() => onOpenArticle?.(post)}
+                className="inline-flex min-w-0 flex-1 items-center justify-center gap-1 rounded-lg border border-emerald-200 px-2 py-3 text-xs font-extrabold whitespace-nowrap text-emerald-800 transition hover:bg-emerald-50 sm:px-3 sm:text-sm"
+              >
+                {isBook ? "Details" : "Read more"} <Arrow />
+              </button>
+            </div>
           ) : (
             <span className="mt-4 inline-flex w-full items-center justify-center gap-2 rounded-lg bg-emerald-800 px-4 py-3 text-sm font-extrabold text-white transition group-hover:bg-emerald-700">
               {post.type === "E-Learning"
@@ -477,6 +509,12 @@ export default function LibraryPage() {
           )
         : [],
     [activeTab, posts, term],
+  );
+  const visibleExternalQuizzes = useMemo(
+    () => EXTERNAL_QUIZZES.filter((quiz) =>
+      !term || `${quiz.title} ${quiz.category} ${quiz.description}`.toLowerCase().includes(term),
+    ),
+    [term],
   );
   const questionPapers = useMemo(() => {
     const source = posts.filter((post) => libraryType(post) === "Question Paper");
@@ -953,9 +991,30 @@ export default function LibraryPage() {
                   </div>
                 ) : <div className="mt-6"><EmptyState label="question papers matching these filters" /></div>}
               </div>
+            ) : activeTab === "quizzes" ? (
+              <div className="mt-8">
+                <section className="rounded-3xl border border-indigo-100 bg-gradient-to-br from-indigo-950 via-blue-900 to-violet-900 p-6 text-white shadow-xl sm:p-9">
+                  <p className="text-xs font-black uppercase tracking-[.22em] text-amber-300">External quiz library</p>
+                  <h2 className="mt-3 text-3xl font-black sm:text-4xl">Explore more quizzes</h2>
+                  <p className="mt-3 max-w-3xl text-sm leading-7 text-blue-100">Practice science, mathematics, sports, history, India, environment, and general knowledge through the Scholastic World quiz collection. Each quiz opens on the original publisher's website in a new tab.</p>
+                  <div className="mt-4 flex flex-wrap gap-2 text-xs font-bold text-blue-100"><span className="rounded-full bg-white/10 px-3 py-1">Student friendly</span><span className="rounded-full bg-white/10 px-3 py-1">Multiple categories</span><span className="rounded-full bg-white/10 px-3 py-1">Original source credited</span></div>
+                </section>
+                <div className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+                  {visibleExternalQuizzes.map((quiz) => (
+                    <article key={quiz.slug} className="group rounded-2xl border border-slate-200 bg-white p-5 shadow-sm transition hover:-translate-y-1 hover:border-indigo-300 hover:shadow-lg">
+                      <div className="flex items-start justify-between gap-3"><span className="rounded-full bg-indigo-50 px-3 py-1 text-[11px] font-black uppercase tracking-wider text-indigo-700">{quiz.category}</span><span className="text-xl" aria-hidden="true">✦</span></div>
+                      <h3 className="mt-4 text-xl font-black text-slate-900">{quiz.title}</h3>
+                      <p className="mt-2 min-h-12 text-sm leading-6 text-slate-600">{quiz.description}</p>
+                      <a href={`${EXTERNAL_QUIZ_ORIGIN}${quiz.slug}`} target="_blank" rel="noreferrer" className="mt-5 inline-flex items-center gap-2 rounded-xl bg-[#102d35] px-4 py-3 text-sm font-black text-white transition group-hover:bg-indigo-700">Open quiz <span aria-hidden="true">↗</span></a>
+                    </article>
+                  ))}
+                </div>
+                {!visibleExternalQuizzes.length && <div className="mt-8 rounded-2xl border border-dashed border-slate-300 bg-white p-10 text-center"><p className="font-black text-slate-800">No external quizzes match “{search}”.</p><p className="mt-2 text-sm text-slate-500">Try a topic such as science, space, sports, India, or history.</p></div>}
+                <p className="mt-6 text-center text-xs leading-5 text-slate-500">External quizzes are provided by Scholastic World. Ansar English School does not host or modify their questions.</p>
+              </div>
             ) : tabPosts.length ? (
               <div
-                className={`mt-10 grid gap-4 ${activeTab === "short-films" || activeTab === "new-arrivals" || activeTab === "winners" ? "grid-cols-2 sm:grid-cols-3 lg:grid-cols-5" : "sm:grid-cols-2 lg:grid-cols-3"}`}
+                className={`mx-auto mt-10 grid max-w-7xl gap-4 ${activeTab === "short-films" || activeTab === "new-arrivals" || activeTab === "winners" ? "grid-cols-2 sm:grid-cols-3 lg:grid-cols-5" : activeTab === "events" || activeTab === "vocabulary" || activeTab === "e-learning" || activeTab === "e-books" ? "grid-cols-2 sm:grid-cols-3 lg:grid-cols-4" : "sm:grid-cols-2 lg:grid-cols-3"}`}
               >
                 {tabPosts.map((post, index) => (
                   <ResourceCard
