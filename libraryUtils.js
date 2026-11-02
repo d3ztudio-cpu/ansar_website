@@ -172,8 +172,7 @@ export const LIBRARY_POST_TYPES = [
 ];
 
 export const QUESTION_PAPER_CATEGORIES = [
-  'Model Exam', 'Pre-Midterm', 'First Terminal', 'Second Terminal', 'Annual', 'Unit Test',
-  'Periodic Test', 'Practice Paper', 'Olympiad', 'Entrance', 'Other'
+  'Pre midterm exam', 'Midterm exam', 'Post midterm exam', 'Annual exam'
 ];
 
 export const LIBRARY_FILE_TYPES = ['PDF', 'Image', 'Google Drive document', 'Web link', 'Other'];

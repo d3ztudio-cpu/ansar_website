@@ -793,7 +793,7 @@ export default function AdminLibrary() {
             />
             <span className="mt-1 block text-xs font-medium text-slate-500">
               {post.type === "Short Film" || post.type === "Creative Corner"
-                ? "YouTube and Vimeo are embedded directly. For other links, paste the video URL or add a video cover image. The public page opens other links in a new tab."
+                ? "Paste a YouTube, Vimeo, or Google Drive video link. Google Drive files must be shared as Anyone with the link can view."
                 : "This opens the selected resource in a new tab."}
             </span>
           </label>
@@ -1385,6 +1385,14 @@ function OverviewTab({ postsByType, postCount, draftCount, postsLoading }) {
 function ProfileTab({ settingsItems, existingSettings, settingsLoading }) {
   const [settings, setSettings] = useState(DEFAULT_SETTINGS);
   const [saving, setSaving] = useState(false);
+  const parsedStaff = useMemo(() => {
+    try {
+      const value = JSON.parse(settings.staffMembers || "[]");
+      return Array.isArray(value) ? value : [];
+    } catch {
+      return [];
+    }
+  }, [settings.staffMembers]);
 
   useEffect(() => {
     if (existingSettings)
@@ -1600,10 +1608,33 @@ function ProfileTab({ settingsItems, existingSettings, settingsLoading }) {
             className={`${fieldClass} h-32 font-mono text-xs`}
           />
           <span className="mt-1 block text-xs font-medium text-slate-500">
-            Add members with name, role, qualification, contact and optional
-            imageUrl.
+            Add members with name, role, qualification and contact. Use the
+            device upload controls below for team photos.
           </span>
         </label>
+        <div className="md:col-span-2 rounded-xl border border-slate-200 bg-slate-50 p-4">
+          <p className="text-sm font-extrabold text-slate-800">Upload Library team photos</p>
+          <p className="mt-1 text-xs font-medium text-slate-500">Images are stored on the school’s primary Hostinger storage. Upload a photo, then save the library profile.</p>
+          <div className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+            {parsedStaff.map((member, index) => (
+              <div key={`${member.name || "member"}-${index}`} className="rounded-lg border border-slate-200 bg-white p-3">
+                <p className="truncate text-sm font-extrabold text-slate-900">{member.name || `Team member ${index + 1}`}</p>
+                <div className="mt-3">
+                  <LibraryMediaUploader
+                    mode="image"
+                    value={member.imageUrl || ""}
+                    folder={["library", "team"]}
+                    label={member.imageUrl ? "Replace photo from device" : "Choose photo from device"}
+                    onChange={(imageUrl) => {
+                      const nextStaff = parsedStaff.map((item, itemIndex) => itemIndex === index ? { ...item, imageUrl: imageUrl || "" } : item);
+                      setSettings((value) => ({ ...value, staffMembers: JSON.stringify(nextStaff, null, 2) }));
+                    }}
+                  />
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
       </div>
       <div className="mt-6 flex justify-end">
         <button

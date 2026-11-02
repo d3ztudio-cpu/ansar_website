@@ -64,7 +64,7 @@ const PAGE_W = 210; // A4 mm
 const PAGE_H = 297;
 const MARGIN = 16;
 const CONTENT_W = PAGE_W - MARGIN * 2;
-const HEADER_H = 32;
+const HEADER_H = 40;
 
 /** Produce report.pdfBytes + pdfBlob + filename + a download() helper. */
 export async function generateWebsitePerformanceReport(metrics, { onProgress = () => {}, download = true } = {}) {
@@ -83,22 +83,34 @@ export async function generateWebsitePerformanceReport(metrics, { onProgress = (
 
   // Header: school name, tagline, accreditation, address, contact, white branding strip
   const headerY = 0;
-  const headerContentH = 32;
+  const headerContentH = 40;
   doc.setFillColor(...BRAND.primary);
   doc.rect(0, headerY, PAGE_W, headerContentH, 'F');
   doc.setFillColor(255, 255, 255);
-  doc.roundedRect(16, 10, 22, 22, 3, 3, 'F');
+  doc.roundedRect(16, 8, 26, 24, 3, 3, 'F');
+  // Add the bundled school logo inside the header. Keep the white tile as a
+  // graceful fallback if the asset cannot be loaded in an offline export.
+  try {
+    const logoResponse = await fetch('/report-logo.png');
+    if (logoResponse.ok) {
+      const logoBlob = await logoResponse.blob();
+      const logoDataUrl = await blobToDataUrl(logoBlob);
+      doc.addImage(logoDataUrl, 'PNG', 18, 9, 22, 22, undefined, 'FAST');
+    }
+  } catch {
+    // The branded white tile remains visible when the logo is unavailable.
+  }
   // Keep the export self-contained: a relative browser URL is interpreted as
   // a filesystem path by jsPDF's Node build and can abort generation.
   doc.setTextColor(255, 255, 255);
   doc.setFont('helvetica', 'bold');
   doc.setFontSize(15);
-  doc.text(SCHOOL_INFO.name, 43, 12.5);
+  doc.text(SCHOOL_INFO.name, 48, 13);
   doc.setFont('helvetica', 'normal');
   doc.setFontSize(8);
   doc.text(`${SCHOOL_INFO.tagline} • ${SCHOOL_INFO.accreditation}`, 43, 18);
   doc.setFontSize(7.5);
-  doc.text(SCHOOL_INFO.address, 43, 22.5);
+  doc.text(SCHOOL_INFO.address, 48, 24);
   doc.text(`Tel: ${SCHOOL_INFO.phone}  •  ${SCHOOL_INFO.email}  •  ${SCHOOL_INFO.website}`, 43, 27);
 
   // Accent line under header
@@ -112,14 +124,14 @@ export async function generateWebsitePerformanceReport(metrics, { onProgress = (
   const subtitle = 'Website Performance Report';
 
   doc.setFillColor(...BRAND.bg);
-  doc.rect(0, headerContentH, PAGE_W, 10, 'F');
+  doc.rect(0, headerContentH, PAGE_W, 12, 'F');
   doc.setTextColor(...BRAND.primary);
   doc.setFont('helvetica', 'bold');
   doc.setFontSize(11);
-  doc.text(`${subtitle}`, MARGIN, headerContentH + 6.8);
+  doc.text(`${subtitle}`, MARGIN, headerContentH + 8);
   doc.setDrawColor(...BRAND.light);
   doc.setLineWidth(0.3);
-  doc.line(0, headerContentH + 10, PAGE_W, headerContentH + 10);
+  doc.line(0, headerContentH + 12, PAGE_W, headerContentH + 12);
 
   // Reporting period (top of body)
   setTextColor(doc, BRAND.muted);
@@ -137,7 +149,7 @@ export async function generateWebsitePerformanceReport(metrics, { onProgress = (
     ['Average position', displayMetric(metrics?.position)]
   ];
 
-  const startY = headerContentH + 26;
+  const startY = headerContentH + 31;
   setTextColor(doc, BRAND.text);
   doc.setFont('helvetica', 'bold');
   doc.setFontSize(12);
@@ -168,15 +180,16 @@ export async function generateWebsitePerformanceReport(metrics, { onProgress = (
   };
 
   rows.forEach(([label, value], index) => {
-    y = ensureSpace(doc, 8, y, pageHeader);
+    y = ensureSpace(doc, 10, y, pageHeader);
     drawTableRow(index, label, value, y);
-    y += 7;
+    y += 9;
   });
+  y += 5;
 
   // ----- Performance highlights (top pages) -----
   const pages = (metrics?.pages || []).slice(0, 5);
   if (pages.length) {
-    y = ensureSpace(doc, 8, y, pageHeader);
+    y = ensureSpace(doc, 18, y, pageHeader);
     doc.setFont('helvetica', 'bold');
     doc.setFontSize(12);
     doc.text('Performance highlights', MARGIN, y);
@@ -191,9 +204,36 @@ export async function generateWebsitePerformanceReport(metrics, { onProgress = (
     });
     topPages.forEach((line) => {
       doc.text(line, MARGIN, y);
-      y += 7;
+      const wrapped = wrapText(doc, line, CONTENT_W);
+      wrapped.forEach((wrappedLine) => {
+        doc.text(wrappedLine, MARGIN, y);
+        y += 4.8;
+      });
+      y += 1.5;
     });
   }
+
+  // ----- Interpretation and methodology -----
+  y += 4;
+  y = ensureSpace(doc, 35, y, pageHeader);
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(12);
+  setTextColor(doc, BRAND.text);
+  doc.text('What these numbers mean', MARGIN, y);
+  y += 6;
+  doc.setFont('helvetica', 'normal');
+  doc.setFontSize(8.8);
+  setTextColor(doc, BRAND.muted);
+  const explanation = [
+    'Users are the estimated number of distinct visitors who accessed the website during the reporting period. Sessions count visits, while page views count the total number of pages loaded during those visits.',
+    'Search clicks and impressions describe visibility in Google Search. Click-through rate (CTR) is the percentage of impressions that produced a click. Average position is the mean position of the site in reported Search results; a lower number generally indicates stronger ranking.',
+    'The performance highlights list the pages with the highest recorded page-view volume. These pages can help the school understand which services, resources, and activities attract the greatest visitor interest.',
+  ];
+  explanation.forEach((paragraph) => {
+    const lines = wrapText(doc, paragraph, CONTENT_W);
+    lines.forEach((line) => { doc.text(line, MARGIN, y); y += 4.2; });
+    y += 2.5;
+  });
 
   // ----- Closing note -----
   y = ensureSpace(doc, 12, y, pageHeader);
@@ -204,7 +244,7 @@ export async function generateWebsitePerformanceReport(metrics, { onProgress = (
   setTextColor(doc, BRAND.muted);
   doc.setFont('helvetica', 'normal');
   doc.setFontSize(8.5);
-  const note = `This website performance report was generated automatically from the live Search Console and Google Analytics data requested through the protected Firebase reporting service. No credentials or bridge URL are stored in the browser.`;
+  const note = `This report was generated automatically for ${SCHOOL_INFO.name} from the selected Google Search Console and Google Analytics reporting period. The figures are intended for trend review and management planning; small differences may occur because each platform applies its own privacy thresholds, attribution rules, sampling, and data-processing delays. No Google credentials or bridge URL are stored in the browser.`;
   const noteLines = wrapText(doc, note, CONTENT_W);
   noteLines.forEach((line) => {
     doc.text(line, MARGIN, y + 3);
@@ -273,3 +313,11 @@ function wrapText(doc, text, widthMm) {
 function setTextColor(doc, rgb) { doc.setTextColor(rgb[0], rgb[1], rgb[2]); }
 function setFillColor(doc, rgb) { doc.setFillColor(rgb[0], rgb[1], rgb[2]); }
 function setDrawColor(doc, rgb) { doc.setDrawColor(rgb[0], rgb[1], rgb[2]); }
+function blobToDataUrl(blob) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onloadend = () => resolve(reader.result);
+    reader.onerror = reject;
+    reader.readAsDataURL(blob);
+  });
+}

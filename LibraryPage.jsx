@@ -24,7 +24,7 @@ const DEFAULT_LIBRARY = {
   contactEmail: "",
 };
 const LIBRARY_PROFILE =
-  "Every library is the heart of an institution. The library provides the right information at the right time to the right person through books, dictionaries, encyclopedias, journals, magazines, newspapers and other e-resources. Ansar English School has 35,486 printed documents, subscribes to 14 magazines and six newspapers in English, Malayalam and other languages. Students and staff can access e-resources, and the library is a member of the National Digital Library of India. Our library is automated with KOHA software for barcode technology, circulation, acquisition, serial control and report generation.";
+  "Every library is the heart of an institution. The library provides the right information at the right time to the right person through books, dictionaries, encyclopedias, journals, magazines, newspapers and other e-resources. Ansar English School has 36,132 printed documents, subscribes to 14 magazines and six newspapers in English, Malayalam and other languages. Students and staff can access e-resources, and the library is a member of the National Digital Library of India. Our library is automated with KOHA software for barcode technology, circulation, acquisition, serial control and report generation.";
 const LIBRARY_RULES = [
   "All students and staff of the school are members of the library.",
   "A student can borrow one book at a time for a period of one week.",
@@ -153,7 +153,8 @@ function videoPreview(url, imageUrl) {
 }
 function youtubeEmbedUrl(url) {
   const id = String(url || "").match(YOUTUBE_ID)?.[1];
-  return id ? `https://www.youtube.com/embed/${id}` : "";
+  if (id) return `https://www.youtube.com/embed/${id}`;
+  return googleDriveEmbedUrl(url);
 }
 function imageUrl(value) {
   if (!value) return "";
@@ -230,8 +231,15 @@ function displayDate(value) {
 }
 function drivePreviewUrl(value) {
   const url = String(value || "");
-  const match = url.match(/drive\.google\.com\/file\/d\/([^/]+)/i);
-  return match ? `https://drive.google.com/file/d/${match[1]}/preview` : url;
+  const fileMatch = url.match(/drive\.google\.com\/file\/d\/([^/]+)/i);
+  if (fileMatch) return `https://drive.google.com/file/d/${fileMatch[1]}/preview`;
+  const openMatch = url.match(/[?&]id=([^&#]+)/i);
+  if (openMatch && /drive\.google\.com/i.test(url)) return `https://drive.google.com/file/d/${openMatch[1]}/preview`;
+  return url;
+}
+function googleDriveEmbedUrl(url) {
+  const normalized = drivePreviewUrl(url);
+  return /drive\.google\.com\/file\/d\/[^/]+\/preview/i.test(normalized) ? normalized : "";
 }
 function factDateSearchText(value) {
   const raw = String(value || "").trim();
@@ -283,6 +291,7 @@ function ResourceCard({ post, film = false, onOpenArticle, bookMode = false, arr
   const destination = post.linkUrl || post.fileUrl;
   const isClipping = libraryType(post) === "Clipping";
   const isCreative = libraryType(post) === "Creative Corner";
+  const embeddedVideo = isCreative ? googleDriveEmbedUrl(post.linkUrl) || youtubeEmbedUrl(post.linkUrl) : "";
   const isBook = bookMode || libraryType(post) === "E-Book";
   const shouldOpenArticle = forceArticle || isClipping || isBook || isCreative;
   const Card = destination && !shouldOpenArticle ? "a" : "article";
@@ -296,9 +305,17 @@ function ResourceCard({ post, film = false, onOpenArticle, bookMode = false, arr
       className="group flex min-w-0 flex-col overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm transition duration-300 hover:-translate-y-1 hover:border-emerald-200 hover:shadow-xl"
     >
       <div
-        className={`relative ${film ? "aspect-video" : arrivalMode ? "" : featureMode ? "aspect-[4/5]" : "aspect-[4/5]"} overflow-hidden bg-slate-100`}
+        className={`relative ${film || isCreative ? "aspect-video" : arrivalMode ? "" : featureMode ? "aspect-[4/5]" : "aspect-[4/5]"} overflow-hidden bg-slate-100`}
       >
-        {image ? (
+        {embeddedVideo ? (
+          <iframe
+            title={`Watch ${post.title || "Creative Corner video"}`}
+            src={embeddedVideo}
+            className="h-full w-full"
+            allow="autoplay; encrypted-media; picture-in-picture"
+            allowFullScreen
+          />
+        ) : image ? (
           <img
             src={image}
             alt=""
@@ -324,7 +341,7 @@ function ResourceCard({ post, film = false, onOpenArticle, bookMode = false, arr
           {film ? "Short Film" : libraryType(post)}
         </span>
       </div>
-      <div className={`flex flex-1 flex-col ${arrivalMode ? "p-3" : "p-5"}`}>
+      <div className={`flex flex-1 flex-col ${arrivalMode || isCreative ? "p-3" : "p-5"}`}>
         {post.date && (
           <p className="text-xs font-bold text-slate-400">
             {displayDate(post.date)}
@@ -336,7 +353,7 @@ function ResourceCard({ post, film = false, onOpenArticle, bookMode = false, arr
           </p>
         )}
         {isBook && <p className="mt-2 text-xs font-black uppercase tracking-widest text-emerald-700">Book no. {post.bookNumber || fallbackBookNumber || "Not assigned"}</p>}
-        <h3 className={`mt-2 line-clamp-2 font-extrabold leading-snug text-slate-900 transition group-hover:text-emerald-700 ${arrivalMode ? "text-sm" : "text-lg"}`}>
+        <h3 className={`mt-2 line-clamp-2 font-extrabold leading-snug text-slate-900 transition group-hover:text-emerald-700 ${arrivalMode || isCreative ? "text-sm" : "text-lg"}`}>
           {post.title}
         </h3>
         {post.summary && (
@@ -958,7 +975,7 @@ export default function LibraryPage() {
                 {[['Student voices', creativeStudents], ['Staff voices', creativeStaff]].map(([heading, entries]) => (
                   <section key={heading}>
                     <div className="flex items-end justify-between gap-4"><div><p className="text-sm font-black uppercase tracking-widest text-fuchsia-700">Creative Corner</p><h2 className="mt-2 text-3xl font-extrabold text-emerald-950">{heading}</h2></div><span className="rounded-full bg-fuchsia-100 px-3 py-1 text-xs font-black text-fuchsia-700">{entries.length} {entries.length === 1 ? 'entry' : 'entries'}</span></div>
-                    {entries.length ? <div className="mt-6 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">{entries.map((entry) => <ResourceCard key={entry.id} post={{...entry, type: 'Creative Corner'}} onOpenArticle={setSelectedArticle} />)}</div> : <div className="mt-6"><EmptyState label={heading.toLowerCase()} /></div>}
+                    {entries.length ? <div className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">{entries.map((entry) => <ResourceCard key={entry.id} post={{...entry, type: 'Creative Corner'}} onOpenArticle={setSelectedArticle} />)}</div> : <div className="mt-6"><EmptyState label={heading.toLowerCase()} /></div>}
                   </section>
                 ))}
               </div>

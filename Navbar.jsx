@@ -24,9 +24,19 @@ export default function Navbar() {
   // bundled tightly-cropped logo is shown so it always renders large enough.
   const customLogoUrl = "";
   const scrollToFooter = () => {
-    document
-      .getElementById("site-footer")
-      ?.scrollIntoView({ behavior: "smooth", block: "start" });
+    const scrollToEnd = () => {
+      const documentHeight = Math.max(
+        document.body.scrollHeight,
+        document.documentElement.scrollHeight,
+      );
+      window.scrollTo({ top: Math.max(0, documentHeight - window.innerHeight), behavior: "auto" });
+    };
+    scrollToEnd();
+    // Recalculate while images/content finish laying out so the footer remains
+    // the final position even when the page height changes after the click.
+    window.setTimeout(scrollToEnd, 100);
+    window.setTimeout(scrollToEnd, 400);
+    window.setTimeout(scrollToEnd, 800);
     setIsMoreOpen(false);
     setIsOpen(false);
   };
