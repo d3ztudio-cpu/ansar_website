@@ -104,6 +104,25 @@ const MAX_IMAGE_PIXELS = 1600; // longest side after downscale
  * @returns {Promise<{dataUrl:string,w:number,h:number}|null>} dimensions in px
  */
 async function fetchAsDataUrl(url, timeoutMs = IMAGE_FETCH_TIMEOUT_MS) {
+  const candidates = [url];
+  // Some upload hosts allow an <img> tag to display an image but do not send
+  // CORS headers, which prevents the browser from reading the bytes for a PDF.
+  // weserv.nl is used only as a fallback image fetcher in that case.
+  try {
+    const parsed = new URL(url, window.location.href);
+    if (parsed.protocol === 'http:' || parsed.protocol === 'https:') {
+      candidates.push(`https://images.weserv.nl/?url=${encodeURIComponent(parsed.href)}`);
+    }
+  } catch { /* keep the original candidate */ }
+
+  for (const candidate of candidates) {
+    const photo = await fetchImageCandidate(candidate, timeoutMs);
+    if (photo) return photo;
+  }
+  return null;
+}
+
+async function fetchImageCandidate(url, timeoutMs) {
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), timeoutMs);
   try {
@@ -597,11 +616,13 @@ export async function generateEventReport(report, logoDataUrl, opts = {}) {
 
   // Fetch images (max N, sequential with progress)
   const imageUrls = report.images.slice(0, MAX_IMAGES_PER_REPORT);
+  // Keep each result aligned with its source URL. The renderer uses this
+  // positional relationship when laying out the photo captions.
   const imageDataUrls = [];
   for (let i = 0; i < imageUrls.length; i++) {
     onProgress(10 + Math.round((i / Math.max(1, imageUrls.length)) * 50), `Fetching photo ${i + 1} of ${imageUrls.length}…`);
     const photo = await fetchAsDataUrl(imageUrls[i]);
-    if (photo) imageDataUrls.push(photo);
+    imageDataUrls.push(photo);
   }
 
   onProgress(70, 'Building PDF…');

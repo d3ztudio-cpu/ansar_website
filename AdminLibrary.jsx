@@ -90,6 +90,7 @@ const EMPTY_POST = {
   bookStatus: "EXISTING",
   venue: "",
   published: true,
+  contributorType: "Student",
 };
 
 const LEGACY_LIBRARY_HOST =
@@ -563,7 +564,7 @@ export default function AdminLibrary() {
               Section
               <input required value={post.category} onChange={(e) => setPost((value) => ({ ...value, category: e.target.value }))} placeholder="English, Art, Reading…" className={fieldClass} />
             </label>
-            {post.contributorType === "Student" && <label className="text-sm font-bold text-slate-700">Class &amp; division<input required value={post.className} onChange={(e) => setPost((value) => ({ ...value, className: e.target.value }))} placeholder="VII A" className={fieldClass} /></label>}
+            {post.contributorType === "Student" && <label className="text-sm font-bold text-slate-700">Class &amp; division<input required value={post.className} onChange={(e) => setPost((value) => ({ ...value, className: e.target.value }))} placeholder="VII A" className={fieldClass} /><span className="mt-1 block text-xs font-medium text-slate-500">Enter the student’s class and division, for example VII A.</span></label>}
           </>
         )}
         <label className="text-sm font-bold text-slate-700 md:col-span-2">

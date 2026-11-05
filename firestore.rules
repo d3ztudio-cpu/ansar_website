@@ -834,6 +834,19 @@ service cloud.firestore {
       allow read, create, update, delete: if isAdmin();
     }
 
+    // Public visitor counter. Clients may only increment the single counter;
+    // reads remain public so the footer can stay live with onSnapshot().
+    match /siteMetrics/{metricId} {
+      allow read: if metricId == 'visitorCounter';
+      allow create: if metricId == 'visitorCounter'
+        && request.resource.data.keys().hasOnly(['totalVisitors'])
+        && request.resource.data.totalVisitors == 1;
+      allow update: if metricId == 'visitorCounter'
+        && request.resource.data.keys().hasOnly(['totalVisitors'])
+        && request.resource.data.totalVisitors == resource.data.totalVisitors + 1;
+      allow delete: if isAdmin();
+    }
+
     match /seoPages/{pageId} {
       // SEO values are displayed in public page metadata; only edits are private.
       allow read: if true;

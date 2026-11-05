@@ -1,13 +1,29 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import Navbar from './Navbar';
 import Footer from './Footer';
 import FloatingSocials from './FloatingSocials';
 import InstallPrompt from './InstallPrompt';
 import { useLocation } from 'react-router-dom';
 import LibraryContactSection from './LibraryContactSection';
+import { doc, increment, setDoc } from 'firebase/firestore';
+import { db } from './firebase-init';
 
 export default function Layout({ children, isHome = false, fullWidth = false }) {
   const location = useLocation();
+
+  useEffect(() => {
+    const counterRef = doc(db, 'siteMetrics', 'visitorCounter');
+    try {
+      if (window.sessionStorage.getItem('aes-visitor-counted') === '1') return;
+      window.sessionStorage.setItem('aes-visitor-counted', '1');
+      setDoc(counterRef, { totalVisitors: increment(1) }, { merge: true }).catch(() => {
+        window.sessionStorage.removeItem('aes-visitor-counted');
+      });
+    } catch {
+      setDoc(counterRef, { totalVisitors: increment(1) }, { merge: true }).catch(() => {});
+    }
+  }, []);
+
   return (
     <div className="min-h-screen w-full max-w-full flex flex-col bg-[#ffffff] text-[#0f172a] font-sans selection:bg-emerald-600 selection:text-white">
       <Navbar />

@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { doc, getDoc, serverTimestamp, setDoc } from 'firebase/firestore';
+import { doc, getDoc, onSnapshot, serverTimestamp, setDoc } from 'firebase/firestore';
 import { db } from './firebase-init';
 import { generateWebsitePerformanceReport } from './AdminReportGenerator';
 import { auth, GoogleAuthProvider, signInWithPopup } from './firebase-auth';
@@ -35,6 +35,7 @@ function BarList({ rows, label = 'name', value = 'value', empty = 'No data has b
 
 export default function AdminAnalytics() {
   const [tab, setTab] = useState('overview'); const [range, setRange] = useState('month');
+  const [totalVisitors, setTotalVisitors] = useState(null);
   const [customStart, setCustomStart] = useState(iso(new Date(new Date().setMonth(new Date().getMonth() - 1)))); const [customEnd, setCustomEnd] = useState(iso(new Date()));
   const [metrics, setMetrics] = useState(emptyMetrics); const [status, setStatus] = useState('Loading analytics configuration…'); const [busy, setBusy] = useState(false);
   const [seoPath, setSeoPath] = useState('/'); const [seo, setSeo] = useState(SEO_DEFAULT); const [reportMessage, setReportMessage] = useState(''); const [googleToken, setGoogleToken] = useState(readAnalyticsToken);
@@ -53,6 +54,10 @@ export default function AdminAnalytics() {
     } catch (error) { if (/invalid authentication credentials|unauthenticated|invalid credentials/i.test(error.message || '')) { clearAnalyticsToken(); setGoogleToken(''); } setMetrics(emptyMetrics); setStatus(`Analytics could not be loaded: ${error.message}`); } finally { setBusy(false); }
   };
   useEffect(() => { load(); }, [period.start, period.end, googleToken]);
+  useEffect(() => onSnapshot(doc(db, 'siteMetrics', 'visitorCounter'), (snapshot) => {
+    const value = snapshot.data()?.totalVisitors;
+    if (typeof value === 'number') setTotalVisitors(value);
+  }), []);
   useEffect(() => { (async () => { const saved = await getDoc(doc(db, 'seoPages', encodeURIComponent(seoPath))); setSeo(saved.exists() ? { ...SEO_DEFAULT, ...saved.data() } : { ...SEO_DEFAULT, canonical: `https://ansarschool.in${seoPath}` }); })(); }, [seoPath]);
 
   const saveSeo = async () => { setBusy(true); try { await setDoc(doc(db, 'seoPages', encodeURIComponent(seoPath)), { ...seo, path: seoPath, updatedAt: serverTimestamp() }, { merge: true }); setReportMessage('SEO published. The public-page metadata updates immediately; refresh that page to verify it.'); } catch (e) { setReportMessage(`Could not save SEO settings: ${e.message}`); } finally { setBusy(false); } };    const report = async (download = false) => {
@@ -71,7 +76,7 @@ export default function AdminAnalytics() {
     } catch (error) { setReportMessage(`Could not generate the report: ${error.message}`); }
     finally { setBusy(false); }
   };
-  const cards = [['Users', metrics.users], ['Sessions', metrics.sessions], ['Page views', metrics.pageViews], ['Search clicks', metrics.clicks], ['Impressions', metrics.impressions], ['CTR', metrics.ctr, '%'], ['Avg. position', metrics.position], ['Engagement', metrics.engagementRate, '%']];
+  const cards = [['Total visitors', totalVisitors], ['Users', metrics.users], ['Sessions', metrics.sessions], ['Page views', metrics.pageViews], ['Search clicks', metrics.clicks], ['Impressions', metrics.impressions], ['CTR', metrics.ctr, '%'], ['Avg. position', metrics.position], ['Engagement', metrics.engagementRate, '%']];
   const tabs = [['overview','Overview'], ['analytics','Analytics'], ['search','Search Performance'], ['pages','Top Pages'], ['seo','SEO Management'], ['performance','SEO Performance'], ['reports','Reports']];
   return <div className="space-y-6"><div className="rounded-2xl bg-gradient-to-br from-emerald-950 to-emerald-700 p-6 text-white shadow-lg"><div className="flex flex-col justify-between gap-5 lg:flex-row lg:items-end"><div><p className="text-sm font-bold uppercase tracking-widest text-emerald-200">Website intelligence</p><h2 className="mt-1 text-3xl font-black">Analytics & SEO Centre</h2><p className="mt-2 max-w-2xl text-sm text-emerald-100">Google Analytics and Search Console data is displayed only when returned by your secure server-side bridge.</p></div><div className="flex flex-wrap gap-2"><select value={range} onChange={e => setRange(e.target.value)} className="rounded-lg border-0 bg-white px-3 py-2 text-sm font-bold text-slate-800">{RANGE_OPTIONS.map(([v,l]) => <option key={v} value={v}>{l}</option>)}</select>{range === 'custom' && <><input type="date" value={customStart} onChange={e => setCustomStart(e.target.value)} className="rounded-lg px-2 py-2 text-sm text-slate-800" /><input type="date" value={customEnd} onChange={e => setCustomEnd(e.target.value)} className="rounded-lg px-2 py-2 text-sm text-slate-800" /></>}<button onClick={load} disabled={busy} className="rounded-lg bg-amber-300 px-4 py-2 text-sm font-black text-emerald-950">{busy ? 'Loading…' : 'Refresh'}</button></div></div></div>
     <div className="flex gap-2 overflow-x-auto pb-1">{tabs.map(([id,label]) => <button key={id} onClick={() => setTab(id)} className={`whitespace-nowrap rounded-lg px-4 py-2 text-sm font-bold ${tab === id ? 'bg-emerald-600 text-white' : 'bg-white text-slate-600 ring-1 ring-slate-200'}`}>{label}</button>)}</div>
