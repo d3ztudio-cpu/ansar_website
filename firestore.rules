@@ -577,6 +577,12 @@ service cloud.firestore {
       allow delete: if isAdmin();
     }
 
+    match /counselingTeam/{memberId} {
+      allow read: if true;
+      allow create, update: if isVerifiedAdmin();
+      allow delete: if isAdmin();
+    }
+
     // Library page configuration contains public, non-sensitive display content only.
     match /librarySettings/{settingId} {
       allow read: if true;

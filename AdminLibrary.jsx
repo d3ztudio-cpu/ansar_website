@@ -553,7 +553,7 @@ export default function AdminLibrary() {
             <label className="text-sm font-bold text-slate-700">
               Contributor type
               <select value={post.contributorType} onChange={(e) => setPost((value) => ({ ...value, contributorType: e.target.value }))} className={fieldClass}>
-                <option>Student</option><option>Staff</option>
+                <option>Student</option><option>Staff</option><option>Parents</option>
               </select>
             </label>
             <label className="text-sm font-bold text-slate-700">
@@ -1126,7 +1126,7 @@ export default function AdminLibrary() {
     ),
     "creative-corner": (
       <PostSectionTab
-        intro="Publish student and staff book reviews, writing, artwork and creative projects. Add an optional image and YouTube URL for the article preview."
+        intro="Publish student, staff, and parent book reviews, writing, artwork and creative projects. Add an optional image and YouTube URL for the article preview."
         types={SECTION_TYPES["creative-corner"]}
         typeOptions={SECTION_TYPES["creative-corner"]}
         form={postForm(null, { creativeCorner: true, showLink: true, hideExtraFields: true, showDescription: false, formTitle: "a Creative Corner entry", formHint: "Required: title, name, date, section and class & division for students. Image and YouTube URL are optional." })}

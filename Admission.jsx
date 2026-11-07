@@ -8,6 +8,7 @@ import { useSettings } from './SettingsContext';
 const DEFAULT_FEE_STRUCTURE_URL = 'https://drive.google.com/file/d/1BlRQIlD4U4RjRGvVIq2Kah4xYxNjChoa/view?usp=drive_link';
 const DEFAULT_FEE_STRUCTURE_TITLE = 'Fee Structure 2026 - 2027';
 const FEE_PAYMENT_PORTAL_URL = 'https://ansartrust.atcampussolutions.com/school/';
+const FEE_PAYMENT_TUTORIAL_URL = 'https://www.youtube.com/embed/dwqhwvvNIvI';
 
 const ADMISSION_FAQS = [
   {
@@ -204,6 +205,32 @@ export default function Admission() {
   const settings = useSettings();
   const feeStructureUrl = settings?.feeStructurePdfUrl?.trim() || DEFAULT_FEE_STRUCTURE_URL;
   const feeStructureTitle = settings?.feeStructureTitle?.trim() || DEFAULT_FEE_STRUCTURE_TITLE;
+  const [isFeePaymentModalOpen, setIsFeePaymentModalOpen] = useState(false);
+  const [isTutorialOpen, setIsTutorialOpen] = useState(false);
+
+  React.useEffect(() => {
+    if (!isFeePaymentModalOpen) return undefined;
+    const handleKeyDown = (event) => {
+      if (event.key === 'Escape') setIsFeePaymentModalOpen(false);
+    };
+    document.addEventListener('keydown', handleKeyDown);
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    return () => {
+      document.removeEventListener('keydown', handleKeyDown);
+      document.body.style.overflow = previousOverflow;
+    };
+  }, [isFeePaymentModalOpen]);
+
+  const closeFeePaymentModal = () => {
+    setIsFeePaymentModalOpen(false);
+    setIsTutorialOpen(false);
+  };
+
+  const openGooglePay = () => {
+    window.location.href = 'tez://upi/pay';
+    closeFeePaymentModal();
+  };
 
   const handlePdfDownload = (url) => {
     if (!url) return;
@@ -276,10 +303,9 @@ export default function Admission() {
               <p className="mt-3 text-sm leading-relaxed text-slate-600">Our team guides every family through eligibility, assessment, documentation, and enrollment — a confident first step toward a bright future.</p>
             </div>
             <div className="grid gap-3 sm:grid-cols-3 lg:min-w-0 lg:flex-1">
-              <a
-                href={FEE_PAYMENT_PORTAL_URL}
-                target="_blank"
-                rel="noopener noreferrer"
+              <button
+                type="button"
+                onClick={() => setIsFeePaymentModalOpen(true)}
                 className="group flex h-full flex-col gap-2 rounded-xl border border-slate-100 border-t-4 border-t-amber-500 bg-white p-4 text-left shadow-sm transition-all hover:-translate-y-0.5 hover:border-amber-300 hover:bg-amber-50 hover:shadow-md"
               >
                 <span className="flex h-9 w-9 items-center justify-center rounded-full bg-amber-100 text-amber-700 transition-colors group-hover:bg-amber-600 group-hover:text-white">
@@ -289,7 +315,7 @@ export default function Admission() {
                 </span>
                 <span className="text-xs font-black uppercase tracking-wider text-slate-400">Online Payments</span>
                 <span className="whitespace-nowrap text-sm font-extrabold leading-5 tracking-tight text-slate-900">Fee Payment</span>
-              </a>
+              </button>
               <Link
                 to="/contact"
                 className="group flex h-full flex-col gap-2 rounded-xl border border-slate-100 border-t-4 border-t-emerald-500 bg-white p-4 text-left shadow-sm transition-all hover:-translate-y-0.5 hover:border-emerald-300 hover:bg-emerald-50 hover:shadow-md"
@@ -320,6 +346,101 @@ export default function Admission() {
             </div>
           </div>
         </section>
+
+        {isFeePaymentModalOpen && (
+          <div
+            className="fixed inset-0 z-[100] flex items-center justify-center overflow-y-auto bg-slate-950/60 p-4 backdrop-blur-sm"
+            role="presentation"
+            onMouseDown={(event) => {
+              if (event.target === event.currentTarget) closeFeePaymentModal();
+            }}
+          >
+            <div
+              role="dialog"
+              aria-modal="true"
+              aria-labelledby="fee-payment-modal-title"
+              className="w-full max-w-2xl overflow-hidden rounded-3xl border border-white/70 bg-white shadow-2xl"
+            >
+              <div className="flex items-start justify-between gap-4 bg-gradient-to-br from-emerald-950 to-emerald-800 px-6 py-5 text-white sm:px-8">
+                <div>
+                  <p className="text-xs font-black uppercase tracking-[0.2em] text-emerald-200">Online Payments</p>
+                  <h2 id="fee-payment-modal-title" className="mt-1 text-2xl font-black">Online Fee Payment</h2>
+                </div>
+                <div className="flex flex-col items-center gap-1.5">
+                  <span className="text-[10px] font-black uppercase tracking-wider text-emerald-100">Tutorial video</span>
+                  <button
+                    type="button"
+                    aria-label="Open fee payment tutorial video"
+                    aria-expanded={isTutorialOpen}
+                    onClick={() => setIsTutorialOpen((open) => !open)}
+                    className="flex h-9 w-9 flex-none items-center justify-center rounded-full border border-white/30 text-lg font-bold transition-colors hover:bg-white/15"
+                  >
+                    ℹ
+                  </button>
+                </div>
+              </div>
+
+              <div className="max-h-[85vh] space-y-3 overflow-y-auto p-6 sm:p-8">
+                {isTutorialOpen && (
+                  <div className="mb-5 overflow-hidden rounded-2xl border border-slate-200 bg-slate-50">
+                    <div className="aspect-[9/16] max-h-[420px] w-full sm:aspect-video">
+                      <iframe
+                        className="h-full w-full"
+                        src={FEE_PAYMENT_TUTORIAL_URL}
+                        title="How to make an online fee payment"
+                        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                        allowFullScreen
+                      />
+                    </div>
+                  </div>
+                )}
+                <div className="mb-5 rounded-2xl border border-amber-200 bg-amber-50 p-5 text-sm leading-6 text-slate-700 sm:p-6">
+                  <h3 className="text-base font-black text-slate-900">Online Fee Payment Guidelines</h3>
+                  <p className="mt-2">Those who wish to pay school fees online can choose any of the following methods. This will make paying fees easier and help avoid delays and confusion in receipt generation.</p>
+                  <h4 className="mt-4 font-black text-slate-900">(1) BBPS (Google Pay / PhonePe / Paytm)</h4>
+                  <ul className="mt-2 list-disc space-y-1 pl-5">
+                    <li>Search &amp; find: <strong>Ansar English School, Thrissur</strong></li>
+                    <li>Enter Admission No. &amp; Mobile Number as in the school profile</li>
+                    <li>Select Fee Type: Due till date</li>
+                  </ul>
+                  <h4 className="mt-4 font-black text-slate-900">(2) School Software</h4>
+                  <p className="mt-2">Log in through the Parent Login link using the student&apos;s <strong>Admission Number</strong> and <strong>Date of Birth</strong> to pay the fees.</p>
+                  <h4 className="mt-4 font-black text-slate-900">Important Notes</h4>
+                  <ul className="mt-2 list-disc space-y-1 pl-5">
+                    <li>Those who pay fees using any of the above methods do not need to send details via WhatsApp.</li>
+                    <li>Fees should not be paid directly into the school&apos;s bank account.</li>
+                  </ul>
+                  <div className="mt-6 border-t border-amber-200 pt-5" lang="ml">
+                    <h4 className="mt-3 font-black text-slate-900">ഓൺലൈൻ ഫീസ് അടവ് (Online Fee Payment)</h4>
+                    <p className="mt-2">സ്കൂൾ ഫീസ് ഓൺലൈനിൽ അടക്കാനാഗ്രഹിക്കുന്നവർക്ക് താഴെ പറയുന്ന ഏതെങ്കിലും ഒരു രീതി സ്വീകരിക്കാവുന്നതാണ്. ഫീസ് അടക്കുന്നത് കൂടുതൽ എളുപ്പമാകുന്നതിനും ഫീസ് വരവ് വെക്കുന്നതിലെ കാലതാമസവും ആശയക്കുഴപ്പങ്ങളും ഒഴിവാക്കുന്നതിനും ഇത് കൂടുതൽ സഹായകമാവും.</p>
+                    <h4 className="mt-4 font-black text-slate-900">(1) BBPS (Google Pay / PhonePe / Paytm)</h4>
+                    <ul className="mt-2 list-disc space-y-1 pl-5">
+                      <li>Search &amp; Find: <strong>Ansar English School, Thrissur</strong></li>
+                      <li>Admission No. &amp; Mob. Number (As in the school profile)</li>
+                      <li>Fee Type (Due till date)</li>
+                    </ul>
+                    <h4 className="mt-4 font-black text-slate-900">(2) School Software</h4>
+                    <p className="mt-2"><a href={FEE_PAYMENT_PORTAL_URL} target="_blank" rel="noopener noreferrer" className="font-bold text-emerald-700 underline">ഈ Parent Login ലിങ്കിൽ</a> കുട്ടിയുടെ അഡ്മിഷൻ നമ്പർ, ജനന തീയതി എന്നിവ ഉപയോഗിച്ച് പേരന്റ് ലോഗിൻ ചെയ്യാവുന്നതും ഫീസ് അടയ്ക്കാവുന്നതുമാണ്.</p>
+                    <h4 className="mt-4 font-black text-slate-900">പ്രത്യേക ശ്രദ്ധയ്ക്ക്</h4>
+                    <ul className="mt-2 list-disc space-y-1 pl-5">
+                      <li>മേൽ പറഞ്ഞ ഏതെങ്കിലും രീതിയിൽ ഫീസ് അടക്കുന്നവർ അതുസംബന്ധമായ വിവരങ്ങൾ വാട്സ്ആപ്പ് ചെയ്യേണ്ടതില്ല.</li>
+                      <li>സ്കൂൾ ബാങ്ക് അക്കൗണ്ടിലേക്ക് നേരിട്ട് ഫീസ് അടയ്ക്കേണ്ടതില്ല.</li>
+                    </ul>
+                  </div>
+                </div>
+                <button type="button" onClick={openGooglePay} className="flex w-full items-center justify-between rounded-2xl bg-emerald-600 px-5 py-4 text-left font-extrabold text-white shadow-md transition-colors hover:bg-emerald-700">
+                  <span><span className="block text-base">Open Google Pay</span><span className="mt-0.5 block text-xs font-medium text-emerald-100">Launch the Google Pay app</span></span>
+                  <span aria-hidden="true" className="text-xl">→</span>
+                </button>
+                <a href={FEE_PAYMENT_PORTAL_URL} target="_blank" rel="noopener noreferrer" className="flex w-full items-center justify-between rounded-2xl border border-slate-200 bg-slate-50 px-5 py-4 text-left font-extrabold text-slate-900 transition-colors hover:border-emerald-300 hover:bg-emerald-50">
+                  <span><span className="block text-base">Go to Fee Portal</span><span className="mt-0.5 block text-xs font-medium text-slate-500">Open the school payment portal</span></span>
+                  <span aria-hidden="true" className="text-xl text-emerald-600">↗</span>
+                </a>
+                <button type="button" onClick={closeFeePaymentModal} className="w-full rounded-2xl px-5 py-3 text-sm font-bold text-slate-500 transition-colors hover:bg-slate-100 hover:text-slate-900">Cancel / Close</button>
+              </div>
+            </div>
+          </div>
+        )}
 
         {page?.bodyHtml && (
           <section className="mb-16 rounded-3xl border border-slate-100 bg-white p-8 shadow-sm sm:p-10">

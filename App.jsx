@@ -111,6 +111,7 @@ const AdminQuizCorner = lazy(() => import("./AdminQuizCorner"));
 const AdminStaffExams = lazy(() => import("./AdminStaffExams"));
 const AdminAnalytics = lazy(() => import("./AdminAnalytics"));
 const AdminForms = lazy(() => import("./AdminForms"));
+const AdminCounseling = lazy(() => import("./AdminCounseling"));
 const DeveloperOptions = lazy(() => import("./DeveloperOptions"));
 
 const BOOT_SPLASH_ID = "boot-splash";
@@ -2679,6 +2680,7 @@ export default function App() {
                             <Route path="/forms" element={<AdminForms />} />
                             <Route path="/gallery" element={<AdminGallery />} />
                             <Route path="/notices" element={<AdminNotices />} />
+                            <Route path="/counseling" element={<AdminCounseling />} />
                             <Route
                               path="/settings"
                               element={<AdminSettings />}

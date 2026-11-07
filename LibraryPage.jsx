@@ -596,6 +596,7 @@ export default function LibraryPage() {
   const creativeEntries = useMemo(() => posts.filter((post) => libraryType(post) === "Creative Corner" && post.published !== false), [posts]);
   const creativeStudents = creativeEntries.filter((post) => String(post.contributorType || post.category || "Student").toLowerCase() === "student");
   const creativeStaff = creativeEntries.filter((post) => String(post.contributorType || post.category || "Staff").toLowerCase() === "staff");
+  const creativeParents = creativeEntries.filter((post) => String(post.contributorType || "").toLowerCase() === "parents" || String(post.contributorType || "").toLowerCase() === "parent");
   return (
     <Layout fullWidth>
       <main className="min-h-screen bg-[#f7faf8] text-slate-900">
@@ -977,7 +978,7 @@ export default function LibraryPage() {
                   <p className="text-sm font-black uppercase tracking-widest text-fuchsia-700">Our school family creates</p>
                   <p className="mt-3 max-w-4xl text-base leading-8 text-slate-600">Creative Corner is our school library’s shared space for students, staff, and parents to express themselves and celebrate a love for reading. Here, you will find honest book reviews, original writing, artwork, and creative projects contributed by our entire school family. Explore popular reads, discover local talent, and share your own creative work with us!</p>
                 </div>
-                {[['Student voices', creativeStudents], ['Staff voices', creativeStaff]].map(([heading, entries]) => (
+                {[['Student voices', creativeStudents], ['Staff voices', creativeStaff], ['Parents', creativeParents]].map(([heading, entries]) => (
                   <section key={heading}>
                     <div className="flex items-end justify-between gap-4"><div><p className="text-sm font-black uppercase tracking-widest text-fuchsia-700">Creative Corner</p><h2 className="mt-2 text-3xl font-extrabold text-emerald-950">{heading}</h2></div><span className="rounded-full bg-fuchsia-100 px-3 py-1 text-xs font-black text-fuchsia-700">{entries.length} {entries.length === 1 ? 'entry' : 'entries'}</span></div>
                     {entries.length ? <div className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">{entries.map((entry) => <ResourceCard key={entry.id} post={{...entry, type: 'Creative Corner'}} onOpenArticle={setSelectedArticle} />)}</div> : <div className="mt-6"><EmptyState label={heading.toLowerCase()} /></div>}
