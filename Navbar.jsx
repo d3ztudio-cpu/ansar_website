@@ -7,11 +7,11 @@ import SmartImage from "./SmartImage";
 // that project is still incomplete and will be re-added once it is live.
 
 const EXPLORE_LINKS = [
+  { title: "Library", slug: "library" },
   { title: "Field Trips", slug: "field-trips" },
   { title: "ATL", slug: "atl" },
   { title: "Sports", slug: "sports-page" },
   { title: "Achievements", slug: "achievements" },
-  { title: "Ansar Media Productions", slug: "ansar-media-production" },
   { title: "Extension Services", slug: "extension-services" },
   { title: "Life at Ansar", slug: "life-at-ansar" },
 ];

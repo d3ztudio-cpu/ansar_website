@@ -20,11 +20,19 @@ import {
   parseQuizText,
 } from "./quizUtils";
 
+// Codes from AES NON-TEACHING.xlsx. This also corrects older records that were
+// imported before the category field was added.
+const NON_TEACHING_CODES = new Set(["C0145","C0193","C0222","C0226","C0254","C0276","C0283","C0459","C0584","C0623","C0864","C0867","C0976","C1034","C1066","C1161","C1162","C1239","C1377","C1695","C1746","C1827","C1876","C1878","C1921","C2088","C2091","C2113","C2136","C2145","C2152","C2153","C2205","C2226","C2240","C2260","C2314","C2325","C2342","C2385","C2407","C2408","C2409","C2434","C2440","C2448","C2449","C2450","C2453","C2464","C2475","C2490","C2508","C2550","C2558","C2570","C2582","C2597","C2599","C2641","C2654","C2657","C2661","C2664","C2665"]);
+const NON_TEACHING_STAFF = [
+  ["C0145","KAMARUDHEEN M A","8129808077"],["C0193","BABU K H","8129808064"],["C0222","MUHAMMED NAUSHAD N P","8089038710"],["C0226","FAISAL R","9048227732"],["C0254","SHAJAHAN M A","9847590718"],["C0276","JABBAR K B","9895915351"],["C0283","JAMEELA","9846717542"],["C0459","SUHARA M","8907533513"],["C0584","CHANDRAN O A","9645041215"],["C0623","HASHIF N M","9497313352"],["C0864","FATHIMA P V","9048757252"],["C0867","AYSHA K K","9633703671"],["C0976","SHAJAHAN P","8129808056"],["C1034","PRAVEEN M P","9539279893"],["C1066","AKIB RAHMAN V A","9846342521"],["C1161","MUHAMMED MANSOOR P","8943114864"],["C1162","SUKESH K S","8606305183"],["C1239","SYED ARIF ABDULLAH","9446725257"],["C1377","SAKKEENAMOL","9846814292"],["C1695","PREEDHEENDRA T A","9072078058"],["C1746","PETER K M","9645360215"],["C1827","RADHAKRISHNAN K M","9747022137"],["C1876","ABDUL SALAM P K","9074852817"],["C1878","SHYNI P K","9400566641"],["C1921","SAHINA K A","7561844900"],["C2088","ABITHA P A","7561865936"],["C2091","JASNA I P","7994618440"],["C2113","SULAIKHA N","9946700153"],["C2136","BABILY K K","9645183731"],["C2145","NISHABI M K","9846882786"],["C2152","ASHIFA FIROS","9061717735"],["C2153","NITHYA K B","9072278357"],["C2205","MANSOOR P M","7907827347"],["C2226","SRUTHY A M","8606743768"],["C2240","THAHSEEN VARIKKOTTIL","8590488074"],["C2260","SALMATH M A","9605653522"],["C2314","ANVER SHA","8891201974"],["C2325","SHEMINA K V","7909183866"],["C2342","SHAMSEERA K","9947857757"],["C2385","NAJMA K","9048904104"],["C2407","MURSHITHA C","8606422183"],["C2408","HAFSA N M","8606499251"],["C2409","NAJMATH P K","7994976183"],["C2434","DARSANA K KRISHNAN","9656548908"],["C2440","JASLA T P","8943359854"],["C2448","AJMAL V","8891081317"],["C2449","SHAHNA P A","9847571751"],["C2450","ASEES M","9961752080"],["C2453","ANAS T V","9809640268"],["C2464","FATHIMA NAFEELA P P","8943847437"],["C2475","DANISHA K M","9605765506"],["C2490","SHIFNA SHIRIN M K","8157040974"],["C2508","MUHSINA M U","9072490620"],["C2550","ABDUL HAMEED","7594067940"],["C2558","SAGEERHUSSAIN","9447634725"],["C2570","KUNJU AHAMMED","9447676407"],["C2582","ASNA K M","9746275484"],["C2597","ABIDHA K P","9961576695"],["C2599","DOLUS K SHYJU","7034692274"],["C2641","MUSHRIFA NASREEN","9847134986"],["C2654","ASHRAF V P","9961434413"],["C2657","RISHAD N M","7034302128"],["C2661","MUHSINA M N","9847043825"],["C2664","FAMILA BEGUM A","8925200611"],["C2665","SAJEED AHAMMED","9497681840"]
+].map(([staffCode, name, phoneNumber]) => ({ staffCode, name, phoneNumber, category: "non-teaching" }));
+
 export default function AdminStaffExams() {
   const [staff, setStaff] = useState({
       staffCode: "",
       name: "",
       phoneNumber: "",
+      category: "teaching",
     }),
     [controller, setController] = useState(""),
     [search, setSearch] = useState("");
@@ -56,6 +64,17 @@ export default function AdminStaffExams() {
       ),
     [],
   );
+  useEffect(() => {
+    const existing = new Map(directory.map((record) => [record.staffCode, record]));
+    const missingOrWrong = NON_TEACHING_STAFF.filter((record) => {
+      const current = existing.get(record.staffCode);
+      return !current || current.name !== record.name || current.phoneNumber !== record.phoneNumber || current.category !== "non-teaching";
+    });
+    if (!missingOrWrong.length) return;
+    const batch = writeBatch(db);
+    missingOrWrong.forEach((record) => batch.set(doc(db, "staffDirectory", record.staffCode), { ...record, updatedAt: serverTimestamp(), createdAt: existing.get(record.staffCode)?.createdAt || serverTimestamp() }, { merge: true }));
+    batch.commit().then(() => setStaffImportMessage(`${missingOrWrong.length} non-teaching staff records synced from AES NON-TEACHING.xlsx.`)).catch(() => {});
+  }, [directory]);
   useEffect(
     () =>
       onSnapshot(collection(db, "staffExamSessions"), (snap) =>
@@ -117,12 +136,14 @@ export default function AdminStaffExams() {
   const visible = useMemo(
     () =>
       directory.filter((x) =>
-        `${x.staffCode} ${x.name} ${x.phoneNumber}`
+        `${x.staffCode} ${x.name} ${x.phoneNumber} ${x.category || ""}`
           .toLowerCase()
           .includes(search.toLowerCase()),
       ),
     [directory, search],
   );
+  const teachingStaff = visible.filter((record) => !NON_TEACHING_CODES.has(record.staffCode) && (record.category || "teaching") === "teaching");
+  const nonTeachingStaff = visible.filter((record) => NON_TEACHING_CODES.has(record.staffCode) || record.category === "non-teaching");
   const liveScore = (participant) =>
     Object.entries(participant.answers || {}).reduce(
       (sum, [questionId, answer]) =>
@@ -154,12 +175,13 @@ export default function AdminStaffExams() {
           staffCode: code,
           name: staff.name.trim(),
           phoneNumber: staff.phoneNumber.trim(),
+          category: staff.category,
           createdAt: serverTimestamp(),
           updatedAt: serverTimestamp(),
         },
         { merge: true },
       );
-      setStaff({ staffCode: "", name: "", phoneNumber: "" });
+      setStaff({ staffCode: "", name: "", phoneNumber: "", category: "teaching" });
       setStaffImportMessage(`Staff record ${code} saved.`);
     } catch (error) {
       setStaffImportMessage(
@@ -193,9 +215,19 @@ export default function AdminStaffExams() {
     if (!file) return;
     try {
       const workbook = XLSX.read(await file.arrayBuffer(), { type: "array" });
-      const rows = XLSX.utils.sheet_to_json(
+      const rawRows = XLSX.utils.sheet_to_json(
         workbook.Sheets[workbook.SheetNames[0]],
-        { defval: "" },
+        { header: 1, defval: "", raw: false },
+      );
+      // Some HR exports have a blank first row (notably the non-teaching file).
+      // Locate the real header row instead of assuming row 1 is the header.
+      const headerIndex = rawRows.findIndex((row) => row.some((cell) =>
+        /(?:staff|emp|employee)\s*code|s\.?\s*code|name|mobile|phone/i.test(String(cell)),
+      ));
+      if (headerIndex < 0) throw new Error("Could not find a staff header row in that file.");
+      const headers = rawRows[headerIndex].map((cell) => String(cell).trim());
+      const rows = rawRows.slice(headerIndex + 1).map((values) =>
+        Object.fromEntries(headers.map((header, index) => [header, values[index] ?? ""])),
       );
       const normalized = rows
         .map((row) => {
@@ -214,6 +246,7 @@ export default function AdminStaffExams() {
               values.mobile ||
               values.mobilenumber ||
               "",
+            category: /non/i.test(file.name) ? "non-teaching" : "teaching",
           };
         })
         .filter((row) => row.staffCode || row.name || row.phoneNumber);
@@ -233,7 +266,7 @@ export default function AdminStaffExams() {
         );
       setStaffImportPreview(unique);
       setStaffImportMessage(
-        `${unique.length} staff records ready to import${invalid.length ? `; ${invalid.length} incomplete row(s) skipped` : ""}.`,
+        `${unique.length} ${/non/i.test(file.name) ? "non-teaching" : "teaching"} staff records ready to import${invalid.length ? `; ${invalid.length} incomplete row(s) skipped` : ""}.`,
       );
     } catch (error) {
       setStaffImportPreview([]);
@@ -654,6 +687,10 @@ export default function AdminStaffExams() {
               }
               className="rounded-xl border p-3"
             />
+            <select value={staff.category} onChange={(e) => setStaff({ ...staff, category: e.target.value })} className="rounded-xl border p-3 font-bold">
+              <option value="teaching">Teaching staff</option>
+              <option value="non-teaching">Non-teaching staff</option>
+            </select>
           </div>
           <button className="mt-4 rounded-xl bg-emerald-700 px-5 py-3 font-black text-white">
             Save staff record
@@ -758,8 +795,11 @@ export default function AdminStaffExams() {
           onChange={(e) => setSearch(e.target.value)}
           className="mt-4 w-full rounded-xl border p-3"
         />
-        <div className="mt-4 grid gap-3 sm:grid-cols-2">
-          {visible.map((x) => (
+        <div className="mt-4 space-y-3">
+          <details open className="rounded-2xl border border-indigo-100 bg-indigo-50/40 p-4">
+            <summary className="cursor-pointer list-none text-lg font-black text-indigo-800">Teaching staff ({teachingStaff.length})</summary>
+            <div className="mt-3 grid gap-3 sm:grid-cols-2">
+          {teachingStaff.map((x) => (
             <div
               key={x.id}
               className="flex items-center justify-between gap-3 rounded-xl bg-slate-50 p-3"
@@ -780,6 +820,19 @@ export default function AdminStaffExams() {
               </button>
             </div>
           ))}
+            </div>
+          </details>
+          <details className="rounded-2xl border border-amber-100 bg-amber-50/40 p-4">
+            <summary className="cursor-pointer list-none text-lg font-black text-amber-800">Non-teaching staff ({nonTeachingStaff.length})</summary>
+            <div className="mt-3 grid gap-3 sm:grid-cols-2">
+          {nonTeachingStaff.map((x) => (
+            <div key={x.id} className="flex items-center justify-between gap-3 rounded-xl bg-amber-50 p-3">
+              <div className="min-w-0"><b className="block truncate">{x.name}</b><span className="text-sm">{x.staffCode} Â· {x.phoneNumber}</span></div>
+              <button type="button" onClick={() => removeStaff(x)} disabled={deletingStaffCode === x.staffCode} className="shrink-0 rounded-lg border border-red-200 px-3 py-2 text-sm font-bold text-red-700 hover:bg-red-50 disabled:opacity-50">{deletingStaffCode === x.staffCode ? "Removingâ€¦" : "Remove"}</button>
+            </div>
+          ))}
+            </div>
+          </details>
           {!visible.length && (
             <p className="rounded-xl bg-slate-50 p-4 text-sm text-slate-500">
               No staff records match this search.

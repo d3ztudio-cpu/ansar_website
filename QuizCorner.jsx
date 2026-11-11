@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
-import { collection, doc, getDocs, onSnapshot, query, serverTimestamp, setDoc, updateDoc, where } from 'firebase/firestore';
+import { collection, doc, getDoc, getDocs, onSnapshot, query, serverTimestamp, setDoc, updateDoc, where } from 'firebase/firestore';
 import { onAuthStateChanged, signInAnonymously } from 'firebase/auth';
 import { db } from './firebase-init';
 import { auth } from './firebase-auth';
@@ -7,12 +7,12 @@ import { formatDuration, shuffle } from './quizUtils';
 import QuizQuestionPlayer from './QuizQuestionPlayer';
 import QuizWaitingResult from './QuizWaitingResult';
 
-const EMPTY_STUDENT = { name: '', className: '1', division: 'A' };
+const EMPTY_STUDENT = { admissionId: '', name: '', className: '1', division: 'A' };
 
 export default function QuizCorner() {
   const [user, setUser] = useState(null), [quizzes, setQuizzes] = useState([]), [selected, setSelected] = useState(null);
   const [student, setStudent] = useState(EMPTY_STUDENT), [participant, setParticipant] = useState(null), [questions, setQuestions] = useState([]);
-  const [answers, setAnswers] = useState({}), [questionTimings, setQuestionTimings] = useState({}), [elapsed, setElapsed] = useState(0), [notice, setNotice] = useState(''), [questionLoadError, setQuestionLoadError] = useState(''), [questionRetry, setQuestionRetry] = useState(0);
+  const [answers, setAnswers] = useState({}), [questionTimings, setQuestionTimings] = useState({}), [elapsed, setElapsed] = useState(0), [notice, setNotice] = useState(''), [questionLoadError, setQuestionLoadError] = useState(''), [questionRetry, setQuestionRetry] = useState(0), [identityLocked, setIdentityLocked] = useState(false);
   const disqualifying = useRef(false);
 
   useEffect(() => onAuthStateChanged(auth, async current => {
@@ -63,19 +63,15 @@ export default function QuizCorner() {
     const updateTimer = () => setElapsed(Math.max(0, Date.now() - startedAtMs));
     updateTimer();
     const timer = setInterval(updateTimer, 250);
-    const violate = async (reason) => {
-      if (disqualifying.current) return;
-      disqualifying.current = true;
-      try { await updateDoc(doc(db, 'quizSessions', selected.id, 'participants', user.uid), { status: 'disqualified', violation: reason, violationAt: serverTimestamp(), updatedAt: serverTimestamp() }); } catch { /* listener will retry visually */ }
-    };
-    const visibility = () => document.hidden && violate('Switched tab or minimized the quiz');
-    const keys = e => { if ((e.ctrlKey || e.metaKey) && ['c', 'v', 'x', 'a', 'p', 'u'].includes(e.key.toLowerCase())) { e.preventDefault(); violate('Used a restricted keyboard shortcut'); } };
-    document.addEventListener('visibilitychange', visibility); document.addEventListener('keydown', keys);
-    return () => { clearInterval(timer); document.removeEventListener('visibilitychange', visibility); document.removeEventListener('keydown', keys); };
+    const lock = async reason => { if (disqualifying.current || !selected || !user) return; disqualifying.current = true; try { await updateDoc(doc(db, 'quizSessions', selected.id, 'participants', user.uid), { status: 'disqualified', violation: reason, violationAt: serverTimestamp(), updatedAt: serverTimestamp() }); } catch {} };
+    const visibility = () => document.hidden && lock('Switched tab or opened another tab/window');
+    const keys = e => { if (e.key === 'Escape') { e.preventDefault(); lock('Pressed Escape'); } if ((e.ctrlKey || e.metaKey) && ['c','v','x','a','p','u'].includes(e.key.toLowerCase())) { e.preventDefault(); lock('Used a restricted keyboard shortcut'); } };
+    document.addEventListener('visibilitychange', visibility); window.addEventListener('keydown', keys, true);
+    return () => { clearInterval(timer); document.removeEventListener('visibilitychange', visibility); window.removeEventListener('keydown', keys, true); };
   }, [participant?.status, participant?.startedAt?.seconds, participant?.startedAt?.nanoseconds, selected?.id, user?.uid]);
 
   const eligible = useMemo(() => quizzes.filter(q => !q.className || q.className === student.className), [quizzes, student.className]);
-  const join = async e => { e.preventDefault(); if (!user || !selected) return; await setDoc(doc(db, 'quizSessions', selected.id, 'participants', user.uid), { uid: user.uid, name: student.name.trim(), className: student.className, division: student.division.trim().toUpperCase(), status: 'waiting', progress: 0, shuffleSeed: Math.floor(Math.random() * 9999999) + 1, joinedAt: serverTimestamp(), updatedAt: serverTimestamp() }); };
+  const join = async e => { e.preventDefault(); if (!user || !selected || identityLocked) return; const admissionId = student.admissionId.trim().toUpperCase(); const name = student.name.trim(); if (!admissionId || !name) return setNotice('Enter your Admission ID/Roll Number and full name.'); try { const identityRef = doc(db, 'studentIdentities', admissionId); const identitySnap = await getDoc(identityRef); const current = identitySnap.exists() ? identitySnap.data() : null; if (current && (current.name !== name || current.className !== student.className || current.division !== student.division.trim().toUpperCase())) { setIdentityLocked(true); setNotice('This Admission ID/Roll Number is locked because the entered student details do not match the first saved record. Contact an administrator.'); return; } if (!current) await setDoc(identityRef, { admissionId, name, className: student.className, division: student.division.trim().toUpperCase(), createdAt: serverTimestamp(), updatedAt: serverTimestamp() }); await setDoc(doc(db, 'quizSessions', selected.id, 'participants', user.uid), { uid: user.uid, admissionId, name, className: student.className, division: student.division.trim().toUpperCase(), status: 'waiting', progress: 0, shuffleSeed: Math.floor(Math.random() * 9999999) + 1, joinedAt: serverTimestamp(), updatedAt: serverTimestamp() }); } catch { setNotice('Student identity verification failed. Please try again or contact an administrator.'); } };
   const start = async () => { try { if (document.documentElement.requestFullscreen) { try { await document.documentElement.requestFullscreen(); } catch { /* iOS and embedded browsers continue in secure in-page mode. */ } } await updateDoc(doc(db, 'quizSessions', selected.id, 'participants', user.uid), { status: 'active', startedAt: serverTimestamp(), updatedAt: serverTimestamp() }); disqualifying.current = false; } catch { setNotice('We could not start the quiz. Please check your connection and try again.'); } };
   const submit = async (timedOut = false, finalTimings = questionTimings, forced = false) => { if (!timedOut && !forced && !window.confirm('Submit your final answers?')) return; disqualifying.current = true; const ref = doc(db, 'quizSessions', selected.id, 'participants', user.uid); await updateDoc(ref, { answers, questionTimings: finalTimings, timedOut, progress: questions.length, status: 'submitted', submittedAt: serverTimestamp(), updatedAt: serverTimestamp() }); if (document.fullscreenElement) await document.exitFullscreen(); };
   const setAnswer = async (id, value) => { const next = { ...answers, [id]: value }; setAnswers(next); await updateDoc(doc(db, 'quizSessions', selected.id, 'participants', user.uid), { answers: next, progress: Object.values(next).filter(Boolean).length, updatedAt: serverTimestamp() }); };
@@ -90,6 +86,7 @@ export default function QuizCorner() {
       <p className="text-sm font-black uppercase tracking-[.25em] text-amber-300">Ansar Media Productions · Add-on</p><h1 className="mt-3 text-4xl font-black sm:text-6xl">Online Quiz & Exam</h1><p className="mt-4 max-w-2xl text-blue-100">Student online quizzes are available now. This platform is being prepared to support staff online exams in a later phase.</p>
       {notice && <p className="mt-5 rounded-xl bg-red-500/25 p-4 font-bold text-red-100">{notice}</p>}
       {!participant ? <form onSubmit={join} className="mt-8 grid gap-4 rounded-2xl bg-white p-5 text-slate-900 sm:grid-cols-3">
+        <label className="sm:col-span-3 text-sm font-bold">Admission ID / Class Roll Number<input required maxLength="40" value={student.admissionId} onChange={e => setStudent({ ...student, admissionId: e.target.value })} className="mt-1 w-full rounded-xl border p-3" /></label>
         <label className="sm:col-span-3 text-sm font-bold">Student name<input required maxLength="80" value={student.name} onChange={e => setStudent({ ...student, name: e.target.value })} className="mt-1 w-full rounded-xl border p-3" /></label>
         <label className="text-sm font-bold">Class<select value={student.className} onChange={e => { setStudent({ ...student, className: e.target.value }); setSelected(null); }} className="mt-1 w-full rounded-xl border p-3">{Array.from({ length: 12 }, (_, i) => <option key={i + 1}>{i + 1}</option>)}</select></label>
         <label className="text-sm font-bold">Division<input required maxLength="5" value={student.division} onChange={e => setStudent({ ...student, division: e.target.value })} className="mt-1 w-full rounded-xl border p-3" /></label>

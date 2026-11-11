@@ -32,16 +32,9 @@ export default function QuizQuestionPlayer({ quiz, questions, answers, remaining
         onSecurityEvent?.(reason);
       }
     };
-    const onVisibilityChange = () => { if (document.hidden) reportSecurityEvent('Exam tab was hidden'); };
-    const onKeyDown = event => {
-      if (event.key === 'F11') { event.preventDefault(); reportSecurityEvent('Fullscreen shortcut was used'); }
-      if (event.key === 'Escape') event.preventDefault();
-    };
-    document.addEventListener('visibilitychange', onVisibilityChange);
-    window.addEventListener('keydown', onKeyDown, true);
+    const onVisibilityChange = () => {};
     return () => {
-      document.removeEventListener('visibilitychange', onVisibilityChange);
-      window.removeEventListener('keydown', onKeyDown, true);
+      void onVisibilityChange;
     };
   }, [onSecurityEvent]);
 
@@ -113,7 +106,7 @@ export default function QuizQuestionPlayer({ quiz, questions, answers, remaining
 
   if (!question) return <main className="flex min-h-screen items-center justify-center bg-slate-950 p-6 text-center text-white"><section className="max-w-lg rounded-3xl border border-white/15 bg-white/5 p-8"><p className="text-xl font-bold">{loadingError || 'Loading questions…'}</p><p className="mt-3 text-sm leading-6 text-slate-300">Your exam session is active. Please keep this page open while we reconnect.</p>{onRetryQuestions && <button onClick={onRetryQuestions} className="mt-6 rounded-xl bg-indigo-500 px-5 py-3 font-black text-white">Retry loading questions</button>}</section></main>;
 
-  return <main onContextMenu={e => e.preventDefault()} onCopy={e => e.preventDefault()} onPaste={e => e.preventDefault()} className="min-h-screen select-none bg-slate-950 p-4 text-white sm:p-8">
+  return <main className="min-h-screen bg-slate-950 p-4 text-white sm:p-8">
     <div className="mx-auto max-w-4xl">
       <header className="sticky top-0 z-10 rounded-2xl bg-indigo-700 p-4 shadow-xl sm:flex sm:items-center sm:justify-between">
         <div><p className="text-xs font-black uppercase text-indigo-200">Question {index + 1} of {questions.length}</p><h1 className="text-xl font-black">{quiz?.title}</h1></div>

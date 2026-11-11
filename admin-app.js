@@ -3,6 +3,8 @@ import {
   getAuth,
   onAuthStateChanged,
   signInWithEmailAndPassword,
+  GoogleAuthProvider,
+  signInWithPopup,
   signOut
 } from 'https://www.gstatic.com/firebasejs/10.7.0/firebase-auth.js';
 import {
@@ -267,6 +269,7 @@ function showLogin() {
         <label>Email <input type="email" name="email" required autocomplete="email"></label>
         <label>Password <input type="password" name="password" required autocomplete="current-password"></label>
         <button type="submit" class="btn-primary">Sign In</button>
+        <button type="button" id="googleLogin" class="btn-secondary">Continue with Google</button>
         <p id="loginError" class="login-error"></p>
       </form>
     </main>`;
@@ -290,6 +293,25 @@ function showLogin() {
       errorEl.textContent = error.message;
       submitBtn.disabled = false;
       submitBtn.textContent = 'Sign In';
+    }
+  });
+  document.getElementById('googleLogin').addEventListener('click', async event => {
+    const button = event.currentTarget;
+    const errorEl = document.getElementById('loginError');
+    errorEl.textContent = '';
+    button.disabled = true;
+    button.textContent = 'Opening Google...';
+    try {
+      const provider = new GoogleAuthProvider();
+      provider.setCustomParameters({ prompt: 'select_account' });
+      await signInWithPopup(auth, provider);
+      window.location.reload();
+    } catch (error) {
+      errorEl.textContent = error.code === 'auth/popup-blocked'
+        ? 'Your browser blocked the Google sign-in window. Allow pop-ups for this site and try again.'
+        : error.message;
+      button.disabled = false;
+      button.textContent = 'Continue with Google';
     }
   });
 }
@@ -500,12 +522,17 @@ function initializeAdmin() {
   loadDashboard();
 }
 
-window.addEventListener('DOMContentLoaded', () => {
+window.addEventListener('DOMContentLoaded', async () => {
   app = initializeApp(window.firebaseConfig);
   auth = getAuth(app);
   db = getFirestore(app);
-  onAuthStateChanged(auth, user => {
+  // Wait for Firebase Local/IndexedDB persistence to restore the session
+  // before rendering either the login screen or the admin workspace.
+  await auth.authStateReady();
+  const handleAuthState = user => {
     currentUser = user;
+    document.getElementById('authLoading')?.remove();
+    document.body.classList.remove('auth-loading');
     if (!user) {
       showLogin();
       return;
@@ -515,5 +542,9 @@ window.addEventListener('DOMContentLoaded', () => {
       return;
     }
     initializeAdmin();
+  };
+  handleAuthState(auth.currentUser);
+  onAuthStateChanged(auth, user => {
+    if (user?.uid !== currentUser?.uid || (!user && currentUser)) handleAuthState(user);
   });
 });

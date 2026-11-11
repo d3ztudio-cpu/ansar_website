@@ -10,7 +10,7 @@ import {
 } from "firebase/firestore";
 import Layout from "./Layout";
 import { db } from "./firebase-init";
-import { useLocation } from "react-router-dom";
+import { Link, useLocation } from "react-router-dom";
 
 const LIBRARY_HOURS =
   "Mon – Fri: 8:30 AM – 5:00 PM\nSaturday: 8:30 AM – 4:00 PM";
@@ -751,6 +751,16 @@ export default function LibraryPage() {
                     className="min-w-0 flex-1 bg-transparent text-sm font-medium text-slate-800 outline-none placeholder:text-slate-400"
                   />
                 </label>
+              </div>
+            </section>
+            <section className="mx-auto max-w-7xl px-4 pb-4 sm:px-6 lg:px-8">
+              <div className="flex flex-col justify-between gap-5 rounded-3xl border border-indigo-100 bg-gradient-to-r from-indigo-50 to-cyan-50 p-6 shadow-sm sm:flex-row sm:items-center sm:p-8">
+                <div>
+                  <p className="text-xs font-black uppercase tracking-widest text-indigo-700">Library learning tools</p>
+                  <h2 className="mt-2 text-2xl font-extrabold text-slate-900 sm:text-3xl">Online Quiz &amp; Exam Portal</h2>
+                  <p className="mt-2 max-w-2xl text-slate-600">Access assigned student quizzes and verified staff examinations from the Library.</p>
+                </div>
+                <Link to="/ansar-media-production/add-ons/online-quiz" className="inline-flex shrink-0 rounded-xl bg-indigo-700 px-6 py-3 font-extrabold text-white transition hover:bg-indigo-800">Open exam portal</Link>
               </div>
             </section>
             {term && <section className="mx-auto max-w-7xl px-4 pb-16 sm:px-6 lg:px-8"><h2 className="text-2xl font-extrabold text-emerald-950">Search results</h2>{latest.length ? <div className="mt-6 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">{latest.map(post => <ResourceCard key={post.id} post={post} bookMode={libraryType(post) === "E-Book"} />)}</div> : <div className="mt-6"><EmptyState label="items match your search" /></div>}</section>}

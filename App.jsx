@@ -79,7 +79,9 @@ const FieldTrips = lazy(() => import("./FieldTrips"));
 const FieldTripArticle = lazy(() => import("./FieldTripArticle"));
 const Counseling = lazy(() => import("./Counseling"));
 const AtlPage = lazy(() => import("./AtlPage"));
-const LibraryPage = lazy(() => import("./LibraryPage"));
+// Keep the Library page in the main bundle so a stale lazy chunk cannot cause
+// a refresh loop when visitors open /library after a deployment.
+import LibraryPage from "./LibraryPage";
 const Alumni = lazy(() => import("./Alumni"));
 const AlumniArticle = lazy(() => import("./AlumniArticle"));
 const QuizCorner = lazy(() => import("./QuizCorner"));
@@ -1261,28 +1263,6 @@ function AnsarMediaProductionPage() {
             );
           })}
         </section>
-        <section className="mt-16 rounded-3xl border border-indigo-100 bg-gradient-to-r from-indigo-50 to-cyan-50 p-7 shadow-sm sm:p-10">
-          <p className="text-sm font-black uppercase tracking-widest text-indigo-700">
-            Add-ons
-          </p>
-          <div className="mt-3 flex flex-col justify-between gap-6 sm:flex-row sm:items-end">
-            <div>
-              <h2 className="text-3xl font-extrabold text-slate-900">
-                Online Quiz & Exam
-              </h2>
-              <p className="mt-3 max-w-2xl text-lg leading-relaxed text-slate-600">
-                A secure live quiz space for students, with staff online exams
-                planned as the next phase.
-              </p>
-            </div>
-            <Link
-              to="/ansar-media-production/add-ons/online-quiz"
-              className="inline-flex shrink-0 rounded-xl bg-indigo-700 px-6 py-3 font-extrabold text-white transition hover:bg-indigo-800"
-            >
-              Open online quiz
-            </Link>
-          </div>
-        </section>
       </main>
     </Layout>
   );
@@ -2315,15 +2295,19 @@ export default function App() {
   const isAdmissionsPortalHost =
     window.location.hostname.toLowerCase() === "admissions.ansarschool.in";
   const [user, setUser] = useState(null);
-  const [authLoading, setAuthLoading] = useState(false);
+  const [authLoading, setAuthLoading] = useState(() =>
+    window.location.pathname.startsWith("/admin") ||
+    window.location.pathname.startsWith("/admissions-desk"),
+  );
   const [isAdminRoute, setIsAdminRoute] = useState(() =>
     window.location.pathname.startsWith("/admin") || window.location.pathname.startsWith("/admissions-desk"),
   );
   const [deniedEmail, setDeniedEmail] = useState(null);
   const isSproutsAdmin =
     String(user?.email || "").toLowerCase() === SPROUTS_ADMIN_EMAIL;
-  const isLibraryAdmin =
-    String(user?.email || "").toLowerCase() === LIBRARY_ADMIN_EMAIL;
+  // The library team is also authorized to operate both exam portals.
+  // Keep this flag false so the normal admin navigation is available.
+  const isLibraryAdmin = false;
 
   const handleDenied = (email) => setDeniedEmail(email || "your account");
   const handleAdminRouteChange = useCallback((nextIsAdminRoute) => {
@@ -2526,10 +2510,11 @@ export default function App() {
                     role="status"
                     aria-live="polite"
                   >
-                    <div
-                      className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-emerald-500"
-                      aria-hidden="true"
-                    ></div>
+                    <div className="flex items-center gap-2" aria-hidden="true">
+                      {[0, 1, 2, 3].map((dot) => (
+                        <span key={dot} className="h-2.5 w-2.5 animate-bounce rounded-full bg-blue-500" style={{ animationDelay: `${dot * 120}ms` }} />
+                      ))}
+                    </div>
                     <p className="text-sm font-medium text-slate-300">
                       Checking authentication…
                     </p>

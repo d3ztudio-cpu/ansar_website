@@ -60,11 +60,11 @@ service cloud.firestore {
     // collection representing their account. The document must carry a role
     // and an email field so a stale/partial record cannot grant access.
     function isAdmin() {
-      return isAuthenticated() &&
+      return isLibraryAdmin() || (isAuthenticated() &&
         request.auth.token.email != null &&
         exists(/databases/$(database)/documents/admins/$(request.auth.token.email)) &&
         get(/databases/$(database)/documents/admins/$(request.auth.token.email)).data.role is string &&
-        get(/databases/$(database)/documents/admins/$(request.auth.token.email)).data.email is string;
+        get(/databases/$(database)/documents/admins/$(request.auth.token.email)).data.email is string);
     }
 
     // Verified admin: an admin whose email address has been verified by
@@ -622,8 +622,8 @@ service cloud.firestore {
     }
 
     function validParticipantCreate(uid) {
-      return request.auth.uid == uid && request.resource.data.keys().hasOnly(['uid','name','className','division','status','progress','shuffleSeed','joinedAt','updatedAt']) &&
-        request.resource.data.uid == uid && request.resource.data.name is string && request.resource.data.name.size() >= 1 && request.resource.data.name.size() <= 80 &&
+      return request.auth.uid == uid && request.resource.data.keys().hasOnly(['uid','admissionId','name','className','division','status','progress','shuffleSeed','joinedAt','updatedAt']) &&
+        request.resource.data.uid == uid && request.resource.data.admissionId is string && request.resource.data.admissionId.size() >= 1 && request.resource.data.admissionId.size() <= 40 && request.resource.data.name is string && request.resource.data.name.size() >= 1 && request.resource.data.name.size() <= 80 &&
         request.resource.data.className is string && request.resource.data.className.size() <= 2 && request.resource.data.division is string && request.resource.data.division.size() <= 5 &&
         request.resource.data.status == 'waiting' && request.resource.data.progress == 0 && request.resource.data.shuffleSeed is int &&
         request.resource.data.joinedAt == request.time && request.resource.data.updatedAt == request.time;
@@ -633,7 +633,7 @@ service cloud.firestore {
       return request.auth.uid == uid && request.resource.data.uid == resource.data.uid && request.resource.data.name == resource.data.name &&
         request.resource.data.className == resource.data.className && request.resource.data.division == resource.data.division &&
         request.resource.data.shuffleSeed == resource.data.shuffleSeed && request.resource.data.joinedAt == resource.data.joinedAt &&
-        request.resource.data.keys().hasOnly(['uid','name','className','division','status','progress','shuffleSeed','joinedAt','updatedAt','startedAt','answers','questionTimings','timedOut','submittedAt','durationMs','violation','violationAt','score','total','unlockedAt']) &&
+        request.resource.data.keys().hasOnly(['uid','admissionId','name','className','division','status','progress','shuffleSeed','joinedAt','updatedAt','startedAt','answers','questionTimings','timedOut','submittedAt','durationMs','violation','violationAt','score','total','unlockedAt']) &&
         request.resource.data.status in ['waiting','active','submitted','disqualified'] &&
         ((resource.data.status == 'waiting' && request.resource.data.status == 'active' && request.resource.data.startedAt == request.time) ||
          (resource.data.status == 'active' && request.resource.data.status == 'active' && request.resource.data.startedAt == resource.data.startedAt) ||
@@ -647,6 +647,12 @@ service cloud.firestore {
         !('durationMs' in request.resource.data) &&
         request.resource.data.updatedAt == request.time &&
         !request.resource.data.diff(resource.data).affectedKeys().hasAny(['score','total','unlockedAt']);
+    }
+
+    match /studentIdentities/{admissionId} {
+      allow get: if isAuthenticated();
+      allow create: if isAuthenticated() && admissionId == request.resource.data.admissionId && request.resource.data.name is string && request.resource.data.name.size() >= 1 && request.resource.data.className is string && request.resource.data.division is string && request.resource.data.createdAt == request.time && request.resource.data.updatedAt == request.time;
+      allow update, delete: if isAdmin() || isLibraryAdmin();
     }
 
     match /quizSessions/{quizId} {
@@ -663,7 +669,7 @@ service cloud.firestore {
       match /answers/{answerId} { allow read, write: if isVerifiedAdmin(); }
       match /participants/{uid} {
         allow read: if isAdmin() || (isAuthenticated() && request.auth.uid == uid);
-        allow create: if isAuthenticated() && validParticipantCreate(uid) && get(/databases/$(database)/documents/quizSessions/$(quizId)).data.status in ['lobby','running'];
+        allow create: if isAuthenticated() && validParticipantCreate(uid) && get(/databases/$(database)/documents/studentIdentities/$(request.resource.data.admissionId)).data.name == request.resource.data.name && get(/databases/$(database)/documents/studentIdentities/$(request.resource.data.admissionId)).data.className == request.resource.data.className && get(/databases/$(database)/documents/studentIdentities/$(request.resource.data.admissionId)).data.division == request.resource.data.division && get(/databases/$(database)/documents/quizSessions/$(quizId)).data.status in ['lobby','running'];
         allow update: if isVerifiedAdmin() || (isAuthenticated() && validParticipantUpdate(uid, quizId));
         allow delete: if isVerifiedAdmin();
       }
@@ -676,10 +682,11 @@ service cloud.firestore {
       return isVerifiedAdmin() || (isAuthenticated() && request.auth.token.email_verified == true && request.auth.token.email != null && exists(/databases/$(database)/documents/staffExamControllers/$(request.auth.token.email)));
     }
     function validStaffDirectory() {
-      return request.resource.data.keys().hasOnly(['staffCode','name','phoneNumber','createdAt','updatedAt']) &&
+      return request.resource.data.keys().hasOnly(['staffCode','name','phoneNumber','category','createdAt','updatedAt']) &&
         request.resource.data.staffCode is string && request.resource.data.staffCode.size() >= 2 && request.resource.data.staffCode.size() <= 30 &&
         request.resource.data.name is string && request.resource.data.name.size() >= 2 && request.resource.data.name.size() <= 120 &&
         request.resource.data.phoneNumber is string && request.resource.data.phoneNumber.size() >= 7 && request.resource.data.phoneNumber.size() <= 20 &&
+        (!('category' in request.resource.data) || request.resource.data.category in ['teaching','non-teaching']) &&
         request.resource.data.createdAt is timestamp && request.resource.data.updatedAt is timestamp;
     }
     function validStaffProfile(uid) {
