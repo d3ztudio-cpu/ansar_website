@@ -108,6 +108,24 @@ export default function AdminCareersFixed() {
       setSaving(false);
     }
   };
+  const removeVacancy = async (job) => {
+    const applicationCount = apps.filter((item) => item.vacancyId === job.id).length;
+    const message = applicationCount
+      ? `Delete “${job.title}”? This will remove the vacancy from the admin panel and public careers page. Its ${applicationCount} application${applicationCount === 1 ? "" : "s"} will be kept. This cannot be undone.`
+      : `Delete “${job.title}”? This will permanently remove the vacancy. This cannot be undone.`;
+    if (!window.confirm(message)) return;
+
+    setError("");
+    try {
+      await deleteDoc(doc(db, "careersVacancies", job.id));
+      if (editing === job.id) {
+        setEditing(null);
+        setForm(blank);
+      }
+    } catch (err) {
+      setError(`Vacancy could not be deleted: ${err.message}`);
+    }
+  };
   const filtered = useMemo(
     () =>
       apps.filter((item) =>
@@ -270,15 +288,24 @@ export default function AdminCareersFixed() {
                     applications
                   </p>
                 </div>
-                <button
-                  onClick={() => {
-                    setEditing(job.id);
-                    setForm({ ...blank, ...job });
-                  }}
-                  className="rounded-lg border px-3 py-2 text-sm font-bold"
-                >
-                  Edit
-                </button>
+                <div className="flex gap-2">
+                  <button
+                    onClick={() => {
+                      setEditing(job.id);
+                      setForm({ ...blank, ...job });
+                    }}
+                    className="rounded-lg border px-3 py-2 text-sm font-bold"
+                  >
+                    Edit
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => removeVacancy(job)}
+                    className="rounded-lg bg-red-600 px-3 py-2 text-sm font-bold text-white hover:bg-red-700"
+                  >
+                    Delete
+                  </button>
+                </div>
               </div>
             ))}
           </div>

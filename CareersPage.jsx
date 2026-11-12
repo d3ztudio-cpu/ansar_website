@@ -145,7 +145,8 @@ export default function Careers() {
     [files, setFiles] = useState({}),
     [sent, setSent] = useState(null),
     [error, setError] = useState(""),
-    [saving, setSaving] = useState(false);
+    [saving, setSaving] = useState(false),
+    [copiedVacancy, setCopiedVacancy] = useState("");
   useEffect(() => {
     if (!sent) return undefined;
     const timer = window.setTimeout(() => {
@@ -169,6 +170,36 @@ export default function Careers() {
       ),
     [],
   );
+  useEffect(() => {
+    const vacancyId = new URLSearchParams(window.location.search).get("vacancy");
+    const sharedVacancy = jobs.find((job) => job.id === vacancyId);
+    if (!sharedVacancy) return;
+    setSelected(sharedVacancy);
+    window.setTimeout(() => document.getElementById("application-form")?.scrollIntoView({ behavior: "smooth" }), 100);
+  }, [jobs]);
+  const vacancyLink = (job) => `${window.location.origin}/hiring?vacancy=${encodeURIComponent(job.id)}`;
+  const copyVacancyLink = async (job) => {
+    const link = vacancyLink(job);
+    try {
+      await navigator.clipboard.writeText(link);
+      setCopiedVacancy(job.id);
+      window.setTimeout(() => setCopiedVacancy(""), 2000);
+    } catch {
+      window.prompt("Copy this vacancy link:", link);
+    }
+  };
+  const shareVacancy = async (job) => {
+    const link = vacancyLink(job);
+    if (navigator.share) {
+      try {
+        await navigator.share({ title: `${job.title} | Ansar English School`, text: `View this vacancy at Ansar English School: ${job.title}`, url: link });
+        return;
+      } catch (shareError) {
+        if (shareError?.name === "AbortError") return;
+      }
+    }
+    await copyVacancyLink(job);
+  };
   const submit = async (e) => {
     e.preventDefault();
     setError("");
@@ -360,15 +391,31 @@ export default function Careers() {
                       </div>
                     )}
                   </dl>
-                  <button
-                    onClick={() => {
-                      setSelected(j);
-                      window.scrollTo({ top: 0, behavior: "smooth" });
-                    }}
-                    className="mt-7 w-full rounded-xl bg-[#073f42] px-5 py-3 font-black text-white"
-                  >
-                    Apply now
-                  </button>
+                  <div className="mt-7 grid grid-cols-3 gap-2">
+                    <button
+                      onClick={() => {
+                        setSelected(j);
+                        window.scrollTo({ top: 0, behavior: "smooth" });
+                      }}
+                      className="col-span-3 rounded-xl bg-[#073f42] px-5 py-3 font-black text-white"
+                    >
+                      Apply now
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => copyVacancyLink(j)}
+                      className="rounded-xl border border-slate-200 px-3 py-2 text-sm font-bold text-slate-700 hover:border-emerald-500 hover:text-emerald-700"
+                    >
+                      {copiedVacancy === j.id ? "Copied!" : "Copy link"}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => shareVacancy(j)}
+                      className="col-span-2 rounded-xl border border-slate-200 px-3 py-2 text-sm font-bold text-slate-700 hover:border-emerald-500 hover:text-emerald-700"
+                    >
+                      Share vacancy
+                    </button>
+                  </div>
                 </article>
               ))}
             </div>
@@ -381,7 +428,7 @@ export default function Careers() {
         </div>
       </section>
       {selected && (
-        <section className="border-t border-slate-200 bg-white px-6 py-16">
+        <section id="application-form" className="border-t border-slate-200 bg-white px-6 py-16">
           <form onSubmit={submit} className="mx-auto max-w-4xl">
             <div className="flex flex-wrap items-end justify-between gap-4">
               <div>
