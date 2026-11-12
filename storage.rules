@@ -33,7 +33,7 @@ service firebase.storage {
 
     function isCareersUser() {
       return request.auth != null && request.auth.token.email != null &&
-        (request.auth.token.email == 'hr@ansarschool.in' || isAdmin());
+        (request.auth.token.email == 'hr@ansar.in' || isAdmin());
     }
 
     match /careersApplications/{applicationId}/{fileName} {

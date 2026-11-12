@@ -62,7 +62,7 @@ service cloud.firestore {
     function isAdmin() {
       return isLibraryAdmin() || (isAuthenticated() &&
         request.auth.token.email != null &&
-        request.auth.token.email != 'hr@ansarschool.in' &&
+        request.auth.token.email != 'hr@ansar.in' &&
         exists(/databases/$(database)/documents/admins/$(request.auth.token.email)) &&
         get(/databases/$(database)/documents/admins/$(request.auth.token.email)).data.role is string &&
         get(/databases/$(database)/documents/admins/$(request.auth.token.email)).data.email is string);
@@ -92,7 +92,7 @@ service cloud.firestore {
 
     function isCareersUser() {
       return isAuthenticated() && request.auth.token.email != null &&
-        (request.auth.token.email in ['hr@ansarschool.in', 'd3ztudio@gmail.com', 'ansarmedia@ansarschool.in', 'aesmedia2025@gmail.com'] || isAdmin());
+        (request.auth.token.email in ['hr@ansar.in', 'd3ztudio@gmail.com', 'ansarmedia@ansarschool.in', 'aesmedia2025@gmail.com'] || isAdmin());
     }
 
     // Validate string length to prevent 1MB DoS attacks

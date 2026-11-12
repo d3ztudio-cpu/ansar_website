@@ -155,7 +155,7 @@ const SPROUTS_ADMIN_EMAIL = "sprouts@ansar.in";
 // This account is intentionally *not* part of ADMIN_EMAILS. It is allowed into
 // the portal, but its routes and Firestore permissions are limited to Library.
 const LIBRARY_ADMIN_EMAIL = "aeslibrary@ansarschool.in";
-const HR_ADMIN_EMAIL = "hr@ansarschool.in";
+const HR_ADMIN_EMAIL = "hr@ansar.in";
 const ADMIN_GOOGLE_REDIRECT_KEY = "ansar:admin-google-redirect";
 let authServices = null;
 let authServicesPromise = null;

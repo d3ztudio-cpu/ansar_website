@@ -153,9 +153,8 @@ exports.sendCareerApplicationNotification = onDocumentCreated({ document: 'caree
 });
 
 const CAREERS_EMAIL_FROM = process.env.CAREERS_EMAIL_FROM || 'HR Office <hr@ansar.in>';
-// Temporarily disabled until ansar.in is verified in Resend. Status changes
-// and WhatsApp handoff continue independently of email delivery.
-const CAREERS_EMAIL_ENABLED = false;
+// ansar.in is verified in Resend, so Careers status notifications are enabled.
+const CAREERS_EMAIL_ENABLED = true;
 const careerStatusEmail = async application => {
   const recipient = String(application.email || '').trim();
   if (!recipient) return { skipped: true, reason: 'No candidate email address was submitted.' };
@@ -182,7 +181,7 @@ exports.sendCareerStatusNotification = onDocumentUpdated({
   const application = event.data.after.data();
   if (!application || before.status === application.status || !application.status) return;
   if (!CAREERS_EMAIL_ENABLED) {
-    logger.info('Career status email skipped: sender domain is not verified yet', { applicationId: event.params.applicationId, status: application.status });
+    logger.info('Career status email skipped: email delivery is disabled', { applicationId: event.params.applicationId, status: application.status });
     return;
   }
   try {
