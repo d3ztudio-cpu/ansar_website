@@ -3,7 +3,7 @@ import { Link, useLocation } from 'react-router-dom';
 import AdminFieldUndo from './AdminFieldUndo';
 import AdminUndoCenter from './AdminUndoCenter';
 
-export default function AdminLayout({ children, user, onLogout, sproutsOnly = false, libraryOnly = false }) {
+export default function AdminLayout({ children, user, onLogout, sproutsOnly = false, libraryOnly = false, careersOnly = false }) {
   const [isSidebarOpen, setSidebarOpen] = useState(false);
   const [now, setNow] = useState(() => new Date());
   const location = useLocation();
@@ -79,13 +79,20 @@ export default function AdminLayout({ children, user, onLogout, sproutsOnly = fa
           </button>
         </div>
         <nav className="flex-1 overflow-y-auto p-4 space-y-1">
-          {sproutsOnly ? (
+          {careersOnly ? (
+          <Link to="/admin/careers" className="block rounded-lg bg-emerald-600 px-4 py-3 font-medium text-white"><span className="mr-3" aria-hidden="true">▣</span>Careers & Recruitment</Link>
+          ) : sproutsOnly ? (
           <Link to="/admin/ansar-sprouts" className="block rounded-lg bg-orange-500 px-4 py-3 font-medium text-white"><span className="mr-3" aria-hidden="true">🌱</span>Ansar Sprouts</Link>
           ) : libraryOnly ? (
-          <Link to="/admin/library" className="block rounded-lg bg-emerald-600 px-4 py-3 font-medium text-white">Library</Link>
+          <>
+            <Link to="/admin/library" className={`block rounded-lg px-4 py-3 font-medium ${currentModule === 'Library' ? 'bg-emerald-600 text-white' : 'text-slate-300 hover:bg-slate-800 hover:text-white'}`}>Library</Link>
+            <Link to="/admin/ansar-media-production/add-ons/online-quiz" className={`block rounded-lg px-4 py-3 font-medium ${path.includes('/online-quiz') ? 'bg-emerald-600 text-white' : 'text-slate-300 hover:bg-slate-800 hover:text-white'}`}>Student Quiz Dashboard</Link>
+            <Link to="/admin/ansar-media-production/add-ons/staff-exams" className={`block rounded-lg px-4 py-3 font-medium ${path.includes('/staff-exams') ? 'bg-emerald-600 text-white' : 'text-slate-300 hover:bg-slate-800 hover:text-white'}`}>Staff Quiz Dashboard</Link>
+          </>
           ) : <>
           <Link to="/admin/analytics" className={`block px-4 py-3 rounded-lg font-medium transition-colors ${currentModule === 'Analytics & SEO' ? 'bg-emerald-600 text-white' : 'text-slate-300 hover:bg-slate-800 hover:text-white'}`}><span className="mr-3" aria-hidden="true">↗</span>Analytics & SEO</Link>
           <Link to="/admin/dashboard" className={`block px-4 py-3 rounded-lg font-medium transition-colors ${currentModule === 'Dashboard' ? 'bg-emerald-600 text-white' : 'text-slate-300 hover:bg-slate-800 hover:text-white'}`}><span className="mr-3" aria-hidden="true">▦</span>Dashboard</Link>
+          <Link to="/admin/careers" className={`block px-4 py-3 rounded-lg font-medium transition-colors ${currentModule === 'Careers & Recruitment' ? 'bg-emerald-600 text-white' : 'text-slate-300 hover:bg-slate-800 hover:text-white'}`}><span className="mr-3" aria-hidden="true">▣</span>Careers & Recruitment</Link>
           <Link to="/admin/settings" className={`block px-4 py-3 rounded-lg font-medium transition-colors ${currentModule === 'Settings' ? 'bg-emerald-600 text-white' : 'text-slate-300 hover:bg-slate-800 hover:text-white'}`}><span className="mr-3" aria-hidden="true">⚙</span>Settings & Trust Photos</Link>
           <Link to="/admin/news" className={`block px-4 py-3 rounded-lg font-medium transition-colors ${currentModule === 'News' ? 'bg-emerald-600 text-white' : 'text-slate-300 hover:bg-slate-800 hover:text-white'}`}><span className="mr-3" aria-hidden="true">▤</span>News</Link>
           <Link to="/admin/events" className={`block px-4 py-3 rounded-lg font-medium transition-colors ${currentModule === 'Events' ? 'bg-emerald-600 text-white' : 'text-slate-300 hover:bg-slate-800 hover:text-white'}`}><span className="mr-3" aria-hidden="true">◫</span>Events</Link>

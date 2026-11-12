@@ -351,6 +351,27 @@ export default function Home() {
         </div>
       </AnimatedSection>
 
+      <AnimatedSection className="hidden">
+        <a
+          href="https://ansarschool.in/hiring"
+          className="group relative block overflow-hidden rounded-[1.75rem] bg-emerald-950 px-6 py-8 text-white shadow-xl transition hover:-translate-y-1 hover:shadow-2xl sm:rounded-[2.5rem] sm:px-10 sm:py-10"
+          aria-label="Visit Ansar English School Careers and Recruitment"
+        >
+          <div className="absolute -right-16 -top-24 h-64 w-64 rounded-full bg-amber-400/20 blur-2xl transition duration-500 group-hover:bg-amber-400/30" />
+          <div className="relative flex flex-col gap-5 sm:flex-row sm:items-center sm:justify-between">
+            <div>
+              <p className="text-xs font-black uppercase tracking-[.25em] text-amber-300">Careers & Recruitment</p>
+              <h2 className="mt-3 text-3xl font-black sm:text-4xl">Build your future with Ansar.</h2>
+              <p className="mt-3 max-w-2xl leading-7 text-emerald-100">Explore current vacancies and join a school community committed to excellence in education.</p>
+            </div>
+            <span className="inline-flex shrink-0 items-center gap-2 self-start rounded-full bg-amber-300 px-5 py-3 text-sm font-black text-emerald-950 transition group-hover:bg-white sm:self-center">
+              View opportunities
+              <span aria-hidden="true" className="text-lg transition-transform group-hover:translate-x-1">→</span>
+            </span>
+          </div>
+        </a>
+      </AnimatedSection>
+
       <EventCountdown events={settings?.eventCountdowns || []} />
 
       <AnimatedSection className="mt-16 grid grid-cols-1 items-stretch gap-9 sm:mt-24 sm:gap-12 lg:mt-32 lg:grid-cols-2 lg:gap-16">
@@ -553,6 +574,20 @@ export default function Home() {
             </div>
           )}
         </div>
+      </AnimatedSection>
+
+      <AnimatedSection className="relative z-10 mt-16 mb-8 overflow-visible px-2 sm:mt-20 sm:px-0">
+        <a href="https://ansarschool.in/hiring" className="group relative isolate block overflow-visible rounded-[1.75rem] bg-emerald-950 px-6 py-8 text-white shadow-xl transition duration-300 hover:-translate-y-1 hover:shadow-2xl sm:rounded-[2.5rem] sm:px-10 sm:py-10" aria-label="Visit Ansar English School Careers and Recruitment">
+          <div className="pointer-events-none absolute -right-16 -top-24 -z-10 h-64 w-64 rounded-full bg-amber-400/20 blur-2xl transition duration-500 group-hover:bg-amber-400/30" />
+          <div className="relative flex flex-col gap-5 sm:flex-row sm:items-center sm:justify-between">
+            <div>
+              <p className="text-xs font-black uppercase tracking-[.25em] text-amber-300">Careers & Recruitment</p>
+              <h2 className="mt-3 text-3xl font-black sm:text-4xl">Build your future with Ansar.</h2>
+              <p className="mt-3 max-w-2xl leading-7 text-emerald-100">Explore current vacancies and join a school community committed to excellence in education.</p>
+            </div>
+            <span className="inline-flex shrink-0 items-center gap-2 self-start rounded-full bg-amber-300 px-5 py-3 text-sm font-black text-emerald-950 transition group-hover:bg-white sm:self-center">View opportunities <span aria-hidden="true" className="text-lg transition-transform group-hover:translate-x-1">→</span></span>
+          </div>
+        </a>
       </AnimatedSection>
 
       {lightboxImage && (

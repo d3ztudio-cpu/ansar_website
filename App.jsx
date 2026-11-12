@@ -114,6 +114,11 @@ const AdminStaffExams = lazy(() => import("./AdminStaffExams"));
 const AdminAnalytics = lazy(() => import("./AdminAnalytics"));
 const AdminForms = lazy(() => import("./AdminForms"));
 const AdminCounseling = lazy(() => import("./AdminCounseling"));
+const Careers = lazy(() => import("./CareersWithHeader"));
+const AdminCareers = lazy(() => import("./AdminCareers"));
+const AdminCareersFixed = lazy(() => import("./AdminCareersFixed"));
+const AdminApplicationDeleteEnhancer = lazy(() => import("./AdminApplicationDeleteEnhancer"));
+const HrNotificationGate = lazy(() => import("./HrNotificationGate"));
 const DeveloperOptions = lazy(() => import("./DeveloperOptions"));
 
 const BOOT_SPLASH_ID = "boot-splash";
@@ -150,6 +155,7 @@ const SPROUTS_ADMIN_EMAIL = "sprouts@ansar.in";
 // This account is intentionally *not* part of ADMIN_EMAILS. It is allowed into
 // the portal, but its routes and Firestore permissions are limited to Library.
 const LIBRARY_ADMIN_EMAIL = "aeslibrary@ansarschool.in";
+const HR_ADMIN_EMAIL = "hr@ansarschool.in";
 const ADMIN_GOOGLE_REDIRECT_KEY = "ansar:admin-google-redirect";
 let authServices = null;
 let authServicesPromise = null;
@@ -163,8 +169,14 @@ function isAuthorizedAdmin(email) {
     ADMIN_EMAILS.includes(normalizedEmail) ||
     normalizedEmail === SPROUTS_ADMIN_EMAIL ||
     normalizedEmail === LIBRARY_ADMIN_EMAIL ||
+    normalizedEmail === HR_ADMIN_EMAIL ||
     isAnsaSchoolEmail
   );
+}
+
+function isAuthorizedCareersAdmin(email) {
+  const normalizedEmail = String(email || "").trim().toLowerCase();
+  return ADMIN_EMAILS.includes(normalizedEmail) || normalizedEmail === HR_ADMIN_EMAIL;
 }
 
 /**
@@ -2294,20 +2306,21 @@ function AdminDashboard() {
 export default function App() {
   const isAdmissionsPortalHost =
     window.location.hostname.toLowerCase() === "admissions.ansarschool.in";
+  const isCareersHost = window.location.hostname.toLowerCase() === "hiring.ansarschool.in";
   const [user, setUser] = useState(null);
   const [authLoading, setAuthLoading] = useState(() =>
     window.location.pathname.startsWith("/admin") ||
-    window.location.pathname.startsWith("/admissions-desk"),
+    window.location.pathname.startsWith("/admissions-desk") ||
+    isCareersHost,
   );
   const [isAdminRoute, setIsAdminRoute] = useState(() =>
-    window.location.pathname.startsWith("/admin") || window.location.pathname.startsWith("/admissions-desk"),
+    window.location.pathname.startsWith("/admin") || window.location.pathname.startsWith("/admissions-desk") || isCareersHost,
   );
   const [deniedEmail, setDeniedEmail] = useState(null);
   const isSproutsAdmin =
     String(user?.email || "").toLowerCase() === SPROUTS_ADMIN_EMAIL;
-  // The library team is also authorized to operate both exam portals.
-  // Keep this flag false so the normal admin navigation is available.
-  const isLibraryAdmin = false;
+  const isLibraryAdmin = String(user?.email || "").toLowerCase() === LIBRARY_ADMIN_EMAIL;
+  const isHrAdmin = String(user?.email || '').toLowerCase() === HR_ADMIN_EMAIL;
 
   const handleDenied = (email) => setDeniedEmail(email || "your account");
   const handleAdminRouteChange = useCallback((nextIsAdminRoute) => {
@@ -2430,8 +2443,9 @@ export default function App() {
             {/* Public Website Routes */}
             <Route
               path="/"
-              element={isAdmissionsPortalHost ? <AdmissionPortal /> : <Home />}
+              element={isAdmissionsPortalHost ? <AdmissionPortal /> : isCareersHost ? <Navigate to="/admin/careers" replace /> : <Home />}
             />
+            <Route path="/hiring" element={<Careers />} />
             <Route path="/about" element={<About />} />
             <Route path="/academics" element={<Academics />} />
             <Route path="/admission" element={<Admission />} />
@@ -2520,15 +2534,22 @@ export default function App() {
                     </p>
                   </div>
                 ) : user ? (
-                  isAuthorizedAdmin(user.email) ? (
+                  (isCareersHost ? isAuthorizedCareersAdmin(user.email) : isAuthorizedAdmin(user.email)) ? (
                     <AdminLayout
                       user={user}
                       onLogout={handleSignOut}
                       sproutsOnly={isSproutsAdmin}
                       libraryOnly={isLibraryAdmin}
+                      careersOnly={isHrAdmin}
                     >
                       <Routes>
-                        {isSproutsAdmin ? (
+                        {isHrAdmin ? (
+                          <>
+                            <Route path="/" element={<Navigate to="/admin/careers" replace />} />
+                            <Route path="/careers" element={<HrNotificationGate user={user}><AdminApplicationDeleteEnhancer><AdminCareersFixed user={user} /></AdminApplicationDeleteEnhancer></HrNotificationGate>} />
+                            <Route path="*" element={<Navigate to="/admin/careers" replace />} />
+                          </>
+                        ) : isSproutsAdmin ? (
                           <>
                             <Route
                               path="/"
@@ -2554,6 +2575,9 @@ export default function App() {
                               element={<Navigate to="/admin/library" replace />}
                             />
                             <Route path="/library" element={<AdminLibrary />} />
+                            <Route path="/library/quiz" element={<Navigate to="/admin/ansar-media-production/add-ons/online-quiz" replace />} />
+                            <Route path="/ansar-media-production/add-ons/online-quiz" element={<AdminQuizCorner />} />
+                            <Route path="/ansar-media-production/add-ons/staff-exams" element={<AdminStaffExams />} />
                             <Route
                               path="*"
                               element={<Navigate to="/admin/library" replace />}
@@ -2571,6 +2595,7 @@ export default function App() {
                               path="/dashboard"
                               element={<AdminDashboard />}
                             />
+                            <Route path="/careers" element={<AdminApplicationDeleteEnhancer><AdminCareersFixed user={user} /></AdminApplicationDeleteEnhancer>} />
                             <Route
                               path="/analytics"
                               element={<AdminAnalytics />}

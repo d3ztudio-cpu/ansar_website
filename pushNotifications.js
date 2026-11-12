@@ -33,3 +33,14 @@ export async function registerForSchoolPushNotifications() {
   });
   return token;
 }
+
+export async function registerForHrPushNotifications(user) {
+  if (!user?.email || !('serviceWorker' in navigator) || !(await isSupported())) return null;
+  const registration = await navigator.serviceWorker.ready;
+  const token = await getToken(getMessaging(app), { vapidKey: VAPID_KEY, serviceWorkerRegistration: registration });
+  if (!token) return null;
+  const digest = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(token));
+  const tokenId = Array.from(new Uint8Array(digest)).map(byte => byte.toString(16).padStart(2, '0')).join('');
+  await setDoc(doc(db, 'hrPushSubscriptions', tokenId), { token, email: String(user.email).toLowerCase(), updatedAt: serverTimestamp(), platform: 'web' }, { merge: true });
+  return token;
+}

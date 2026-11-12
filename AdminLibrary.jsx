@@ -742,18 +742,12 @@ export default function AdminLibrary() {
             </label>
             <div className="md:col-span-2">
               <div className="mb-3">
-                <LibraryMediaUploader
-                  mode="pdf"
-                  value={post.linkUrl}
-                  onChange={(url) =>
-                    setPost((value) => ({ ...value, linkUrl: url || "" }))
-                  }
-                  folder={["files", post.category].filter(Boolean)}
-                  label="Upload PDF to Google Drive"
-                />
+                <p className="rounded-xl border border-amber-200 bg-amber-50 p-4 text-sm font-bold text-amber-900">
+                  PDF uploading has been removed. Paste a public document link below.
+                </p>
               </div>
               <p className="text-sm font-bold text-slate-700">
-                Google Drive sharing link
+                Document sharing link
               </p>
               <label className="mt-2 block text-sm font-bold text-slate-700">
                 <input
@@ -1182,7 +1176,7 @@ export default function AdminLibrary() {
     ),
     files: (
       <PostSectionTab
-        intro="Documents, circulars, books and reference PDFs. Upload a PDF or paste a Google Drive link — public cards get View and Download buttons."
+        intro="Documents, circulars, books and reference PDFs. Paste a public document link — public cards get View and Download buttons."
         types={SECTION_TYPES.files}
         typeOptions={SECTION_TYPES.files}
         form={postForm(["File"], { showFile: true })}

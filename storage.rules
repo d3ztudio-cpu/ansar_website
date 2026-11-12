@@ -31,6 +31,20 @@ service firebase.storage {
       ];
     }
 
+    function isCareersUser() {
+      return request.auth != null && request.auth.token.email != null &&
+        (request.auth.token.email == 'hr@ansarschool.in' || isAdmin());
+    }
+
+    match /careersApplications/{applicationId}/{fileName} {
+      allow read: if isCareersUser();
+      allow write: if (
+        (fileName == 'resume.pdf' && request.resource.size <= 5 * 1024 * 1024) ||
+        (fileName == 'photo' && request.resource.size <= 2 * 1024 * 1024)
+      ) || isCareersUser();
+      allow delete: if isCareersUser();
+    }
+
     match /learning-features/{featureId}/{fileName} {
       allow read: if true;
       allow create, update: if isAdmin()

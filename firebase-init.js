@@ -7,6 +7,7 @@ const firebaseConfig = {
   apiKey: "AIzaSyApBeUtd8i7VC6wpOSxjD1PPYjQEQBGQ4Y",
   authDomain: "ansar-english-school.firebaseapp.com",
   projectId: "ansar-english-school",
+  storageBucket: "ansar-english-school.firebasestorage.app",
   messagingSenderId: "729617648651",
   appId: "1:729617648651:web:f5d90b86b9b387d86b0b0e",
   measurementId: "G-Y7YNPNVFP1"
@@ -17,7 +18,7 @@ export const app = initializeApp(firebaseConfig);
 export const db = initializeFirestore(app, {
   localCache: persistentLocalCache({})
 });
-export const storage = getStorage(app);
+export const storage = getStorage(app, 'gs://ansar-english-school.firebasestorage.app');
 
 // Optional: connect to the Firestore emulator in local development.
 // if (window.location.hostname === 'localhost') {

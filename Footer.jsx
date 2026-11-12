@@ -255,6 +255,17 @@ export default function Footer() {
               Prospectus
             </Link>
           </nav>
+          <div className="mt-6 border-t border-slate-800 pt-5">
+            <h4 className="mb-3 text-xs font-bold uppercase tracking-wider text-white">
+              Careers
+            </h4>
+            <Link
+              to="/hiring"
+              className="text-sm text-slate-400 transition-colors hover:text-emerald-400"
+            >
+              Join our team
+            </Link>
+          </div>
         </div>
 
         <div>

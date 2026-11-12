@@ -1,19 +1,12 @@
 const { onDocumentUpdated } = require('firebase-functions/v2/firestore');
 const { onDocumentCreated } = require('firebase-functions/v2/firestore');
-const { onRequest } = require('firebase-functions/v2/https');
 const { logger } = require('firebase-functions');
 const { defineSecret } = require('firebase-functions/params');
 const admin = require('firebase-admin');
-const { GoogleAuth } = require('google-auth-library');
 admin.initializeApp();
 const db = admin.firestore();
 const normalize = value => String(value || '').trim().toLowerCase();
-const driveServiceAccount = defineSecret('GOOGLE_DRIVE_SERVICE_ACCOUNT');
-const driveRootFolderId = defineSecret('GOOGLE_DRIVE_ROOT_FOLDER_ID');
 const resendApiKey = defineSecret('RESEND_API_KEY');
-const DEFAULT_DRIVE_ROOT_FOLDER_ID = '1emaD9t5jJouaD34ltMd4FuTnDZKw3HwO';
-const DRIVE_FOLDER_MIME = 'application/vnd.google-apps.folder';
-const MAX_PDF_BYTES = 25 * 1024 * 1024;
 const allowedOrigins = new Set(['https://ansar-english-school.web.app', 'https://ansar-english-school.firebaseapp.com', 'https://ansarschool.in', 'https://www.ansarschool.in']);
 const safeSegment = value => String(value || '').trim().replace(/[^a-zA-Z0-9 _.-]/g, '').slice(0, 80);
 
@@ -91,7 +84,8 @@ exports.sendAdmissionStatusNotification = onDocumentUpdated({
 });
 
 
-async function assertLibraryEditor(request) {
+/* Library PDF uploads were intentionally removed; Library documents now use public links. */
+/* async function assertLibraryEditor(request) {
   const token = String(request.get('authorization') || '').match(/^Bearer (.+)$/i)?.[1];
   if (!token) throw new Error('Sign in is required.');
   const decoded = await admin.auth().verifyIdToken(token);
@@ -130,7 +124,7 @@ exports.uploadLibraryPdf = onRequest({ region: 'asia-south1', secrets: [driveSer
     await client.request({ url: `https://www.googleapis.com/drive/v3/files/${uploaded.data.id}/permissions`, method: 'POST', data: { type: 'anyone', role: 'reader' } });
     return response.status(201).json({ url: `https://drive.google.com/file/d/${uploaded.data.id}/view`, id: uploaded.data.id });
   } catch (error) { logger.error('Library PDF upload failed', error); return response.status(/not allowed|required/.test(error.message) ? 403 : 400).json({ error: error.message || 'PDF upload failed.' }); }
-});
+}); */
 
 // Sends FCM directly from Firebase when new public content is published. This
 // runs independently of whether a visitor currently has the site open.
@@ -145,6 +139,59 @@ exports.sendPublishedContentNotification = onDocumentCreated({ document: '{colle
   const title = data.title || (collectionId === 'ansarTimes' ? 'New Ansar Times edition' : 'New school update');
   const response = await admin.messaging().sendEachForMulticast({ tokens, notification: { title: 'Ansar English School', body: title }, webpush: { headers: { Urgency: 'high' }, fcmOptions: { link: 'https://ansarschool.in/' }, notification: { icon: 'https://ansarschool.in/icon-192.png', badge: 'https://ansarschool.in/icon-192.png', tag: `ansar-${collectionId}-${event.params.documentId}` } } });
   logger.info('Published-content push sent', { collectionId, sent: response.successCount, failed: response.failureCount });
+});
+
+exports.sendCareerApplicationNotification = onDocumentCreated({ document: 'careersApplications/{applicationId}', region: 'asia-south1' }, async event => {
+  const application = event.data?.data();
+  if (!application) return;
+  const snapshot = await db.collection('hrPushSubscriptions').get();
+  const tokens = snapshot.docs.map(item => item.data().token).filter(token => typeof token === 'string' && token.length > 20);
+  if (!tokens.length) return;
+  const candidate = application.fullName || 'A candidate';
+  const position = application.vacancyTitle || 'a vacancy';
+  await admin.messaging().sendEachForMulticast({ tokens, notification: { title: 'New recruitment application', body: `${candidate} applied for ${position}.` }, webpush: { headers: { Urgency: 'high' }, fcmOptions: { link: 'https://hiring.ansarschool.in/admin/careers' }, notification: { icon: 'https://ansarschool.in/icon-192.png', badge: 'https://ansarschool.in/icon-192.png', tag: `ansar-careers-${event.params.applicationId}` } } });
+});
+
+const CAREERS_EMAIL_FROM = process.env.CAREERS_EMAIL_FROM || 'HR Office <hr@ansar.in>';
+// Temporarily disabled until ansar.in is verified in Resend. Status changes
+// and WhatsApp handoff continue independently of email delivery.
+const CAREERS_EMAIL_ENABLED = false;
+const careerStatusEmail = async application => {
+  const recipient = String(application.email || '').trim();
+  if (!recipient) return { skipped: true, reason: 'No candidate email address was submitted.' };
+  const name = application.fullName || 'Candidate';
+  const status = application.status || 'Under Review';
+  const reference = application.applicationId || 'your application';
+  const position = application.vacancyTitle || 'the position';
+  const text = `Dear ${name},\n\nYour application for ${position} at Ansar English School has been updated to: ${status}.\n\nApplication reference: ${reference}\n\nOur HR team will contact you with the next steps.\n\nRegards,\nAnsar English School HR Office`;
+  const response = await fetch('https://api.resend.com/emails', {
+    method: 'POST',
+    headers: { Authorization: `Bearer ${resendApiKey.value()}`, 'Content-Type': 'application/json' },
+    body: JSON.stringify({ from: CAREERS_EMAIL_FROM, to: [recipient], subject: `Application update - ${status}`, text, html: `<p>Dear ${name},</p><p>Your application for <b>${position}</b> at Ansar English School has been updated to: <b>${status}</b>.</p><p>Application reference: ${reference}</p><p>Our HR team will contact you with the next steps.</p><p>Regards,<br>Ansar English School HR Office</p>` }),
+  });
+  if (!response.ok) throw new Error(`Resend returned HTTP ${response.status}: ${await response.text()}`);
+  return { sent: true };
+};
+
+exports.sendCareerStatusNotification = onDocumentUpdated({
+  document: 'careersApplications/{applicationId}',
+  region: 'asia-south1',
+  secrets: [resendApiKey],
+}, async event => {
+  const before = event.data.before.data();
+  const application = event.data.after.data();
+  if (!application || before.status === application.status || !application.status) return;
+  if (!CAREERS_EMAIL_ENABLED) {
+    logger.info('Career status email skipped: sender domain is not verified yet', { applicationId: event.params.applicationId, status: application.status });
+    return;
+  }
+  try {
+    const email = await careerStatusEmail(application);
+    await event.data.after.ref.set({ notificationState: { status: { [String(application.status).replace(/[^a-zA-Z0-9]/g, '_')]: { email, at: admin.firestore.FieldValue.serverTimestamp() } } } }, { merge: true });
+    logger.info('Career status email processed', { applicationId: event.params.applicationId, status: application.status, email: email.sent === true });
+  } catch (error) {
+    logger.error('Career status email failed', { applicationId: event.params.applicationId, status: application.status, error: error.message });
+  }
 });
 
 // The server alone can read the answer key, so immediate result scoring never exposes it to staff browsers.

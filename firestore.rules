@@ -62,6 +62,7 @@ service cloud.firestore {
     function isAdmin() {
       return isLibraryAdmin() || (isAuthenticated() &&
         request.auth.token.email != null &&
+        request.auth.token.email != 'hr@ansarschool.in' &&
         exists(/databases/$(database)/documents/admins/$(request.auth.token.email)) &&
         get(/databases/$(database)/documents/admins/$(request.auth.token.email)).data.role is string &&
         get(/databases/$(database)/documents/admins/$(request.auth.token.email)).data.email is string);
@@ -87,6 +88,11 @@ service cloud.firestore {
     function isLibraryAdmin() {
       return isAuthenticated() && request.auth.token.email != null &&
         request.auth.token.email in ['aeslibrary@ansarschool.in', 'ansarmedia@ansarschool.in', 'aesmedia2025@gmail.com'];
+    }
+
+    function isCareersUser() {
+      return isAuthenticated() && request.auth.token.email != null &&
+        (request.auth.token.email in ['hr@ansarschool.in', 'd3ztudio@gmail.com', 'ansarmedia@ansarschool.in', 'aesmedia2025@gmail.com'] || isAdmin());
     }
 
     // Validate string length to prevent 1MB DoS attacks
@@ -551,6 +557,10 @@ service cloud.firestore {
         request.resource.data.token.size() <= 4096 && request.resource.data.platform == 'web';
       allow read, delete: if false;
     }
+    match /hrPushSubscriptions/{tokenId} {
+      allow create, update: if isCareersUser() && request.resource.data.email == request.auth.token.email && request.resource.data.token is string && request.resource.data.token.size() >= 20 && request.resource.data.token.size() <= 4096 && request.resource.data.platform == 'web';
+      allow read, delete: if isCareersUser();
+    }
 
     // ---------- helper: validate an admin document ----------
     // The `role` field must be a short, non-empty string (e.g. 'developer',
@@ -724,7 +734,7 @@ service cloud.firestore {
       allow get: if isAuthenticated() && request.auth.uid == uid;
       allow create: if isAuthenticated() && request.auth.uid == uid && validStaffProfile(uid) && request.resource.data.displayName == '' && request.resource.data.createdAt == request.time && request.resource.data.updatedAt == request.time && request.resource.data.staffCode == get(/databases/$(database)/documents/staffDirectory/$(request.resource.data.staffCode)).data.staffCode && request.resource.data.phoneNumber == get(/databases/$(database)/documents/staffDirectory/$(request.resource.data.staffCode)).data.phoneNumber;
       allow update: if isAuthenticated() && request.auth.uid == uid && validStaffProfile(uid) && request.resource.data.staffCode == resource.data.staffCode && request.resource.data.phoneNumber == resource.data.phoneNumber && request.resource.data.createdAt == resource.data.createdAt && request.resource.data.updatedAt == request.time && request.resource.data.displayName == get(/databases/$(database)/documents/staffDirectory/$(resource.data.staffCode)).data.name;
-      allow delete: if false;
+      allow delete: if isCareersUser();
     }
     match /staffExamSessions/{examId} {
       allow read: if isExamController() || (isAuthenticated() && exists(/databases/$(database)/documents/staffExamProfiles/$(request.auth.uid)) && (resource.data.status in ['lobby','running'] || (resource.data.status == 'ended' && exists(/databases/$(database)/documents/staffExamSessions/$(examId)/participants/$(request.auth.uid)))));
@@ -926,6 +936,18 @@ service cloud.firestore {
         allow read: if isAdmin();
         allow create, update: if isAuthenticated() && request.auth.uid == userId && isValidUserTracking();
         allow delete: if isAdmin();
+    }
+
+    // Careers: vacancy listings are public only while explicitly published and enabled.
+    match /careersVacancies/{vacancyId} {
+      allow read: if isCareersUser() || (resource.data.published == true && resource.data.enabled == true);
+      allow create, update: if isCareersUser();
+      allow delete: if isCareersUser();
+    }
+    match /careersApplications/{applicationId} {
+      allow create: if request.resource.data.applicationId is string && request.resource.data.vacancyId is string && request.resource.data.fullName is string && request.resource.data.email is string && request.resource.data.status == 'New Application';
+      allow read, update: if isCareersUser();
+      allow delete: if isCareersUser();
     }
   }
 }

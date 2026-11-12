@@ -54,7 +54,7 @@ function relativeTime(millis) {
 const LAST_SEEN_KEY = 'ansar:lastSeenNotification';
 
 // The bell subscribes to four collections; see the subscription effect.
-const SUBSCRIBED_COLLECTIONS = 6;
+const SUBSCRIBED_COLLECTIONS = 7;
 
 /**
  * Show one local "new content" alert without ever throwing out of React.
@@ -119,6 +119,7 @@ export default function NotificationsBell() {
   const [ansarTimesEditions, setAnsarTimesEditions] = useState([]);
   const [libraryPosts, setLibraryPosts] = useState([]);
   const [libraryFacts, setLibraryFacts] = useState([]);
+  const [careerVacancies, setCareerVacancies] = useState([]);
   const [showPermissionPrompt, setShowPermissionPrompt] = useState(false);
   const knownNotificationKeys = useRef(null);
   // Counts how many of the four subscriptions have delivered at least one
@@ -149,6 +150,7 @@ export default function NotificationsBell() {
     const ansarTimesQuery = collection(db, 'ansarTimes');
     const libraryPostsQuery = query(collection(db, 'libraryPosts'), where('published', '==', true));
     const libraryFactsQuery = query(collection(db, 'libraryOneFact'), where('published', '==', true));
+    const careerVacanciesQuery = query(collection(db, 'careersVacancies'), where('published', '==', true), where('enabled', '==', true));
 
     const unsubscribeUpdates = onSnapshot(updatesQuery, (snapshot) => {
       snapshotDeliveriesRef.current += 1;
@@ -177,6 +179,10 @@ export default function NotificationsBell() {
       snapshotDeliveriesRef.current += 1;
       setLibraryFacts(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })));
     }, (error) => console.error('Unable to load One Fact notifications:', error));
+    const unsubscribeCareerVacancies = onSnapshot(careerVacanciesQuery, (snapshot) => {
+      snapshotDeliveriesRef.current += 1;
+      setCareerVacancies(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })));
+    }, (error) => console.error('Unable to load career notifications:', error));
 
     return () => {
       unsubscribeUpdates();
@@ -185,6 +191,7 @@ export default function NotificationsBell() {
       unsubscribeAnsarTimes();
       unsubscribeLibraryPosts();
       unsubscribeLibraryFacts();
+      unsubscribeCareerVacancies();
     };
   }, [idleReady]);
 
@@ -246,11 +253,18 @@ export default function NotificationsBell() {
       href: '/library?tab=one-fact',
       millis: getMillis(item)
     }));
+    const careerItems = careerVacancies.map(item => ({
+      id: item.id,
+      title: item.title || 'New job opportunity',
+      type: 'CAREERS',
+      href: '/hiring',
+      millis: getMillis(item)
+    }));
 
-    return [...updateItems, ...achievementItems, ...magazineItems, ...ansarTimesItems, ...libraryItems, ...factItems]
+    return [...updateItems, ...achievementItems, ...magazineItems, ...ansarTimesItems, ...libraryItems, ...factItems, ...careerItems]
       .sort((a, b) => b.millis - a.millis)
       .slice(0, 12);
-  }, [updates, achievements, magazines, ansarTimesEditions, libraryPosts, libraryFacts]);
+  }, [updates, achievements, magazines, ansarTimesEditions, libraryPosts, libraryFacts, careerVacancies]);
 
   const newestMillis = notifications[0]?.millis || 0;
   const hasUnread = newestMillis > lastSeenMillis;
@@ -335,7 +349,7 @@ export default function NotificationsBell() {
       {showPermissionPrompt && (
         <section className="fixed bottom-5 left-4 right-4 z-[70] mx-auto max-w-md rounded-2xl border border-emerald-200 bg-white p-5 shadow-2xl sm:left-auto sm:right-6" role="dialog" aria-label="Enable school update alerts">
           <p className="text-base font-extrabold text-slate-900">Get new school updates</p>
-          <p className="mt-1 text-sm leading-relaxed text-slate-600">Enable notifications for news, events, achievements, and Ansar Times updates.</p>
+          <p className="mt-1 text-sm leading-relaxed text-slate-600">Enable notifications for news, events, achievements, careers, and Ansar Times updates.</p>
           <div className="mt-4 flex flex-wrap gap-3">
             <button type="button" onClick={requestNotificationPermission} className="rounded-xl bg-emerald-700 px-4 py-2.5 text-sm font-black text-white hover:bg-emerald-800">Enable notifications</button>
             <button type="button" onClick={dismissPermissionPrompt} className="rounded-xl px-4 py-2.5 text-sm font-bold text-slate-600 hover:bg-slate-100">Not now</button>
@@ -378,7 +392,7 @@ export default function NotificationsBell() {
                 className="block border-b border-emerald-100 px-4 py-3 transition-colors hover:bg-emerald-50"
               >
                 <div className="flex items-center justify-between gap-3">
-                  <span className="rounded-full bg-emerald-100 px-2 py-0.5 text-[10px] font-extrabold uppercase tracking-wide text-emerald-700">{item.type}</span>
+                  <span className={`rounded-full px-2 py-0.5 text-[10px] font-extrabold uppercase tracking-wide ${item.type === 'CAREERS' ? 'bg-amber-100 text-amber-800' : 'bg-emerald-100 text-emerald-700'}`}>{item.type === 'CAREERS' ? 'NEW JOB' : item.type}</span>
                   <span className="text-xs font-semibold text-slate-400">{relativeTime(item.millis)}</span>
                 </div>
                 <p className="mt-2 line-clamp-2 text-sm font-bold leading-snug text-slate-800">{item.title}</p>
