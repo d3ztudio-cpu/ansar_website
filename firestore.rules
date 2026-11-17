@@ -730,6 +730,20 @@ service cloud.firestore {
       allow list: if isVerifiedAdmin();
       allow create, update, delete: if isVerifiedAdmin();
     }
+    // One immutable submission lock per exam and staff identity. The lock is
+    // keyed by staff code by the client and is also tied to the verified phone
+    // and Google email, preventing a second account from reusing the identity.
+    match /staffExamAttempts/{attemptId} {
+      allow get: if isAuthenticated();
+      allow list: if isVerifiedAdmin();
+      allow create: if isAuthenticated() && !exists(/databases/$(database)/documents/staffExamAttempts/$(attemptId)) &&
+        request.resource.data.keys().hasOnly(['examId','uid','email','staffCode','phoneNumber','status','submittedAt']) &&
+        request.resource.data.uid == request.auth.uid && request.resource.data.email == request.auth.token.email &&
+        request.resource.data.staffCode == get(/databases/$(database)/documents/staffExamProfiles/$(request.auth.uid)).data.staffCode &&
+        request.resource.data.phoneNumber == get(/databases/$(database)/documents/staffExamProfiles/$(request.auth.uid)).data.phoneNumber &&
+        request.resource.data.status == 'submitted' && request.resource.data.submittedAt == request.time;
+      allow update, delete: if isVerifiedAdmin();
+    }
     match /staffExamProfiles/{uid} {
       allow get: if isAuthenticated() && request.auth.uid == uid;
       allow create: if isAuthenticated() && request.auth.uid == uid && validStaffProfile(uid) && request.resource.data.displayName == '' && request.resource.data.createdAt == request.time && request.resource.data.updatedAt == request.time && request.resource.data.staffCode == get(/databases/$(database)/documents/staffDirectory/$(request.resource.data.staffCode)).data.staffCode && request.resource.data.phoneNumber == get(/databases/$(database)/documents/staffDirectory/$(request.resource.data.staffCode)).data.phoneNumber;

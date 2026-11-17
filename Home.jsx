@@ -127,9 +127,6 @@ function VerticalCarousel({ images, onImageClick }) {
         <>
           <button type="button" onClick={() => setIndex((index - 1 + validImages.length) % validImages.length)} className="absolute left-4 top-1/2 z-10 grid h-9 w-9 -translate-y-1/2 place-items-center rounded-full border border-white/30 bg-slate-950/35 text-lg text-white backdrop-blur-md transition hover:bg-amber-400 hover:text-slate-950" aria-label="Previous image">‹</button>
           <button type="button" onClick={() => setIndex((index + 1) % validImages.length)} className="absolute right-4 top-1/2 z-10 grid h-9 w-9 -translate-y-1/2 place-items-center rounded-full border border-white/30 bg-slate-950/35 text-lg text-white backdrop-blur-md transition hover:bg-amber-400 hover:text-slate-950" aria-label="Next image">›</button>
-          <div className="absolute bottom-4 left-1/2 z-10 flex max-w-[78%] -translate-x-1/2 gap-2 overflow-hidden rounded-2xl border border-white/20 bg-slate-950/35 p-2 backdrop-blur-md">
-            {validImages.map((image, i) => <button key={image} type="button" onClick={() => setIndex(i)} className={`h-9 w-12 shrink-0 overflow-hidden rounded-lg border-2 transition ${i === index ? 'scale-105 border-amber-400' : 'border-transparent opacity-60 hover:opacity-100'}`} aria-label={`Show image ${i + 1}`}><img src={image} alt="" className="h-full w-full object-cover" /></button>)}
-          </div>
         </>
       )}
     </div>

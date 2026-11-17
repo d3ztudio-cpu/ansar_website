@@ -27,6 +27,19 @@ const NON_TEACHING_STAFF = [
   ["C0145","KAMARUDHEEN M A","8129808077"],["C0193","BABU K H","8129808064"],["C0222","MUHAMMED NAUSHAD N P","8089038710"],["C0226","FAISAL R","9048227732"],["C0254","SHAJAHAN M A","9847590718"],["C0276","JABBAR K B","9895915351"],["C0283","JAMEELA","9846717542"],["C0459","SUHARA M","8907533513"],["C0584","CHANDRAN O A","9645041215"],["C0623","HASHIF N M","9497313352"],["C0864","FATHIMA P V","9048757252"],["C0867","AYSHA K K","9633703671"],["C0976","SHAJAHAN P","8129808056"],["C1034","PRAVEEN M P","9539279893"],["C1066","AKIB RAHMAN V A","9846342521"],["C1161","MUHAMMED MANSOOR P","8943114864"],["C1162","SUKESH K S","8606305183"],["C1239","SYED ARIF ABDULLAH","9446725257"],["C1377","SAKKEENAMOL","9846814292"],["C1695","PREEDHEENDRA T A","9072078058"],["C1746","PETER K M","9645360215"],["C1827","RADHAKRISHNAN K M","9747022137"],["C1876","ABDUL SALAM P K","9074852817"],["C1878","SHYNI P K","9400566641"],["C1921","SAHINA K A","7561844900"],["C2088","ABITHA P A","7561865936"],["C2091","JASNA I P","7994618440"],["C2113","SULAIKHA N","9946700153"],["C2136","BABILY K K","9645183731"],["C2145","NISHABI M K","9846882786"],["C2152","ASHIFA FIROS","9061717735"],["C2153","NITHYA K B","9072278357"],["C2205","MANSOOR P M","7907827347"],["C2226","SRUTHY A M","8606743768"],["C2240","THAHSEEN VARIKKOTTIL","8590488074"],["C2260","SALMATH M A","9605653522"],["C2314","ANVER SHA","8891201974"],["C2325","SHEMINA K V","7909183866"],["C2342","SHAMSEERA K","9947857757"],["C2385","NAJMA K","9048904104"],["C2407","MURSHITHA C","8606422183"],["C2408","HAFSA N M","8606499251"],["C2409","NAJMATH P K","7994976183"],["C2434","DARSANA K KRISHNAN","9656548908"],["C2440","JASLA T P","8943359854"],["C2448","AJMAL V","8891081317"],["C2449","SHAHNA P A","9847571751"],["C2450","ASEES M","9961752080"],["C2453","ANAS T V","9809640268"],["C2464","FATHIMA NAFEELA P P","8943847437"],["C2475","DANISHA K M","9605765506"],["C2490","SHIFNA SHIRIN M K","8157040974"],["C2508","MUHSINA M U","9072490620"],["C2550","ABDUL HAMEED","7594067940"],["C2558","SAGEERHUSSAIN","9447634725"],["C2570","KUNJU AHAMMED","9447676407"],["C2582","ASNA K M","9746275484"],["C2597","ABIDHA K P","9961576695"],["C2599","DOLUS K SHYJU","7034692274"],["C2641","MUSHRIFA NASREEN","9847134986"],["C2654","ASHRAF V P","9961434413"],["C2657","RISHAD N M","7034302128"],["C2661","MUHSINA M N","9847043825"],["C2664","FAMILA BEGUM A","8925200611"],["C2665","SAJEED AHAMMED","9497681840"]
 ].map(([staffCode, name, phoneNumber]) => ({ staffCode, name, phoneNumber, category: "non-teaching" }));
 
+// Older JSX text was saved with a UTF-8/Windows-1252 mismatch. Normalize the
+// visible legacy text so existing admin records do not show mojibake.
+function normalizeLegacyText() {
+  const walker = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT);
+  const replacements = [["Ã‚Â·", " - "], ["Â·", " - "], ["Ã¢â‚¬Â¦", "..."], ["â€¦", "..."]];
+  let node;
+  while ((node = walker.nextNode())) {
+    replacements.forEach(([bad, good]) => {
+      if (node.nodeValue.includes(bad)) node.nodeValue = node.nodeValue.split(bad).join(good);
+    });
+  }
+}
+
 export default function AdminStaffExams() {
   const [staff, setStaff] = useState({
       staffCode: "",
@@ -70,6 +83,9 @@ export default function AdminStaffExams() {
       const current = existing.get(record.staffCode);
       return !current || current.name !== record.name || current.phoneNumber !== record.phoneNumber || current.category !== "non-teaching";
     });
+  useEffect(() => {
+    normalizeLegacyText();
+  });
     if (!missingOrWrong.length) return;
     const batch = writeBatch(db);
     missingOrWrong.forEach((record) => batch.set(doc(db, "staffDirectory", record.staffCode), { ...record, updatedAt: serverTimestamp(), createdAt: existing.get(record.staffCode)?.createdAt || serverTimestamp() }, { merge: true }));
