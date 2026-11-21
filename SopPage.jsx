@@ -1,26 +1,30 @@
 import React, { useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import Layout from './Layout';
+import { useContentCollection } from './useContentCollection';
 
-const SOP_DOCUMENTS = [
-  { title: 'School SOP', category: 'School-wide', file: 'school-sop.pdf', size: '3.1 MB', featured: true },
-  { title: 'Control of Records & Documents SOP', category: 'Governance', file: 'control-of-records-and-documents-sop.pdf', size: '48 KB' },
-  { title: 'Curriculum Planning SOP', category: 'Academic', file: 'curriculum-planning-sop.pdf', size: '195 KB' },
-  { title: 'Teaching & Learning Process SOP', category: 'Academic', file: 'teaching-learning-process-sop.pdf', size: '325 KB' },
-  { title: 'Assessment & Evaluation SOP', category: 'Academic', file: 'assessment-and-evaluation-sop.pdf', size: '392 KB' },
-  { title: 'Career Guidance SOP', category: 'Academic', file: 'career-guidance-sop.pdf', size: '156 KB' },
-  { title: 'Instructional Resources SOP', category: 'Academic', file: 'instructional-resources-sop.pdf', size: '59 KB' },
-  { title: 'CWSN SOP', category: 'Student support', file: 'cwsn-sop.pdf', size: '164 KB' },
-  { title: 'Student Activities SOP', category: 'Student support', file: 'student-activities-sop.pdf', size: '178 KB' },
-  { title: 'School Assembly SOP', category: 'Student support', file: 'school-assembly-sop.pdf', size: '45 KB' },
-  { title: 'Complaint Handling SOP', category: 'Safeguarding', file: 'complaint-handling-sop.pdf', size: '100 KB' },
-  { title: 'Health & Safety SOP', category: 'Safeguarding', file: 'health-and-safety-sop.pdf', size: '322 KB' },
-  { title: 'Admission SOP', category: 'Administration', file: 'admission-sop.pdf', size: '502 KB' },
-  { title: 'Accounts SOP', category: 'Administration', file: 'accounts-sop.pdf', size: '300 KB' },
-  { title: 'Human Resource Development SOP', category: 'Administration', file: 'human-resource-development-sop.pdf', size: '674 KB' },
-  { title: 'Hostel SOP', category: 'Administration', file: 'hostel-sop.pdf', size: '206 KB' },
-  { title: 'Self-Assessment SOP', category: 'Governance', file: 'self-assessment-sop.pdf', size: '69 KB' },
-  { title: 'Risk & Opportunities SOP', category: 'Governance', file: 'risk-and-opportunities-sop.pdf', size: '154 KB' }
+const SOP_DRIVE_FOLDER = 'https://drive.google.com/drive/folders/1cGlI5bhOqSBCaIdHiHfpxb22BVCYEw27?usp=drive_link';
+const sopDriveUrl = id => `https://drive.google.com/file/d/${id}/view?usp=drive_link`;
+
+export const SOP_DOCUMENTS = [
+  { title: 'School SOP', category: 'School-wide', file: 'school-sop.pdf', size: '3.1 MB', featured: true, driveUrl: sopDriveUrl('1RpH9K_EpryUf-QI7ILB2_dWiib2qGs4L') },
+  { title: 'Control of Records & Documents SOP', category: 'Governance', file: 'control-of-records-and-documents-sop.pdf', size: '48 KB', driveUrl: sopDriveUrl('1BClw4SoQw54RzLqr3yC-fWQ9FrYrwhcw') },
+  { title: 'Curriculum Planning SOP', category: 'Academic', file: 'curriculum-planning-sop.pdf', size: '195 KB', driveUrl: sopDriveUrl('1FvmjoemRuSE1iw7dIbSuQFJxCR1I4ozR') },
+  { title: 'Teaching & Learning Process SOP', category: 'Academic', file: 'teaching-learning-process-sop.pdf', size: '325 KB', driveUrl: sopDriveUrl('1Nw4gxFLTB5rABqJnlyN1qt50Sn8FsVIr') },
+  { title: 'Assessment & Evaluation SOP', category: 'Academic', file: 'assessment-and-evaluation-sop.pdf', size: '392 KB', driveUrl: sopDriveUrl('1QuNXEa-hnhbjXBVojniKRwaLcaVHIDjD') },
+  { title: 'Career Guidance SOP', category: 'Academic', file: 'career-guidance-sop.pdf', size: '156 KB', driveUrl: sopDriveUrl('1Zh4qFQ9eL7dRjzWW7fy2zPk04Ept2-fH') },
+  { title: 'Instructional Resources SOP', category: 'Academic', file: 'instructional-resources-sop.pdf', size: '59 KB', driveUrl: sopDriveUrl('1rDbOTU_5bjHyFE5FYlci664OZYtHN-ln') },
+  { title: 'CWSN SOP', category: 'Student support', file: 'cwsn-sop.pdf', size: '164 KB', driveUrl: sopDriveUrl('1pkXaZ55Ke3nu8nPBjw4Hn1Qmtv3HWfR9') },
+  { title: 'Student Activities SOP', category: 'Student support', file: 'student-activities-sop.pdf', size: '178 KB', driveUrl: sopDriveUrl('12q5qCMuC1l6Te0R24mz5YfCukR5u6YQe') },
+  { title: 'School Assembly SOP', category: 'Student support', file: 'school-assembly-sop.pdf', size: '45 KB', driveUrl: sopDriveUrl('1Tc9egZw6DGbsGmF58ySyPhzRQy1KhCHM') },
+  { title: 'Complaint Handling SOP', category: 'Safeguarding', file: 'complaint-handling-sop.pdf', size: '100 KB', driveUrl: sopDriveUrl('1DDT80V4NUi4go167VIkefDekUm0Q4Saz') },
+  { title: 'Health & Safety SOP', category: 'Safeguarding', file: 'health-and-safety-sop.pdf', size: '322 KB', driveUrl: sopDriveUrl('1Rj-xpb5opSsUHv94MoAxPFaM9yOsqwT4') },
+  { title: 'Admission SOP', category: 'Administration', file: 'admission-sop.pdf', size: '502 KB', driveUrl: sopDriveUrl('1eM6K3YL_JO-VgTJD9wO_iS1s01hRMO5s') },
+  { title: 'Accounts SOP', category: 'Administration', file: 'accounts-sop.pdf', size: '300 KB', driveUrl: sopDriveUrl('1trd5hXfB5VKH-rkZOOg_SQ4J9YhrNll3') },
+  { title: 'Human Resource Development SOP', category: 'Administration', file: 'human-resource-development-sop.pdf', size: '674 KB', driveUrl: sopDriveUrl('1TnQo4nnMG3M1DPvePl0DIR7_oabqRNb_') },
+  { title: 'Hostel SOP', category: 'Administration', file: 'hostel-sop.pdf', size: '206 KB', driveUrl: sopDriveUrl('1w9xj_vUXtkX-b1uRmyjX7K97FNqb1RYn') },
+  { title: 'Self-Assessment SOP', category: 'Governance', file: 'self-assessment-sop.pdf', size: '69 KB', driveUrl: sopDriveUrl('13CI4XB1xbg8Dof8bmwDKl7TTjsCV0QFh') },
+  { title: 'Risk & Opportunities SOP', category: 'Governance', file: 'risk-and-opportunities-sop.pdf', size: '154 KB', driveUrl: sopDriveUrl('1vYoPZsWYAt_kkPhupyIkQTQwwAoVtM20') }
 ];
 
 const POLICY_DOCUMENTS = [
@@ -111,7 +115,7 @@ function DownloadIcon() {
 }
 
 function DocumentCard({ document, basePath }) {
-  const documentUrl = `${basePath}/${document.file}`;
+  const documentUrl = document.driveUrl || `${basePath}/${document.file}`;
 
   return (
     <article className="group flex h-full flex-col rounded-2xl border border-slate-200 bg-white p-5 shadow-sm transition duration-300 hover:-translate-y-1 hover:border-emerald-200 hover:shadow-xl sm:p-6">
@@ -141,21 +145,26 @@ function DocumentCard({ document, basePath }) {
 
 function DocumentLibraryPage({ library }) {
   const config = LIBRARIES[library];
+  const { data: savedDocuments } = useContentCollection('sops', 'order', 'asc', { sheetsOnly: true });
+  const documents = library === 'sop' && savedDocuments.length
+    ? savedDocuments.filter(document => document.published !== false).map(document => ({ ...document, file: document.driveUrl || document.file }))
+    : config.documents;
+  const activeConfig = { ...config, documents };
   const [query, setQuery] = useState('');
   const [category, setCategory] = useState('All');
-  const featuredDocument = config.documents.find(document => document.featured);
+  const featuredDocument = activeConfig.documents.find(document => document.featured) || activeConfig.documents[0];
   const libraryTitleId = `${library}-library-title`;
 
   const filteredDocuments = useMemo(() => {
     const normalizedQuery = query.trim().toLowerCase();
-    return config.documents.filter(document => {
+    return activeConfig.documents.filter(document => {
       const matchesCategory = category === 'All' || document.category === category;
       const matchesQuery = !normalizedQuery
         || document.title.toLowerCase().includes(normalizedQuery)
         || document.category.toLowerCase().includes(normalizedQuery);
       return matchesCategory && matchesQuery;
     });
-  }, [category, config.documents, query]);
+  }, [category, activeConfig.documents, query]);
 
   return (
     <Layout>
@@ -169,7 +178,7 @@ function DocumentLibraryPage({ library }) {
             <h1 className="mt-3 text-4xl font-extrabold leading-tight sm:text-5xl lg:text-6xl">{config.title}</h1>
             <p className="mt-6 max-w-3xl text-lg leading-relaxed text-emerald-50/90 lg:text-xl">{config.description}</p>
             <div className="mt-8 flex flex-wrap gap-3 text-sm font-bold">
-              <span className="rounded-full border border-white/15 bg-white/10 px-4 py-2">{config.countLabel}</span>
+              <span className="rounded-full border border-white/15 bg-white/10 px-4 py-2">{activeConfig.documents.length} {library === 'sop' ? 'SOP documents' : 'policy documents'}</span>
               <span className="rounded-full border border-white/15 bg-white/10 px-4 py-2">Public PDF access</span>
               <span className="rounded-full border border-white/15 bg-white/10 px-4 py-2">View or download</span>
             </div>
@@ -186,7 +195,7 @@ function DocumentLibraryPage({ library }) {
               <h2 className="mt-2 text-2xl font-extrabold text-slate-900">{featuredDocument.title}</h2>
               <p className="mt-2 text-sm leading-relaxed text-slate-600">{config.featuredDescription}</p>
             </div>
-            <a href={`${config.basePath}/${featuredDocument.file}`} target="_blank" rel="noopener noreferrer" className="inline-flex flex-none items-center justify-center gap-2 rounded-xl bg-slate-900 px-5 py-3 text-sm font-bold text-white transition-colors hover:bg-emerald-800 focus:outline-none focus:ring-2 focus:ring-slate-700 focus:ring-offset-2">
+            <a href={featuredDocument.driveUrl || `${config.basePath}/${featuredDocument.file}`} target="_blank" rel="noopener noreferrer" className="inline-flex flex-none items-center justify-center gap-2 rounded-xl bg-slate-900 px-5 py-3 text-sm font-bold text-white transition-colors hover:bg-emerald-800 focus:outline-none focus:ring-2 focus:ring-slate-700 focus:ring-offset-2">
               Open complete document <OpenIcon />
             </a>
           </div>
@@ -209,8 +218,8 @@ function DocumentLibraryPage({ library }) {
           </div>
 
           <div className="mt-6 flex flex-wrap gap-2" aria-label={`${config.title} categories`}>
-            {config.categories.map(item => {
-              const count = item === 'All' ? config.documents.length : config.documents.filter(document => document.category === item).length;
+            {activeConfig.categories.map(item => {
+              const count = item === 'All' ? activeConfig.documents.length : activeConfig.documents.filter(document => document.category === item).length;
               const selected = category === item;
               return (
                 <button key={item} type="button" onClick={() => setCategory(item)} aria-pressed={selected} className={`rounded-full px-4 py-2 text-sm font-bold transition focus:outline-none focus:ring-2 focus:ring-emerald-600 focus:ring-offset-2 ${selected ? 'bg-emerald-700 text-white shadow-sm' : 'border border-slate-200 bg-white text-slate-700 hover:border-emerald-200 hover:bg-emerald-50 hover:text-emerald-800'}`}>
@@ -220,7 +229,7 @@ function DocumentLibraryPage({ library }) {
             })}
           </div>
 
-          <p className="mt-8 text-sm font-semibold text-slate-500" aria-live="polite">Showing {filteredDocuments.length} of {config.documents.length} documents</p>
+          <p className="mt-8 text-sm font-semibold text-slate-500" aria-live="polite">Showing {filteredDocuments.length} of {activeConfig.documents.length} documents</p>
 
           {filteredDocuments.length ? (
             <div className="mt-4 grid grid-cols-1 gap-5 md:grid-cols-2 xl:grid-cols-3">

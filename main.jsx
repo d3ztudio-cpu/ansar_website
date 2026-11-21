@@ -2,6 +2,7 @@ import React from 'react';
 import ReactDOM from 'react-dom/client';
 import App from './App.jsx';
 import './tailwind.css'; // Switch to a clean Tailwind file to prevent old CSS conflicts
+import './styles.css';
 
 class AppErrorBoundary extends React.Component {
   constructor(props) {

@@ -8,7 +8,6 @@ import ImageUrlThumb from './ImageUrlThumb';
 import { softDeleteRecord } from './adminUndo';
 import { normalizeImageUrl } from './imageUrlUtils';
 
-const MAX_EVENT_IMAGES = 100;
 
 function getDateTime(item) {
   const dateTime = Date.parse(item.date);
@@ -45,10 +44,6 @@ export default function AdminEvents() {
   const addImageUrlField = () => {
     setFormData(prev => {
       const currentImages = Array.isArray(prev.imageUrls) ? prev.imageUrls : [];
-      if (currentImages.length >= MAX_EVENT_IMAGES) {
-        alert(`You can add up to ${MAX_EVENT_IMAGES} images for one event.`);
-        return prev;
-      }
       return { ...prev, imageUrls: [...currentImages, ''] };
     });
   };
@@ -56,11 +51,7 @@ export default function AdminEvents() {
   const appendImageUrls = (urls) => {
     setFormData(prev => {
       const existing = Array.isArray(prev.imageUrls) ? prev.imageUrls.filter(url => url.trim() !== '') : [];
-      const nextImages = [...existing, ...urls].slice(0, MAX_EVENT_IMAGES);
-      if (existing.length + urls.length > MAX_EVENT_IMAGES) {
-        alert(`Only the first ${MAX_EVENT_IMAGES} image links were added. For bigger albums, create another event/gallery entry.`);
-      }
-      return { ...prev, imageUrls: nextImages };
+      return { ...prev, imageUrls: [...new Set([...existing, ...urls])] };
     });
   };
 
@@ -104,11 +95,6 @@ export default function AdminEvents() {
     setIsSubmitting(true);
     try {
       const cleanedImageUrls = formData.imageUrls.map(url => normalizeImageUrl(url)).filter(Boolean);
-      if (cleanedImageUrls.length > MAX_EVENT_IMAGES) {
-        alert(`Save failed: one event can have up to ${MAX_EVENT_IMAGES} image links.`);
-        return;
-      }
-
       const payload = {
         ...formData,
         category: 'Events',

@@ -794,9 +794,16 @@ html, body {
 /* Force all structural layouts and content sections into flexible percentages */
 header, section, footer, main, .container, .row, .grid-wrapper {
   width: 100% !important;
-  max-width: 100% !important;
   float: none !important;
   box-sizing: border-box;
+}
+
+/* Keep the home route centered even when legacy full-width structural rules apply. */
+main.home-layout-shell {
+  width: 100% !important;
+  max-width: 80rem !important;
+  margin-left: auto !important;
+  margin-right: auto !important;
 }
 
 .back-to-top-btn {
@@ -1043,10 +1050,23 @@ button[aria-label="Next new arrivals"] {
 }
 @media print {
   body * { visibility: hidden !important; }
-  .admission-print-document, .admission-print-document *, .mt-6.border-t-4, .mt-6.border-t-4 * { visibility: visible !important; }
+  .admission-print-overlay, .admission-print-overlay * { visibility: visible !important; }
   .admission-print-document, .mt-6.border-t-4 { position: absolute !important; left: 0 !important; top: 0 !important; width: 210mm !important; min-height: 297mm !important; margin: 0 !important; padding: 16mm !important; background: #fff !important; box-shadow: none !important; }
   @page { size: A4 portrait; margin: 0; }
 }
+.admission-print-overlay { position: fixed; inset: 0; z-index: 100; overflow: auto; background: #334155cc; padding: 24px; }
+.print-toolbar { position: sticky; top: 0; z-index: 2; display: flex; justify-content: flex-end; gap: 10px; margin: 0 auto 14px; max-width: 210mm; }
+.print-toolbar button { border: 1px solid #cbd5e1; border-radius: 8px; background: white; padding: 10px 16px; font-weight: 800; color: #0f294a; }
+.print-toolbar button:last-child { background: #0f294a; color: white; }
+.admission-a4 { box-sizing: border-box; width: 210mm; min-height: 297mm; margin: 0 auto; padding: 7mm 8mm 30mm; border: 3px double #0f294a; outline: 1px solid #a5c8e4; outline-offset: 4px; background: white; color: #334155; font-family: Arial, sans-serif; position: relative; }
+.print-header { display: grid; grid-template-columns: 42mm 1fr 30mm; gap: 4mm; align-items: center; border-bottom: 2px solid #0f294a; padding-bottom: 3mm; }
+.print-logo { display: grid; place-items: center; height: 25mm; border: 1px solid #a5c8e4; color: #0f294a; font-size: 8px; font-weight: 800; text-align: center; }.print-logo img { max-width: 40mm; max-height: 22mm; object-fit: contain; }
+.print-title { text-align: center; color: #0f294a; font-family: Georgia, serif; }.print-title h1 { margin: 0; font-size: 20px; letter-spacing: .08em; }.print-title h3 { margin: 5px 0 2px; font: 800 11px Arial, sans-serif; letter-spacing: .08em; }.print-title p { margin: 0; font-size: 9px; }
+.print-photo { display: grid; place-items: center; width: 30mm; height: 38mm; border: 1px solid #334155; text-align: center; font-size: 8px; }.print-photo img { width: 100%; height: 100%; object-fit: cover; }
+.print-reference { display: flex; justify-content: space-between; gap: 10px; margin: 4mm 0; padding: 2mm 3mm; background: #e8f2f9; font-size: 9px; }
+.print-section { margin-top: 1mm; break-inside: avoid; }.print-section h2 { margin: 0; padding: .8mm 3mm; background: #0f294a; color: white; font: 800 7.5px Arial, sans-serif; letter-spacing: .06em; }.print-section:nth-of-type(even) h2 { background: #6f9fbe; }.print-section-body { padding: .6mm 3mm; border: 1px solid #cbd5e1; border-top: 0; }.print-grid { display: grid; gap: .5mm 4mm; }.print-grid.two { grid-template-columns: 1fr 1fr; }.print-field { min-height: 5mm; border-bottom: 1px solid #64748b; }.print-field span { display: block; color: #475569; font-size: 5.5px; font-weight: 800; text-transform: uppercase; }.print-field strong { display: block; margin-top: .25mm; color: #0f172a; font-size: 6.5px; font-weight: 500; overflow-wrap: anywhere; }.print-wide { grid-column: 1 / -1; min-height: 6mm; }
+.print-footer { position: absolute; left: 8mm; right: 18mm; bottom: 7mm; display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); align-items: start; gap: 8mm; break-inside: avoid; }.signature-line { width: 65mm; margin-top: 8mm; border-top: 1px solid #334155; padding-top: 1.5mm; font-size: 7px; }.office-use { width: calc(100% - 7mm); max-width: calc(100% - 7mm); min-width: 0; box-sizing: border-box; border: 1px solid #334155; padding: 2mm 3mm; align-self: start; transform: translateX(-7mm); }.office-use h3 { margin: 0 0 2mm; color: #0f294a; font-size: 8px; }
+@media print { .admission-print-overlay { display: contents !important; position: static !important; inset: auto !important; z-index: auto !important; overflow: visible !important; padding: 0 !important; background: white !important; }.print-toolbar { display: none !important; }.admission-a4 { display: block !important; position: static !important; width: 210mm !important; min-height: 297mm !important; margin: 0 !important; border: 3px double #0f294a; outline: none; } body { background: white !important; } }
 /* Admission portal photo controls: keep actions compact and aligned. */
 [class~="grid-cols-[1fr_1fr_96px]"] { grid-template-columns: minmax(150px, 190px) minmax(180px, 230px) 96px !important; justify-content: start; }
 @media (max-width: 640px) {

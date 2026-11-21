@@ -175,3 +175,25 @@ export function sendContactAcknowledgement({ name, email, destination, category,
 export function deleteSheetRecord(collectionName, id, record) {
   return postToSheets('delete', { collectionName, id, record });
 }
+
+export function deleteSheetRecords(collectionName, ids) {
+  return postToSheets('deleteMany', { collectionName, ids });
+}
+
+export async function confirmSheetRecordDeleted(collectionName, id, tabName = collectionName) {
+  const sheetUrl = `https://docs.google.com/spreadsheets/d/${GOOGLE_SHEETS_DATABASE.spreadsheetId}/gviz/tq?${new URLSearchParams({ tqx: 'out:json', sheet: tabName, v: String(Date.now()) })}`;
+  for (const delay of [700, 1200, 2000, 3000]) {
+    await new Promise(resolve => window.setTimeout(resolve, delay));
+    const response = await fetch(`${sheetUrl}&refresh=${Date.now()}`);
+    if (!response.ok) continue;
+    const text = await response.text();
+    const match = text.match(/setResponse\(([\s\S]*)\);?$/);
+    if (!match) continue;
+    const payload = JSON.parse(match[1]);
+    const headers = (payload.table?.cols || []).map(column => String(column.label || '').trim().toLowerCase());
+    const idIndex = headers.indexOf('id');
+    const stillExists = (payload.table?.rows || []).some(row => String(row.c?.[idIndex]?.v || '') === String(id));
+    if (!stillExists) return true;
+  }
+  throw new Error('Google Sheets did not confirm deletion. Redeploy the latest Apps Script Web App version and try again.');
+}

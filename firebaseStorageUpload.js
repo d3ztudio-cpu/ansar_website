@@ -1,6 +1,5 @@
 import { uploadImageToHostinger } from './hostingerUpload';
 
-const MAX_IMAGE_SIZE_BYTES = 15 * 1024 * 1024;
 
 function friendlyName(name) {
   return String(name || 'image');
@@ -18,7 +17,6 @@ export async function uploadLearningFeatureImages(slug, files, { onProgress } = 
   const selectedFiles = Array.from(files || []);
   if (!selectedFiles.length) return [];
   if (selectedFiles.some(file => !file.type.startsWith('image/'))) throw new Error('Only image files can be uploaded.');
-  if (selectedFiles.some(file => file.size > MAX_IMAGE_SIZE_BYTES)) throw new Error('Each image must be 15 MB or smaller.');
 
   const urls = [];
   for (let index = 0; index < selectedFiles.length; index += 1) {

@@ -8,7 +8,6 @@ import ImageUrlThumb from './ImageUrlThumb';
 import { softDeleteRecord } from './adminUndo';
 import { normalizeImageUrl } from './imageUrlUtils';
 
-const MAX_ARTICLE_IMAGES = 100;
 
 function getDateTime(item) {
   const dateTime = Date.parse(item.date);
@@ -44,20 +43,12 @@ export default function AdminUpdates({ fixedCategory = '' }) {
 
   const addEventImageField = () => setFormData(prev => {
     const currentImages = Array.isArray(prev.eventImages) ? prev.eventImages : [];
-    if (currentImages.length >= MAX_ARTICLE_IMAGES) {
-      alert(`You can add up to ${MAX_ARTICLE_IMAGES} images for one article.`);
-      return prev;
-    }
     return { ...prev, eventImages: [...currentImages, ''] };
   });
   const appendEventImages = (urls) => {
     setFormData(prev => {
       const existing = Array.isArray(prev.eventImages) ? prev.eventImages.filter(url => url.trim() !== '') : [];
-      const nextImages = [...existing, ...urls].slice(0, MAX_ARTICLE_IMAGES);
-      if (existing.length + urls.length > MAX_ARTICLE_IMAGES) {
-        alert(`Only the first ${MAX_ARTICLE_IMAGES} image links were added.`);
-      }
-      return { ...prev, eventImages: nextImages };
+      return { ...prev, eventImages: [...new Set([...existing, ...urls])] };
     });
   };
 
@@ -113,10 +104,6 @@ export default function AdminUpdates({ fixedCategory = '' }) {
           .filter(url => url !== '')
       )];
 
-      if (cleanedEventImages.length > MAX_ARTICLE_IMAGES) {
-        alert(`Save failed: one article can have up to ${MAX_ARTICLE_IMAGES} image links.`);
-        return;
-      }
 
       const category = fixedCategory || formData.category || 'News';
       const isEvent = category === 'Events';
@@ -303,7 +290,7 @@ export default function AdminUpdates({ fixedCategory = '' }) {
                     </div>
                   ))}
                   <button type="button" onClick={addEventImageField} className="text-sm font-bold text-emerald-600 hover:bg-emerald-50 py-2 px-4 rounded-lg transition-colors border border-emerald-100">+ Add Another Image</button>
-                  <p className="mt-2 text-xs text-slate-500">Add up to {MAX_ARTICLE_IMAGES} images. The cover image remains the thumbnail; all images appear in the article carousel.</p>
+                  <p className="mt-2 text-xs text-slate-500">Add as many images as needed. The cover image remains the thumbnail; all images appear in the article carousel.</p>
                 </div>
               )}
             </div>

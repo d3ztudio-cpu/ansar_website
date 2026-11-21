@@ -3,6 +3,13 @@ import Layout from './Layout';
 import SupportWidget from './SupportWidget';
 import { saveSheetRecord, sendContactAcknowledgement } from './googleSheetsAdminApi';
 
+const COUNTRY_CODES = [
+  ['+91', 'India'], ['+1', 'United States / Canada'], ['+44', 'United Kingdom'], ['+971', 'United Arab Emirates'],
+  ['+61', 'Australia'], ['+65', 'Singapore'], ['+60', 'Malaysia'], ['+94', 'Sri Lanka'], ['+880', 'Bangladesh'],
+  ['+92', 'Pakistan'], ['+27', 'South Africa'], ['+49', 'Germany'], ['+33', 'France'], ['+81', 'Japan'],
+  ['+82', 'South Korea'], ['+86', 'China'], ['+7', 'Russia'], ['+64', 'New Zealand'], ['+966', 'Saudi Arabia'], ['+974', 'Qatar']
+];
+
 const CONTACT_CHANNELS = [
   {
     key: 'call',
@@ -63,6 +70,7 @@ export default function Contact() {
   const customerCareEmail = 'principal@ansar.in';
   const [formData, setFormData] = useState({
     name: '',
+    phoneCountryCode: '+91',
     phone: '',
     email: '',
     destination: 'School',
@@ -103,6 +111,10 @@ export default function Contact() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    if (formData.message.trim().length < 20) {
+      window.alert('Please enter at least 20 characters in your message.');
+      return;
+    }
     setIsSubmitting(true);
 
     // 1. Structure the text payload. Complaints and suggestions are always
@@ -114,7 +126,7 @@ export default function Contact() {
     const recipientPhone = isCustomerCare ? customerCarePhone : (isSproutsInquiry ? sproutsPhone : schoolPhone);
     const payload = `Hello ${recipientName}, I have an inquiry:
 - Name: ${formData.name}
-- Phone: ${formData.phone}
+- Phone: ${formData.phoneCountryCode} ${formData.phone}
 - Email: ${formData.email}
 - For: ${formData.destination}${applyingForClass ? `\n- Class Applying For: ${applyingForClass}` : ''}
 - Category: ${formData.category}
@@ -131,7 +143,7 @@ ${formData.message}`;
         date: getIndiaDate(),
         submittedAt: getIndiaTimestamp(),
         name: formData.name.trim(),
-        phone: formData.phone.trim(),
+        phone: `${formData.phoneCountryCode} ${formData.phone.trim()}`,
         email: formData.email.trim(),
         destination: formData.destination,
         category: formData.category,
@@ -157,7 +169,7 @@ ${formData.message}`;
     }
 
     // 4. Redirect to the selected team's WhatsApp conversation.
-    const whatsappUrl = `https://wa.me/91${recipientPhone}?text=${encodedPayload}`;
+    const whatsappUrl = `https://wa.me/${recipientPhone}?text=${encodedPayload}`;
     window.location.assign(whatsappUrl);
   };
 
@@ -311,18 +323,18 @@ ${formData.message}`;
               <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
                 <div>
                   <label htmlFor="contact-name" className="mb-2 block text-sm font-bold text-slate-700">Full Name *</label>
-                  <input id="contact-name" type="text" name="name" value={formData.name} onChange={handleChange} required className="w-full rounded-lg border border-slate-200 bg-slate-50 p-3 outline-none transition-colors focus:bg-white focus:ring-2 focus:ring-emerald-500" placeholder="John Doe" />
+                  <input id="contact-name" type="text" name="name" value={formData.name} onChange={handleChange} required className="w-full rounded-lg border border-slate-200 bg-slate-50 p-3 outline-none transition-colors focus:bg-white focus:ring-2 focus:ring-emerald-500" />
                 </div>
                 <div>
                   <label htmlFor="contact-phone" className="mb-2 block text-sm font-bold text-slate-700">Phone Number *</label>
-                  <input id="contact-phone" type="tel" name="phone" value={formData.phone} onChange={handleChange} required className="w-full rounded-lg border border-slate-200 bg-slate-50 p-3 outline-none transition-colors focus:bg-white focus:ring-2 focus:ring-emerald-500" placeholder="+91 XXXXX XXXXX" />
+                  <div className="flex gap-2"><select aria-label="Country code" name="phoneCountryCode" value={formData.phoneCountryCode} onChange={handleChange} className="w-32 rounded-lg border border-slate-200 bg-slate-50 p-3 outline-none focus:bg-white focus:ring-2 focus:ring-emerald-500">{COUNTRY_CODES.map(([code, country]) => <option key={code} value={code}>{code} · {country}</option>)}</select><input id="contact-phone" type="tel" name="phone" value={formData.phone} onChange={handleChange} required autoComplete="tel-national" inputMode="tel" className="min-w-0 flex-1 rounded-lg border border-slate-200 bg-slate-50 p-3 outline-none transition-colors focus:bg-white focus:ring-2 focus:ring-emerald-500" /></div>
                 </div>
               </div>
 
               <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
                 <div>
                   <label htmlFor="contact-email" className="mb-2 block text-sm font-bold text-slate-700">Email Address *</label>
-                  <input id="contact-email" type="email" name="email" value={formData.email} onChange={handleChange} required className="w-full rounded-lg border border-slate-200 bg-slate-50 p-3 outline-none transition-colors focus:bg-white focus:ring-2 focus:ring-emerald-500" placeholder="john@example.com" />
+                  <input id="contact-email" type="email" name="email" value={formData.email} onChange={handleChange} required className="w-full rounded-lg border border-slate-200 bg-slate-50 p-3 outline-none transition-colors focus:bg-white focus:ring-2 focus:ring-emerald-500" />
                 </div>
                 <div>
                   <label htmlFor="contact-category" className="mb-2 block text-sm font-bold text-slate-700">Inquiry Category</label>
@@ -334,7 +346,8 @@ ${formData.message}`;
 
               <div>
                 <label htmlFor="contact-message" className="mb-2 block text-sm font-bold text-slate-700">Your Message *</label>
-                <textarea id="contact-message" name="message" value={formData.message} onChange={handleChange} required rows="5" className="w-full resize-none rounded-lg border border-slate-200 bg-slate-50 p-3 outline-none transition-colors focus:bg-white focus:ring-2 focus:ring-emerald-500" placeholder="How can we help you?"></textarea>
+                <textarea id="contact-message" name="message" value={formData.message} onChange={handleChange} required minLength={20} rows="5" aria-describedby="contact-message-help" className="w-full resize-none rounded-lg border border-slate-200 bg-slate-50 p-3 outline-none transition-colors focus:bg-white focus:ring-2 focus:ring-emerald-500"></textarea>
+                <p id="contact-message-help" className={`mt-2 text-sm ${formData.message.trim().length >= 20 ? 'text-emerald-700' : 'text-slate-500'}`}>{formData.message.trim().length}/20 characters minimum</p>
               </div>
 
               <button type="submit" disabled={isSubmitting} className="group inline-flex w-full items-center justify-center gap-2 rounded-xl bg-emerald-600 px-8 py-3.5 font-bold text-white shadow-md transition-colors hover:bg-emerald-700 hover:shadow-lg disabled:cursor-not-allowed disabled:opacity-60 sm:w-auto">

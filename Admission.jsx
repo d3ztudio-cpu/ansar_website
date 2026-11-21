@@ -7,8 +7,78 @@ import { useSettings } from './SettingsContext';
 
 const DEFAULT_FEE_STRUCTURE_URL = 'https://drive.google.com/file/d/1BlRQIlD4U4RjRGvVIq2Kah4xYxNjChoa/view?usp=drive_link';
 const DEFAULT_FEE_STRUCTURE_TITLE = 'Fee Structure 2026 - 2027';
+const ADMISSION_SOP_URL = 'https://drive.google.com/file/d/1eM6K3YL_JO-VgTJD9wO_iS1s01hRMO5s/view?usp=drive_link';
+const DEFAULT_PROSPECTUS_YEAR = '2027 - 2028';
+const DEFAULT_PROSPECTUS_DESCRIPTION = 'Read the official prospectus for admissions, school information, programmes, facilities, and important guidance for the 2027 - 2028 academic year.';
 const FEE_PAYMENT_PORTAL_URL = 'https://ansartrust.atcampussolutions.com/school/';
 const FEE_PAYMENT_TUTORIAL_URL = 'https://www.youtube.com/embed/dwqhwvvNIvI';
+
+export const ADMISSION_POLICY_SECTIONS = [
+  { number: '01', title: 'Vision and Core Principles', items: [
+    ['Vision statement', 'Our school envisions nurturing students to thrive as creative and value-driven citizens who can adapt and excel in a diverse and rapidly changing world. The admission policy reflects this vision by ensuring inclusivity, transparency, and equal opportunity.'],
+    ['Compliance and transparency', 'The school shall follow a fair, transparent, and merit-based admission process in compliance with NEP and CBSE guidelines and government regulations.'],
+    ['Inclusivity', 'Admissions will be open to all children irrespective of caste, creed, religion, gender, or socio-economic background, upholding the principle of inclusivity.'],
+    ['Public information', 'The school shall publicize admission criteria, age eligibility, and procedure well in advance through official notice boards, website, and other communication channels.']
+  ] },
+  { number: '02', title: 'Admission Procedures and Assessment', items: [
+    ['Entry-level classes', 'Admissions to entry-level classes (Pre-KG to Class I) will be based on age eligibility and interaction with the child and parents, not on formal testing.'],
+    ['Higher classes', 'For higher classes, admissions shall be granted on the basis of vacancies, prior academic record, and a diagnostic assessment to understand the child’s learning needs.'],
+    ['Priority system', 'A priority system may be applied for siblings of existing students, children of staff, alumni wards, and those residing in the local community, without compromising merit and fairness.']
+  ] },
+  { number: '03', title: 'Timeline and Special Category Admissions', items: [
+    ['Academic schedule', 'Admissions are generally granted at the beginning of the academic year, from March to May.'],
+    ['Mid-year admissions', 'Mid-year admissions for Pre-KG to Class IX and Class XI are considered only in genuine cases of transfer of residence, with applications accepted until October.'],
+    ['Classes X and XII', 'Admission is granted only in rare transfer-of-residence cases, provided a vacancy exists and the application follows CBSE direct-admission guidelines.'],
+    ['Deprived-section support', 'The school shall provide admission to students belonging to the deprived section of society, supported by the APF - Ansar Poor Fund.'],
+    ['Orphan admissions', 'Admission to orphans shall be given through the Ansar Care initiative, which is funded by the Ansar Alumni.'],
+    ['Special learning needs', 'Children with Special Learning Needs (CWSN), abilities or challenges shall be given admission on a case-by-case basis under the guidance of the school counsellor and following the CBSE guidelines.'],
+    ['Orientation and integration', 'The school shall provide counseling and orientation to newly admitted students and parents to ensure smooth integration into the learning environment.']
+  ] },
+  { number: '04', title: 'Age Criteria', items: [
+    ['Age calculation', 'Candidates shall meet the stipulated age requirement for admission to Ansar English School as on June 1st of that year. The stipulated age limit may be relaxed at the discretion of the School Admission Committee based on past academic achievements and performance in our testing procedures, provided the student has graduated from a recognized school.']
+  ] },
+  { number: '05', title: 'Record Keeping and Policy Governance', items: [
+    ['Record maintenance', 'Records of all applications and admissions are systematically maintained for audit, review, and compliance.'],
+    ['Annual review', 'The School Admission Committee reviews the admission process annually to ensure effectiveness, transparency, and alignment with the school’s vision.']
+  ] }
+];
+
+export const ADMISSION_AGE_TABLE = [
+  ['Pre-KG', '3 years'], ['LKG', '4 years'], ['UKG', '5 years'], ['Class I', '6 years'],
+  ['Class II', '7 years'], ['Class III', '8 years'], ['Class IV', '9 years'], ['Class V', '10 years'],
+  ['Class VI', '11 years'], ['Class VII', '12 years'], ['Class VIII', '13 years'], ['Class IX', '14 years'],
+  ['Class X', '15 years'], ['Class XI', '16 years'], ['Class XII', '17 years']
+];
+
+function AdmissionPolicySection({ settings }) {
+  const sections = settings?.admissionPolicySections?.length ? settings.admissionPolicySections : ADMISSION_POLICY_SECTIONS;
+  const ageTable = settings?.admissionPolicyAgeTable?.length ? settings.admissionPolicyAgeTable : ADMISSION_AGE_TABLE;
+  const revision = settings?.admissionPolicyRevision || 'Rev 01';
+  const ref = settings?.admissionPolicyRef || 'AES/ADM/PO/Rev01';
+  const preparedBy = settings?.admissionPolicyPreparedBy || 'Ms. Shabitha M M';
+  const approvedBy = settings?.admissionPolicyApprovedBy || 'Mr. Feroze E M';
+  const revisionDate = settings?.admissionPolicyRevisionDate || 'November 20, 2026';
+  return (
+    <section id="admission-policy" className="mb-16 scroll-mt-24 overflow-hidden rounded-3xl border border-emerald-100 bg-white shadow-xl">
+      <div className="bg-emerald-950 px-6 py-8 text-white sm:px-10">
+        <p className="text-xs font-black uppercase tracking-[0.2em] text-amber-300">Official policy · {revision} · {ref}</p>
+        <h2 className="mt-3 text-3xl font-black sm:text-4xl">Admission Policy</h2>
+        <p className="mt-3 max-w-3xl leading-relaxed text-emerald-50/85">A clear framework for inclusive, transparent, and fair admissions at Ansar English School, Perumpilavu.</p>
+      </div>
+      <div className="space-y-5 p-5 sm:p-8">
+        {sections.map(section => (
+          <article key={section.number} className="rounded-2xl border border-slate-200 p-5 sm:p-6">
+            <div className="flex gap-4"><span className="text-sm font-black text-amber-600">{section.number}</span><div className="min-w-0 flex-1"><h3 className="text-xl font-extrabold text-emerald-950">{section.title}</h3><div className="mt-4 grid gap-4 md:grid-cols-2">{section.items.map(([label, text]) => <div key={label}><p className="text-sm font-extrabold text-slate-900">{label}</p><p className="mt-1 text-sm leading-relaxed text-slate-600">{text}</p></div>)}</div></div></div>
+          </article>
+        ))}
+        <div className="grid gap-6 rounded-2xl bg-slate-50 p-5 sm:p-6 lg:grid-cols-[1.3fr_0.7fr]">
+          <div><h3 className="text-xl font-extrabold text-emerald-950">Age criteria by class</h3><p className="mt-2 text-sm text-slate-600">Minimum age as of June 1 of the academic year.</p><div className="mt-4 grid grid-cols-2 gap-2 sm:grid-cols-3">{ageTable.map(([klass, age]) => <div key={klass} className="rounded-xl border border-slate-200 bg-white px-3 py-2"><p className="text-xs font-bold text-slate-500">{klass}</p><p className="mt-1 text-sm font-black text-emerald-800">{age}</p></div>)}</div></div>
+          <div className="border-t border-slate-200 pt-5 lg:border-l lg:border-t-0 lg:pl-6 lg:pt-0"><h3 className="text-xl font-extrabold text-emerald-950">Policy record</h3><dl className="mt-4 space-y-3 text-sm"><div><dt className="font-bold text-slate-500">Prepared by</dt><dd className="font-extrabold text-slate-900">{preparedBy}</dd></div><div><dt className="font-bold text-slate-500">Approved by</dt><dd className="font-extrabold text-slate-900">{approvedBy}</dd></div><div><dt className="font-bold text-slate-500">Revision date</dt><dd className="font-extrabold text-slate-900">{revisionDate}</dd></div></dl></div>
+        </div>
+      </div>
+    </section>
+  );
+}
 
 const ADMISSION_FAQS = [
   {
@@ -41,7 +111,7 @@ const ADMISSION_FAQS = [
       },
       {
         question: 'Can I apply for mid-year admission?',
-        answer: 'Mid-year admissions up to Class IX are considered only under genuine transfer-of-residence circumstances, with applications accepted until October.'
+        answer: 'Mid-year admissions for Pre-KG to Class IX and Class XI are considered only under genuine transfer-of-residence circumstances, with applications accepted until October.'
       },
       {
         question: 'Can students be admitted directly into Class X or Class XII?',
@@ -116,8 +186,36 @@ function FeeStructureActions({ title, url, onDownload }) {
           <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" /></svg>
           Download
         </button>
+        <a
+          href={ADMISSION_SOP_URL}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="inline-flex items-center justify-center gap-2 rounded-xl bg-amber-400 px-5 py-3 text-sm font-bold text-emerald-950 transition-colors hover:bg-amber-300 sm:col-span-2"
+        >
+          <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M7 3h7l5 5v11a2 2 0 01-2 2H7a2 2 0 01-2-2V5a2 2 0 012-2Zm7 0v6h6M8.5 14h7M8.5 17h5" /></svg>
+          View Admission SOP
+        </a>
       </div>
     </div>
+  );
+}
+
+function ProspectusActions({ year, description, url, onDownload }) {
+  return (
+    <section id="prospectus" className="scroll-mt-24 rounded-3xl border-2 border-amber-200 bg-gradient-to-br from-amber-50 via-white to-emerald-50 p-6 shadow-lg sm:p-8">
+      <div className="flex flex-col gap-5 sm:flex-row sm:items-start sm:justify-between">
+        <div>
+          <p className="text-xs font-black uppercase tracking-[0.2em] text-amber-700">Admissions Prospectus</p>
+          <h2 className="mt-2 text-3xl font-black text-emerald-950">Prospectus {year}</h2>
+          <p className="mt-3 max-w-2xl text-base leading-relaxed text-slate-600">{description}</p>
+        </div>
+      </div>
+      {!url && <p className="mt-5 rounded-xl border border-amber-200 bg-amber-100/60 p-3 text-sm font-semibold text-amber-900">The prospectus will be available here once the latest PDF is published.</p>}
+      <div className="mt-6 grid grid-cols-1 gap-3 sm:grid-cols-2">
+        <a href={url || undefined} aria-disabled={!url} target="_blank" rel="noopener noreferrer" className={`inline-flex items-center justify-center rounded-xl px-5 py-3 text-sm font-bold text-white ${url ? 'bg-slate-900 hover:bg-slate-800' : 'pointer-events-none bg-slate-300'}`}>View Prospectus</a>
+        <button type="button" disabled={!url} onClick={onDownload} className="inline-flex items-center justify-center rounded-xl bg-emerald-600 px-5 py-3 text-sm font-bold text-white transition-colors hover:bg-emerald-700 disabled:cursor-not-allowed disabled:bg-emerald-200">Download Prospectus</button>
+      </div>
+    </section>
   );
 }
 
@@ -205,6 +303,9 @@ export default function Admission() {
   const settings = useSettings();
   const feeStructureUrl = settings?.feeStructurePdfUrl?.trim() || DEFAULT_FEE_STRUCTURE_URL;
   const feeStructureTitle = settings?.feeStructureTitle?.trim() || DEFAULT_FEE_STRUCTURE_TITLE;
+  const prospectusYear = settings?.prospectusYear?.trim() || DEFAULT_PROSPECTUS_YEAR;
+  const prospectusDescription = settings?.prospectusDescription?.trim() || DEFAULT_PROSPECTUS_DESCRIPTION;
+  const prospectusPdfUrl = settings?.prospectusPdfUrl?.trim() || '';
   const [isFeePaymentModalOpen, setIsFeePaymentModalOpen] = useState(false);
   const [isTutorialOpen, setIsTutorialOpen] = useState(false);
 
@@ -238,7 +339,7 @@ export default function Admission() {
     const a = document.createElement('a');
     a.href = downloadUrl;
     a.target = '_blank';
-    a.download = 'Ansar_Fee_Structure.pdf';
+    a.download = url === prospectusPdfUrl ? `Ansar_Prospectus_${prospectusYear.replace(/\s+/g, '_')}.pdf` : 'Ansar_Fee_Structure.pdf';
     document.body.appendChild(a);
     a.click();
     document.body.removeChild(a);
@@ -265,6 +366,10 @@ export default function Admission() {
             className="prose prose-slate prose-lg max-w-none prose-headings:text-slate-900 prose-a:text-emerald-600 prose-img:rounded-xl"
             dangerouslySetInnerHTML={{ __html: page.bodyHtml }}
           />
+          <AdmissionPolicySection settings={settings} />
+          <div className="mt-6">
+            <ProspectusActions year={prospectusYear} description={prospectusDescription} url={prospectusPdfUrl} onDownload={() => handlePdfDownload(prospectusPdfUrl)} />
+          </div>
           <div className="mt-6">
             <FeeStructureActions title={feeStructureTitle} url={feeStructureUrl} onDownload={() => handlePdfDownload(feeStructureUrl)} />
           </div>
@@ -449,6 +554,10 @@ export default function Admission() {
           </section>
         )}
 
+        <div className="mb-16"><ProspectusActions year={prospectusYear} description={prospectusDescription} url={prospectusPdfUrl} onDownload={() => handlePdfDownload(prospectusPdfUrl)} /></div>
+
+        <AdmissionPolicySection settings={settings} />
+
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-16">
           <div className="lg:col-span-2 space-y-8">
             <div className="bg-white p-8 sm:p-10 rounded-3xl shadow-sm border border-slate-100 academics-card">
@@ -518,6 +627,14 @@ export default function Admission() {
                   <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
                   Download Fee Structure
                 </button>
+                <a
+                  href={ADMISSION_SOP_URL}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="w-full rounded-xl bg-amber-400 px-4 py-3 text-sm font-bold text-emerald-950 shadow-md transition-colors hover:bg-amber-300 sm:text-base"
+                >
+                  View Admission SOP
+                </a>
               </div>
             </div>
           </div>

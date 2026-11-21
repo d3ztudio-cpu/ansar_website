@@ -186,13 +186,14 @@ service cloud.firestore {
              isValidOptionalString('keywords', 0, 500) &&
              isValidOptionalString('clubsTitle', 0, 200) &&
              isValidOptionalString('clubsBody', 0, 50000) &&
-             isOptionalUrlList('clubsImages', 30) &&
+             isOptionalUrlList('clubsImages', 1000) &&
              isValidOptionalString('nssTitle', 0, 200) &&
              isValidOptionalString('nssBody', 0, 50000) &&
-             isOptionalUrlList('nssImages', 30) &&
+             isOptionalUrlList('nssImages', 1000) &&
              isValidOptionalString('spcTitle', 0, 200) &&
              isValidOptionalString('spcBody', 0, 50000) &&
-             isOptionalUrlList('spcImages', 30) &&             isOptionalUrlList('sproutsImages', 30) &&             isValidUrl('radioStationImageUrl') &&             isValidUrl('sproutsSkatingImageUrl') && isValidUrl('sproutsCyclingImageUrl') &&
+             isOptionalUrlList('spcImages', 1000) &&             isOptionalUrlList('sproutsImages', 1000) &&
+             isValidUrl('radioStationImageUrl') &&             isValidUrl('sproutsSkatingImageUrl') && isValidUrl('sproutsCyclingImageUrl') &&
              isOptionalUrlList('sproutsFacilities', 30) &&
              isOptionalNumber('order') &&
              isOptionalBool('published') &&
@@ -224,7 +225,7 @@ service cloud.firestore {
              isValidOptionalString('time', 0, 100) &&
              isValidDateString('date') &&
              isValidUrl('image') &&
-             isOptionalUrlList('imageUrls', 100) &&
+             isOptionalUrlList('imageUrls', 1000) &&
              isValidUrl('facebookUrl') &&
              isValidUrl('instagramUrl') &&
              isValidUrl('youtubeUrl') &&
@@ -239,9 +240,9 @@ service cloud.firestore {
              isValidStringLength('title', 1, 200) &&
              isValidOptionalString('description', 0, 50000) &&
              isValidUrl('imageUrl') &&
-             isOptionalUrlList('imageUrls', 100) &&
+             isOptionalUrlList('imageUrls', 1000) &&
              isValidUrl('coverImageUrl') &&
-             isOptionalUrlList('eventImages', 100) &&
+             isOptionalUrlList('eventImages', 1000) &&
              isValidDateString('date') &&
              isValidUrl('facebookUrl') &&
              isValidUrl('instagramUrl') &&
@@ -289,7 +290,7 @@ service cloud.firestore {
              isValidOptionalString('subject', 0, 200) &&
              isValidOptionalString('year', 0, 20) &&
              isValidUrl('fileUrl') &&
-             isOptionalUrlList('imageUrls', 30) &&
+             isOptionalUrlList('imageUrls', 1000) &&
              isValidOptionalString('contributorType', 0, 30) &&
              request.resource.data.published is bool &&
              request.resource.data.createdAt is timestamp &&
@@ -325,7 +326,7 @@ service cloud.firestore {
              isValidStringLength('slug', 1, 100) &&
              isValidStringLength('title', 1, 200) &&
              isValidStringLength('description', 1, 10000) &&
-             isOptionalUrlList('imageUrls', 30) &&
+             isOptionalUrlList('imageUrls', 1000) &&
              isOptionalNumber('order') &&
              isOptionalBool('published') &&
              isOptionalTimestamp('createdAt') &&
@@ -340,7 +341,7 @@ service cloud.firestore {
              isValidDateString('date') &&
              isValidStringLength('description', 1, 20000) &&
              isValidUrl('coverImageUrl') &&
-             isOptionalUrlList('imageUrls', 30) &&
+             isOptionalUrlList('imageUrls', 1000) &&
              isOptionalBool('published') &&
              isOptionalTimestamp('createdAt') &&
              isOptionalTimestamp('updatedAt');
@@ -482,7 +483,7 @@ service cloud.firestore {
                isValidStringLength('title', 1, 200) &&
                isValidOptionalString('description', 0, 10000) &&
                isValidUrl('imageUrl') &&
-               isOptionalUrlList('imageUrls', 30) &&
+               isOptionalUrlList('imageUrls', 1000) &&
                isValidDateString('date') &&
                isValidOptionalString('studentName', 0, 500) &&
                isOptionalNumber('order') &&

@@ -47,8 +47,12 @@ export default function AdminLayout({ children, user, onLogout, sproutsOnly = fa
     if (path.includes('/leadership')) return 'Leadership';
     if (path.includes('/academic-calendar')) return 'Academic Calendar';
     if (path.includes('/academics')) return 'Academics & Admissions';
+    if (path.includes('/prospectus')) return 'Prospectus';
+    if (path.includes('/admission-policy')) return 'Admission Policy';
+    if (path.includes('/contact-submissions')) return 'Contact Submissions';
     if (path.includes('/public-disclosure')) return 'Mandatory Disclosure';
     if (path.includes('/forms')) return 'School Forms';
+    if (path.includes('/sop')) return 'SOP Library';
     if (path.includes('/gallery')) return 'Gallery';
     if (path.includes('/notices')) return 'Notices';
     if (path.includes('/counseling')) return 'Counseling Team';
@@ -112,9 +116,13 @@ export default function AdminLayout({ children, user, onLogout, sproutsOnly = fa
           <Link to="/admin/alumni" className={`block px-4 py-3 rounded-lg font-medium transition-colors ${currentModule === 'Alumni' ? 'bg-emerald-600 text-white' : 'text-slate-300 hover:bg-slate-800 hover:text-white'}`}><span className="mr-3" aria-hidden="true">A</span>Alumni</Link>
           <Link to="/admin/leadership" className={`block px-4 py-3 rounded-lg font-medium transition-colors ${currentModule === 'Leadership' ? 'bg-emerald-600 text-white' : 'text-slate-300 hover:bg-slate-800 hover:text-white'}`}><span className="mr-3" aria-hidden="true">♙</span>Leadership</Link>
           <Link to="/admin/academics" className={`block px-4 py-3 rounded-lg font-medium transition-colors ${currentModule === 'Academics & Admissions' ? 'bg-emerald-600 text-white' : 'text-slate-300 hover:bg-slate-800 hover:text-white'}`}><span className="mr-3" aria-hidden="true">▥</span>Academics & Admissions</Link>
+          <Link to="/admin/prospectus" className={`block px-4 py-3 rounded-lg font-medium transition-colors ${currentModule === 'Prospectus' ? 'bg-amber-500 text-white' : 'text-slate-300 hover:bg-slate-800 hover:text-white'}`}><span className="mr-3" aria-hidden="true">▤</span>Prospectus</Link>
+          <Link to="/admin/admission-policy" className={`block px-4 py-3 rounded-lg font-medium transition-colors ${currentModule === 'Admission Policy' ? 'bg-emerald-600 text-white' : 'text-slate-300 hover:bg-slate-800 hover:text-white'}`}><span className="mr-3" aria-hidden="true">▥</span>Admission Policy</Link>
+          <Link to="/admin/contact-submissions" className={`block px-4 py-3 rounded-lg font-medium transition-colors ${currentModule === 'Contact Submissions' ? 'bg-emerald-600 text-white' : 'text-slate-300 hover:bg-slate-800 hover:text-white'}`}><span className="mr-3" aria-hidden="true">✉</span>Contact Submissions</Link>
           <Link to="/admin/academic-calendar" className={`block px-4 py-3 rounded-lg font-medium transition-colors ${currentModule === 'Academic Calendar' ? 'bg-emerald-600 text-white' : 'text-slate-300 hover:bg-slate-800 hover:text-white'}`}><span className="mr-3" aria-hidden="true">▣</span>Academic Calendar</Link>
           <Link to="/admin/public-disclosure" className={`block px-4 py-3 rounded-lg font-medium transition-colors ${currentModule === 'Mandatory Disclosure' ? 'bg-emerald-600 text-white' : 'text-slate-300 hover:bg-slate-800 hover:text-white'}`}><span className="mr-3" aria-hidden="true">▧</span>Mandatory Disclosure</Link>
           <Link to="/admin/forms" className={`block px-4 py-3 rounded-lg font-medium transition-colors ${currentModule === 'School Forms' ? 'bg-emerald-600 text-white' : 'text-slate-300 hover:bg-slate-800 hover:text-white'}`}><span className="mr-3" aria-hidden="true">▤</span>Forms</Link>
+          <Link to="/admin/sop" className={`block px-4 py-3 rounded-lg font-medium transition-colors ${currentModule === 'SOP Library' ? 'bg-emerald-600 text-white' : 'text-slate-300 hover:bg-slate-800 hover:text-white'}`}><span className="mr-3" aria-hidden="true">▧</span>SOP Library</Link>
           <Link to="/admin/gallery" className={`block px-4 py-3 rounded-lg font-medium transition-colors ${currentModule === 'Gallery' ? 'bg-emerald-600 text-white' : 'text-slate-300 hover:bg-slate-800 hover:text-white'}`}><span className="mr-3" aria-hidden="true">▣</span>Gallery</Link>
           <Link to="/admin/notices" className={`block px-4 py-3 rounded-lg font-medium transition-colors ${currentModule === 'Notices' ? 'bg-emerald-600 text-white' : 'text-slate-300 hover:bg-slate-800 hover:text-white'}`}><span className="mr-3" aria-hidden="true">!</span>Notices</Link>
           <Link to="/admin/counseling" className={`block px-4 py-3 rounded-lg font-medium transition-colors ${currentModule === 'Counseling Team' ? 'bg-emerald-600 text-white' : 'text-slate-300 hover:bg-slate-800 hover:text-white'}`}><span className="mr-3" aria-hidden="true">◉</span>Counseling Team</Link>

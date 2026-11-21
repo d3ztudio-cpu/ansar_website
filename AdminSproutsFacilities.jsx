@@ -6,7 +6,6 @@ import { normalizeImageUrl } from './imageUrlUtils';
 import { uploadImageToHostinger } from './hostingerUpload';
 import ImgBbUrlImporter from './ImgBbUrlImporter';
 
-const MAX_FACILITY_CARD_IMAGES = 12;
 const MAX_FACILITY_CARDS = 4;
 
 const EMPTY_CARD = {
@@ -279,7 +278,7 @@ export default function AdminSproutsFacilities() {
         images: card.images
           .map((image) => normalizeImageUrl(image))
           .filter(Boolean)
-          .slice(0, MAX_FACILITY_CARD_IMAGES)
+          
       }));
 
       await setDoc(doc(db, 'pages', 'ansar-sprouts'), {
@@ -407,7 +406,7 @@ export default function AdminSproutsFacilities() {
                 </div>
 
                 <div className="flex min-w-0 flex-1 flex-col gap-3">
-                  <span className="text-xs font-black uppercase tracking-wider text-slate-500">Images ({card.images.length}/{MAX_FACILITY_CARD_IMAGES})</span>
+                  <span className="text-xs font-black uppercase tracking-wider text-slate-500">Images ({card.images.length})</span>
                   <div className="flex flex-1 flex-wrap gap-3">
                     {card.images.map((image, imageIndex) => (
                       <FacilityPhotoUploader
@@ -421,7 +420,6 @@ export default function AdminSproutsFacilities() {
                     <button
                       type="button"
                       onClick={() => addImage(index)}
-                      disabled={card.images.length >= MAX_FACILITY_CARD_IMAGES}
                       className="flex shrink-0 items-center gap-2 rounded-xl border border-slate-200 px-3 py-2 text-sm font-bold text-slate-600 transition hover:bg-white disabled:cursor-not-allowed disabled:opacity-40"
                     >
                       + Add image

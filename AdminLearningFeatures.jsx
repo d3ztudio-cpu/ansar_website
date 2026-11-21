@@ -6,7 +6,6 @@ import AdminTransportStaff from './AdminTransportStaff';
 import { LEARNING_FEATURES_DOCUMENT_CONTENT, resolveLearningFeatureImage } from './learningFeaturesDocumentContent';
 import { uploadLearningFeatureImages } from './firebaseStorageUpload';
 
-const MAX_GALLERY_IMAGES = 30;
 
 const BASE_DEFAULT_FEATURES = [
   {
@@ -204,10 +203,7 @@ export default function AdminLearningFeatures() {
   const appendGalleryImages = (urls) => {
     setFormData(prev => {
       const existing = prev.galleryImages.filter(url => url.trim());
-      const nextImages = [...existing, ...urls].slice(0, MAX_GALLERY_IMAGES);
-      if (existing.length + urls.length > MAX_GALLERY_IMAGES) {
-        alert(`Only the first ${MAX_GALLERY_IMAGES} image links were added.`);
-      }
+      const nextImages = [...new Set([...existing, ...urls])];
       return { ...prev, galleryImages: nextImages.length ? nextImages : [''] };
     });
   };
@@ -236,10 +232,6 @@ export default function AdminLearningFeatures() {
 
   const addGalleryField = () => {
     setFormData(prev => {
-      if (prev.galleryImages.length >= MAX_GALLERY_IMAGES) {
-        alert(`You can add up to ${MAX_GALLERY_IMAGES} carousel images for one learning page.`);
-        return prev;
-      }
       return { ...prev, galleryImages: [...prev.galleryImages, ''] };
     });
   };
@@ -256,8 +248,8 @@ export default function AdminLearningFeatures() {
     setIsSubmitting(true);
     try {
       const defaultIndex = DEFAULT_FEATURES.findIndex(feature => feature.slug === formData.slug);
-      const galleryImages = formData.galleryImages.map(url => url.trim()).filter(Boolean).slice(0, MAX_GALLERY_IMAGES);
-      const outdoorGymImageUrls = formData.outdoorGymImageUrls.map(url => url.trim()).filter(Boolean).slice(0, MAX_GALLERY_IMAGES);
+      const galleryImages = [...new Set(formData.galleryImages.map(url => url.trim()).filter(Boolean))];
+      const outdoorGymImageUrls = [...new Set(formData.outdoorGymImageUrls.map(url => url.trim()).filter(Boolean))];
       const payload = {
         id: formData.slug,
         slug: formData.slug,
@@ -401,7 +393,7 @@ export default function AdminLearningFeatures() {
             </label>
             <div className="mt-4 flex flex-wrap items-center justify-between gap-3">
               <span className="text-sm font-bold text-slate-700">Outdoor Gym Images</span>
-              <ImgBbUrlImporter multiple label="Extract Outdoor Gym Images" onExtracted={urls => setFormData(prev => ({ ...prev, outdoorGymImageUrls: [...prev.outdoorGymImageUrls.filter(Boolean), ...urls].slice(0, MAX_GALLERY_IMAGES) }))} />
+              <ImgBbUrlImporter multiple label="Extract Outdoor Gym Images" onExtracted={urls => setFormData(prev => ({ ...prev, outdoorGymImageUrls: [...new Set([...prev.outdoorGymImageUrls.filter(Boolean), ...urls])] }))} />
             </div>
             <div className="mt-3 space-y-3">
               {formData.outdoorGymImageUrls.map((url, index) => <div key={index} className="grid grid-cols-[1fr_auto] gap-2">

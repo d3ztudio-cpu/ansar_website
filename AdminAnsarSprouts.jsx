@@ -9,7 +9,6 @@ import { deleteSheetRecord, saveSheetRecord } from './googleSheetsAdminApi';
 import AdminSproutsFacilities from './AdminSproutsFacilities';
 import AdminFieldTrips from './AdminFieldTrips';
 
-const MAX_IMAGES = 30;
 const EMPTY_ACTIVITY = { title: '', category: '', date: '', description: '', imageUrls: [''], order: 0, published: true };
 
 export default function AdminAnsarSprouts() {
@@ -32,13 +31,13 @@ export default function AdminAnsarSprouts() {
     setCyclingImageUrl(data?.sproutsCyclingImageUrl || '');
   }, [data]);
 
-  const appendImages = urls => setImages(current => [...new Set([...current.filter(Boolean), ...urls])].slice(0, MAX_IMAGES));
+  const appendImages = urls => setImages(current => [...new Set([...current.filter(Boolean), ...urls])]);
 
   const save = async event => {
     event.preventDefault();
     setSaving(true);
     try {
-      const sproutsImages = [...new Set(images.map(normalizeImageUrl).filter(Boolean))].slice(0, MAX_IMAGES);
+      const sproutsImages = [...new Set(images.map(normalizeImageUrl).filter(Boolean))];
       const normalizedRadioStationImageUrl = normalizeImageUrl(radioStationImageUrl);
       const normalizedSkatingImageUrl = normalizeImageUrl(skatingImageUrl);
       const normalizedCyclingImageUrl = normalizeImageUrl(cyclingImageUrl);
@@ -68,7 +67,7 @@ export default function AdminAnsarSprouts() {
     const { name, value, type, checked } = event.target;
     setActivity(current => ({ ...current, [name]: type === 'checkbox' ? checked : value }));
   };
-  const appendActivityImages = urls => setActivity(current => ({ ...current, imageUrls: [...new Set([...current.imageUrls.filter(Boolean), ...urls])].slice(0, MAX_IMAGES) }));
+  const appendActivityImages = urls => setActivity(current => ({ ...current, imageUrls: [...new Set([...current.imageUrls.filter(Boolean), ...urls])] }));
   const resetActivity = () => { setEditingActivityId(null); setActivity(EMPTY_ACTIVITY); };
   const refreshActivities = () => { clearGoogleSheetsCache(); setRefreshKey(value => value + 1); };
   const editActivity = item => {
@@ -80,7 +79,7 @@ export default function AdminAnsarSprouts() {
     event.preventDefault();
     setSavingActivity(true);
     try {
-      const imageUrls = [...new Set(activity.imageUrls.map(normalizeImageUrl).filter(Boolean))].slice(0, MAX_IMAGES);
+      const imageUrls = [...new Set(activity.imageUrls.map(normalizeImageUrl).filter(Boolean))];
       await saveSheetRecord('sproutsActivities', { ...activity, id: editingActivityId || undefined, title: activity.title.trim(), category: activity.category.trim() || 'Sprouts Activity', description: activity.description.trim(), imageUrls, order: Number(activity.order) || 0, published: !!activity.published });
       resetActivity();
       refreshActivities();
@@ -97,7 +96,7 @@ export default function AdminAnsarSprouts() {
   return <div className="space-y-8"><form onSubmit={save} className="rounded-2xl border border-orange-100 bg-white p-6 shadow-xl sm:p-8">
     <p className="text-xs font-black uppercase tracking-widest text-orange-500">Ansar Sprouts</p>
     <h2 className="mt-2 text-2xl font-extrabold text-slate-900">Cover carousel images</h2>
-    <p className="mt-2 text-sm leading-relaxed text-slate-500">The first image is the cover. Add up to {MAX_IMAGES} images; they will slide automatically in the Sprouts hero.</p>
+    <p className="mt-2 text-sm leading-relaxed text-slate-500">The first image is the cover. Add as many images as needed; they will slide automatically in the Sprouts hero.</p>
     {loading && <p className="mt-4 text-sm font-semibold text-slate-500">Loading saved images...</p>}
 
     <div className="mt-6 flex flex-wrap justify-end gap-3">
@@ -111,7 +110,7 @@ export default function AdminAnsarSprouts() {
       </div>
       <button type="button" onClick={() => setImages(current => current.length === 1 ? [''] : current.filter((_, imageIndex) => imageIndex !== index))} className="rounded-xl px-4 py-3 text-sm font-bold text-red-600 hover:bg-red-50">Remove</button>
     </div>)}</div>
-    <button type="button" onClick={() => setImages(current => current.length < MAX_IMAGES ? [...current, ''] : current)} className="mt-4 rounded-xl border border-orange-200 px-4 py-2 text-sm font-bold text-orange-600 hover:bg-orange-50">+ Add image</button>
+    <button type="button" onClick={() => setImages(current => [...current, ''])} className="mt-4 rounded-xl border border-orange-200 px-4 py-2 text-sm font-bold text-orange-600 hover:bg-orange-50">+ Add image</button>
     <div className="mt-8 border-t border-slate-100 pt-7">
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div><h3 className="text-xl font-extrabold text-slate-900">Sprouts FM Radio Station image</h3><p className="mt-1 text-sm leading-relaxed text-slate-500">Upload the facility photograph shown on the Sprouts page.</p></div>
@@ -148,7 +147,7 @@ export default function AdminAnsarSprouts() {
     <label className="mt-4 block"><span className="text-sm font-bold text-slate-700">Article description *</span><textarea name="description" value={activity.description} onChange={updateActivityField} required className="mt-1 h-36 w-full rounded-xl border border-slate-200 p-3 outline-none focus:ring-2 focus:ring-emerald-500" /></label>
     <div className="mt-5 flex flex-wrap items-center justify-between gap-3"><div><h3 className="font-extrabold text-slate-900">Activity images</h3><p className="text-sm text-slate-500">The first image is the article cover; all images rotate in its carousel.</p></div><ImgBbUrlImporter multiple label="Extract Multiple ImgBB URLs" onExtracted={appendActivityImages} /></div>
     <div className="mt-4 space-y-3">{activity.imageUrls.map((url, index) => <div key={index} className="flex gap-2"><input type="url" value={url} onChange={event => setActivity(current => ({ ...current, imageUrls: current.imageUrls.map((image, imageIndex) => imageIndex === index ? event.target.value : image) }))} placeholder={`Activity image ${index + 1}`} className="min-w-0 flex-1 rounded-xl border border-slate-200 p-3 outline-none focus:ring-2 focus:ring-emerald-500" /><button type="button" onClick={() => setActivity(current => ({ ...current, imageUrls: current.imageUrls.length === 1 ? [''] : current.imageUrls.filter((_, imageIndex) => imageIndex !== index) }))} className="rounded-xl px-4 font-bold text-red-600 hover:bg-red-50">Remove</button></div>)}</div>
-    <button type="button" onClick={() => setActivity(current => current.imageUrls.length < MAX_IMAGES ? ({ ...current, imageUrls: [...current.imageUrls, ''] }) : current)} className="mt-4 rounded-xl border border-emerald-200 px-4 py-2 text-sm font-bold text-emerald-700">+ Add image</button>
+    <button type="button" onClick={() => setActivity(current => ({ ...current, imageUrls: [...current.imageUrls, ''] }))} className="mt-4 rounded-xl border border-emerald-200 px-4 py-2 text-sm font-bold text-emerald-700">+ Add image</button>
     <div className="mt-6 flex flex-wrap items-center justify-between gap-4 border-t border-slate-100 pt-6"><label className="flex items-center gap-2 font-bold text-slate-700"><input type="checkbox" name="published" checked={activity.published} onChange={updateActivityField} className="h-5 w-5" /> Published</label><div className="flex gap-3">{editingActivityId && <button type="button" onClick={resetActivity} className="rounded-xl px-5 py-3 font-bold text-slate-600">Cancel</button>}<button type="submit" disabled={savingActivity} className="rounded-xl bg-emerald-700 px-6 py-3 font-bold text-white disabled:opacity-50">{savingActivity ? 'Saving...' : 'Save Activity to Google Sheets'}</button></div></div>
   </form>
 

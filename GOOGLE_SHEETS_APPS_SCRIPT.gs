@@ -98,7 +98,21 @@ const SHEET_COLUMNS = {
     'category',
     'applyingForClass',
     'message',
+    'status',
+    'lastAction',
+    'lastActionAt',
     'published'
+  ],
+  sops: [
+    'id',
+    'title',
+    'category',
+    'file',
+    'driveUrl',
+    'size',
+    'order',
+    'published',
+    'featured'
   ],
   publicDisclosure: [
     'id',
@@ -235,6 +249,11 @@ function doPost(e) {
 
     if (action === 'delete') {
       deleteRecord_(body);
+      return json_({ ok: true });
+    }
+
+    if (action === 'deleteMany') {
+      deleteRecords_(body);
       return json_({ ok: true });
     }
 
@@ -672,6 +691,28 @@ function saveRecord_(body) {
   const record = normalizeRecord_(collectionName, body.record || {});
 
   const rowNumber = findRowById_(sheet, headers, record.id);
+  // Contact actions are often sent back from the admin UI after reading a
+  // legacy row. If the old message cell is a boolean/blank in the browser
+  // representation, never replace an existing text message in Sheets with it.
+  if (collectionName === 'contactSubmissions' && rowNumber) {
+    const existing = sheet.getRange(rowNumber, 1, 1, headers.length).getDisplayValues()[0];
+    headers.forEach(function(header, index) {
+      if (/^(message|query|inquiry|description|body)$/i.test(header)) {
+        const incoming = String(record[header] == null ? '' : record[header]).trim();
+        const stored = String(existing[index] || '').trim();
+        if ((!incoming || /^(true|false)$/i.test(incoming)) && stored && !/^(true|false)$/i.test(stored)) {
+          record[header] = stored;
+        }
+      }
+    });
+  }
+  // Phone numbers must always be written as text. A leading plus sign can be
+  // interpreted by Google Sheets as a formula, which produces #ERROR for many
+  // international numbers. Formatting the phone columns as plain text before
+  // writing preserves the number exactly as entered.
+  headers.forEach((header, index) => {
+    if (/phone|mobile|telephone/i.test(header)) sheet.getRange(2, index + 1, Math.max(sheet.getMaxRows() - 1, 1), 1).setNumberFormat('@');
+  });
   const values = headers.map((header) => encodeCellValue_(record[header]));
 
   if (rowNumber) {
@@ -836,7 +877,7 @@ function sendContactAcknowledgement_(body) {
     classLine,
     '    </table>',
     '    <p style="margin:0 0 14px;line-height:1.6;">If your matter is urgent, please call the school office at <strong>+91 81298 08051</strong>.</p>',
-    '    <p style="margin:0;line-height:1.6;">Warm regards,<br><strong>Team Ansar English School</strong></p>',
+    '    <p style="margin:0;line-height:1.6;">Warm regards,<br><strong>ANSAR ENGLISH SCHOOL</strong></p>',
     '  </div>',
     '  <div style="background:#f8fafc;padding:14px 28px;font-size:12px;color:#64748b;">This is a system-generated acknowledgement. Please do not reply to this email.</div>',
     '</div>'
@@ -848,7 +889,7 @@ function sendContactAcknowledgement_(body) {
     'Enquiry Type: ' + category + '\n' +
     (applyingForClass ? 'Class Applying For: ' + applyingForClass + '\n' : '') +
     '\nIf your matter is urgent, please call the school office at +91 81298 08051.\n\n' +
-    'Warm regards,\nTeam Ansar English School\n\n(This is a system-generated acknowledgement. Please do not reply.)';
+    'Warm regards,\nANSAR ENGLISH SCHOOL\n\n(This is a system-generated acknowledgement. Please do not reply.)';
 
   MailApp.sendEmail({
     to: recipient,
@@ -874,6 +915,23 @@ function deleteRecord_(body) {
     rowNumber = findAnsarTimesRow_(sheet, headers, body.record || {});
   }
   if (rowNumber) sheet.deleteRow(rowNumber);
+}
+
+function deleteRecords_(body) {
+  const ids = Array.isArray(body.ids) ? body.ids.map(String).filter(Boolean) : [];
+  if (!ids.length) return;
+  const collectionName = normalizeCollectionName_(body.collectionName);
+  const sheetName = getSheetName_(collectionName);
+  const sheet = getSpreadsheet_(body.spreadsheetId).getSheetByName(sheetName);
+  if (!sheet) return;
+  const headers = readHeaders_(sheet);
+  const idIndex = headers.indexOf('id');
+  if (idIndex < 0) return;
+  const wanted = new Set(ids);
+  const rows = sheet.getRange(2, idIndex + 1, Math.max(sheet.getLastRow() - 1, 0), 1).getDisplayValues();
+  const rowNumbers = [];
+  rows.forEach(function(row, index) { if (wanted.has(String(row[0]).trim())) rowNumbers.push(index + 2); });
+  rowNumbers.sort(function(a, b) { return b - a; }).forEach(function(rowNumber) { sheet.deleteRow(rowNumber); });
 }
 
 function normalizeCollectionName_(collectionName) {

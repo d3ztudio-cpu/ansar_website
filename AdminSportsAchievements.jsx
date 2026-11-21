@@ -10,7 +10,6 @@ import { normalizeImageUrl } from './imageUrlUtils';
 import { DEFAULT_SPORTS_PAGE, mergeListWithDefaults } from './contentDefaults';
 import { compareByUploadOrder } from './dateUtils';
 
-const MAX_SPORTS_ACHIEVEMENT_IMAGES = 30;
 
 function parseFlexibleDate(value) {
   if (!value) return null;
@@ -151,20 +150,13 @@ export default function AdminSportsAchievements() {
   const appendImageUrls = (urls) => {
     setFormData(prev => {
       const existing = Array.isArray(prev.imageUrls) ? prev.imageUrls.filter(url => url.trim() !== '') : [];
-      const nextImages = [...existing, ...urls].slice(0, MAX_SPORTS_ACHIEVEMENT_IMAGES);
-      if (existing.length + urls.length > MAX_SPORTS_ACHIEVEMENT_IMAGES) {
-        alert(`Only the first ${MAX_SPORTS_ACHIEVEMENT_IMAGES} image links were added.`);
-      }
+      const nextImages = [...new Set([...existing, ...urls])];
       return { ...prev, imageUrls: nextImages.length ? nextImages : [''] };
     });
   };
 
   const addImageUrlField = () => {
     setFormData(prev => {
-      if (prev.imageUrls.length >= MAX_SPORTS_ACHIEVEMENT_IMAGES) {
-        alert(`You can add up to ${MAX_SPORTS_ACHIEVEMENT_IMAGES} images for one sports achievement.`);
-        return prev;
-      }
       return { ...prev, imageUrls: [...prev.imageUrls, ''] };
     });
   };
@@ -210,7 +202,7 @@ export default function AdminSportsAchievements() {
     event.preventDefault();
     setIsSubmitting(true);
     try {
-      const cleanedImageUrls = [...new Set(formData.imageUrls.map(url => normalizeImageUrl(url)).filter(Boolean))].slice(0, MAX_SPORTS_ACHIEVEMENT_IMAGES);
+      const cleanedImageUrls = [...new Set(formData.imageUrls.map(url => normalizeImageUrl(url)).filter(Boolean))];
       const payload = {
         title: formData.title.trim(),
         description: formData.description.trim(),

@@ -103,6 +103,9 @@ const AdminFieldTrips = lazy(() => import("./AdminFieldTrips"));
 const AdminLeadership = lazy(() => import("./AdminLeadership"));
 const AdminNotices = lazy(() => import("./AdminNotices"));
 const AdminAcademics = lazy(() => import("./AdminAcademics"));
+const AdminProspectus = lazy(() => import("./AdminProspectus"));
+const AdminAdmissionPolicy = lazy(() => import("./AdminAdmissionPolicy"));
+const AdminContactSubmissions = lazy(() => import("./AdminContactSubmissions"));
 const AdminAcademicCalendar = lazy(() => import("./AdminAcademicCalendar"));
 const AdminSettings = lazy(() => import("./AdminSettings"));
 const AdminPublicDisclosure = lazy(() => import("./AdminPublicDisclosure"));
@@ -113,6 +116,7 @@ const AdminQuizCorner = lazy(() => import("./AdminQuizCorner"));
 const AdminStaffExams = lazy(() => import("./AdminStaffExams"));
 const AdminAnalytics = lazy(() => import("./AdminAnalytics"));
 const AdminForms = lazy(() => import("./AdminForms"));
+const AdminSop = lazy(() => import("./AdminSop"));
 const AdminCounseling = lazy(() => import("./AdminCounseling"));
 const Careers = lazy(() => import("./CareersWithHeader"));
 const AdminCareers = lazy(() => import("./AdminCareers"));
@@ -2679,6 +2683,9 @@ export default function App() {
                               path="/academics"
                               element={<AdminAcademics />}
                             />
+                            <Route path="/prospectus" element={<AdminProspectus />} />
+                            <Route path="/admission-policy" element={<AdminAdmissionPolicy />} />
+                            <Route path="/contact-submissions" element={<AdminContactSubmissions />} />
                             <Route
                               path="/academic-calendar"
                               element={<AdminAcademicCalendar />}
@@ -2688,6 +2695,7 @@ export default function App() {
                               element={<AdminPublicDisclosure />}
                             />
                             <Route path="/forms" element={<AdminForms />} />
+                            <Route path="/sop" element={<AdminSop />} />
                             <Route path="/gallery" element={<AdminGallery />} />
                             <Route path="/notices" element={<AdminNotices />} />
                             <Route path="/counseling" element={<AdminCounseling />} />

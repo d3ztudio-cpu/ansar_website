@@ -38,7 +38,7 @@ export default function AdminLifeAtAnsar() {
 
   const updateImages = (key, updater) => setForm(current => ({ ...current, [`${key}Images`]: updater(current[`${key}Images`]) }));
 
-  const appendImages = (key, urls) => updateImages(key, images => [...new Set([...images.filter(Boolean), ...urls])].slice(0, 30));
+  const appendImages = (key, urls) => updateImages(key, images => [...new Set([...images.filter(Boolean), ...urls])]);
 
   const save = async event => {
     event.preventDefault();
@@ -48,7 +48,7 @@ export default function AdminLifeAtAnsar() {
       SECTION_CONFIG.forEach(({ key }) => {
         payload[`${key}Title`] = form[`${key}Title`].trim();
         payload[`${key}Body`] = form[`${key}Body`].trim();
-        payload[`${key}Images`] = [...new Set(form[`${key}Images`].map(normalizeImageUrl).filter(Boolean))].slice(0, 30);
+        payload[`${key}Images`] = [...new Set(form[`${key}Images`].map(normalizeImageUrl).filter(Boolean))];
       });
       await setDoc(doc(db, 'pages', 'life-at-ansar'), payload, { merge: true });
       alert('Life at Ansar content saved.');
@@ -65,7 +65,7 @@ export default function AdminLifeAtAnsar() {
     <form onSubmit={save} className="space-y-8">
       <div className="rounded-2xl border border-emerald-100 bg-white p-6 shadow-xl sm:p-8">
         <h2 className="text-2xl font-extrabold text-slate-900">Life at Ansar</h2>
-        <p className="mt-2 text-sm text-slate-500">Manage section content and add up to 30 carousel images for each programme.</p>
+        <p className="mt-2 text-sm text-slate-500">Manage section content and add as many carousel images as needed for each programme.</p>
       </div>
 
       {SECTION_CONFIG.map(({ key, label }) => (

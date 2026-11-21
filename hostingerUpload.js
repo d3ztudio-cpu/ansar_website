@@ -8,7 +8,8 @@
 //   https://upload.ansarschool.in/UPLOADS/<file-name>
 import { compressImageForUpload } from './imageCompression';
 
-const HOSTINGER_UPLOAD_ENDPOINT = 'https://upload.ansarschool.in/upload.php';
+export const HOSTINGER_UPLOAD_ENDPOINT = 'https://upload.ansarschool.in/upload.php';
+const UPLOAD_TIMEOUT_MS = 120000;
 
 // Some Android and iOS gallery providers return an empty or generic MIME type
 // for otherwise valid photos. Accept common image filename extensions as a
@@ -36,10 +37,16 @@ export async function uploadImageToHostinger(file) {
   formData.append('file', uploadFile);
 
   let response;
+  const controller = new AbortController();
+  const timeout = window.setTimeout(() => controller.abort(), UPLOAD_TIMEOUT_MS);
   try {
     response = await fetch(HOSTINGER_UPLOAD_ENDPOINT, {
       method: 'POST',
-      body: formData
+      mode: 'cors',
+      credentials: 'omit',
+      cache: 'no-store',
+      body: formData,
+      signal: controller.signal
     });
   } catch (error) {
     throw new Error('Could not reach the upload service. If it was just configured, try again in a few minutes — or paste an image URL instead.');

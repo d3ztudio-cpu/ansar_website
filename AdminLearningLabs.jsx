@@ -6,7 +6,6 @@ import { normalizeImageUrl } from './imageUrlUtils';
 import ImgBbUrlImporter from './ImgBbUrlImporter';
 import { LEARNING_LABS } from './learningLabsConfig';
 
-const MAX_IMAGES = 30;
 
 export default function AdminLearningLabs() {
   const { data, loading } = useContentCollection('learningLabs', 'order', 'asc', { firestoreOnly: true });
@@ -20,13 +19,13 @@ export default function AdminLearningLabs() {
     setForm({ title: selected.title, description: selected.description, imageUrls: Array.isArray(selected.imageUrls) && selected.imageUrls.length ? selected.imageUrls : [''] });
   }, [selected.slug, selected.title, selected.description, selected.imageUrls]);
 
-  const appendImages = urls => setForm(current => ({ ...current, imageUrls: [...new Set([...current.imageUrls.filter(Boolean), ...urls])].slice(0, MAX_IMAGES) }));
+  const appendImages = urls => setForm(current => ({ ...current, imageUrls: [...new Set([...current.imageUrls.filter(Boolean), ...urls])] }));
 
   const save = async event => {
     event.preventDefault();
     setSaving(true);
     try {
-      const imageUrls = [...new Set(form.imageUrls.map(normalizeImageUrl).filter(Boolean))].slice(0, MAX_IMAGES);
+      const imageUrls = [...new Set(form.imageUrls.map(normalizeImageUrl).filter(Boolean))];
       await setDoc(doc(db, 'learningLabs', selected.slug), {
         slug: selected.slug,
         title: form.title.trim(),
@@ -49,7 +48,7 @@ export default function AdminLearningLabs() {
     <div className="rounded-2xl border border-emerald-100 bg-white p-6 shadow-sm">
       <p className="text-xs font-black uppercase tracking-widest text-emerald-600">Experiential Learning Labs</p>
       <h2 className="mt-2 text-2xl font-extrabold text-slate-900">Lab content and carousel images</h2>
-      <p className="mt-2 text-sm text-slate-500">Select a laboratory and add up to {MAX_IMAGES} images. Each lab has its own automatic carousel.</p>
+      <p className="mt-2 text-sm text-slate-500">Select a laboratory and add as many images as needed. Each lab has its own automatic carousel.</p>
     </div>
     <div className="grid gap-6 lg:grid-cols-[19rem_1fr]">
       <aside className="rounded-2xl border border-slate-100 bg-white p-4 shadow-sm">
@@ -69,7 +68,7 @@ export default function AdminLearningLabs() {
           <input type="url" value={url} onChange={event => setForm(current => ({ ...current, imageUrls: current.imageUrls.map((image, imageIndex) => imageIndex === index ? event.target.value : image) }))} placeholder={`Image ${index + 1} URL`} className="min-w-0 flex-1 rounded-xl border border-slate-200 p-3 outline-none focus:ring-2 focus:ring-emerald-500" />
           <button type="button" onClick={() => setForm(current => ({ ...current, imageUrls: current.imageUrls.length === 1 ? [''] : current.imageUrls.filter((_, imageIndex) => imageIndex !== index) }))} className="rounded-xl px-4 font-bold text-red-600 hover:bg-red-50">Remove</button>
         </div>)}</div>
-        <button type="button" onClick={() => setForm(current => current.imageUrls.length < MAX_IMAGES ? ({ ...current, imageUrls: [...current.imageUrls, ''] }) : current)} className="mt-4 rounded-xl border border-emerald-200 px-4 py-2 text-sm font-bold text-emerald-700 hover:bg-emerald-50">+ Add image</button>
+        <button type="button" onClick={() => setForm(current => ({ ...current, imageUrls: [...current.imageUrls, ''] }))} className="mt-4 rounded-xl border border-emerald-200 px-4 py-2 text-sm font-bold text-emerald-700 hover:bg-emerald-50">+ Add image</button>
         <div className="mt-7"><button type="submit" disabled={saving} className="rounded-xl bg-emerald-700 px-6 py-3 font-bold text-white hover:bg-emerald-800 disabled:opacity-50">{saving ? 'Saving...' : 'Save Lab'}</button></div>
       </form>
     </div>

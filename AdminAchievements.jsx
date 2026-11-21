@@ -7,7 +7,6 @@ import ImgBbUrlImporter from './ImgBbUrlImporter';
 import ImageUrlThumb from './ImageUrlThumb';
 import { softDeleteRecord } from './adminUndo';
 
-const MAX_ACHIEVEMENT_IMAGES = 30;
 
 // Achievements display in upload order (FIFO): the most recently uploaded
 // achievement always appears first, regardless of its date field.
@@ -52,10 +51,6 @@ export default function AdminAchievements() {
   const addImageUrlField = () => {
     setFormData(prev => {
       const currentImages = Array.isArray(prev.imageUrls) ? prev.imageUrls : [];
-      if (currentImages.length >= MAX_ACHIEVEMENT_IMAGES) {
-        alert(`You can add up to ${MAX_ACHIEVEMENT_IMAGES} images for one achievement.`);
-        return prev;
-      }
       return { ...prev, imageUrls: [...currentImages, ''] };
     });
   };
@@ -63,10 +58,7 @@ export default function AdminAchievements() {
   const appendImageUrls = (urls) => {
     setFormData(prev => {
       const existing = Array.isArray(prev.imageUrls) ? prev.imageUrls.filter(url => url.trim() !== '') : [];
-      const nextImages = [...existing, ...urls].slice(0, MAX_ACHIEVEMENT_IMAGES);
-      if (existing.length + urls.length > MAX_ACHIEVEMENT_IMAGES) {
-        alert(`Only the first ${MAX_ACHIEVEMENT_IMAGES} image links were added.`);
-      }
+      const nextImages = [...new Set([...existing, ...urls])];
       return { ...prev, imageUrls: nextImages.length ? nextImages : [''] };
     });
   };
@@ -115,7 +107,7 @@ export default function AdminAchievements() {
       const cleanedImageUrls = (Array.isArray(formData.imageUrls) ? formData.imageUrls : [])
         .map(url => url.trim())
         .filter(Boolean)
-        .slice(0, MAX_ACHIEVEMENT_IMAGES);
+        ;
 
       const payload = {
         title: formData.title || '',

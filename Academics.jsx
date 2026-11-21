@@ -34,37 +34,55 @@ export default function Academics() {
   return (
     <Layout>
       <main className="overflow-hidden bg-white">
-        <section className="bg-emerald-950 px-4 py-16 text-white lg:py-24">
-          <div className="mx-auto grid max-w-6xl items-center gap-10 lg:grid-cols-[1.05fr_.95fr]">
+        <section className="relative overflow-hidden rounded-[2rem] bg-emerald-950 px-6 py-10 text-white shadow-xl sm:px-10 sm:py-14 lg:px-14 lg:py-16">
+          <div className="pointer-events-none absolute -right-24 -top-24 h-80 w-80 rounded-full bg-amber-400/10 blur-3xl" />
+          <div className="relative mx-auto grid max-w-6xl items-center gap-10 lg:grid-cols-[1.05fr_.95fr]">
             <div>
-              <p className="text-sm font-black uppercase tracking-[0.25em] text-amber-400">{page.eyebrow}</p>
-              <h1 className="mt-5 text-4xl font-extrabold leading-tight sm:text-5xl lg:text-6xl">{page.title}</h1>
-              <p className="mt-6 max-w-3xl text-lg leading-relaxed text-emerald-100">{page.introduction}</p>
+              <p className="inline-flex rounded-full border border-amber-300/40 bg-amber-300/10 px-4 py-2 text-xs font-black uppercase tracking-[0.25em] text-amber-300">{page.eyebrow}</p>
+              <h1 className="mt-5 max-w-2xl text-4xl font-black leading-[1.05] sm:text-5xl lg:text-6xl">{page.title}</h1>
+              <p className="mt-6 max-w-2xl text-lg leading-relaxed text-emerald-50/85">{page.introduction}</p>
             </div>
-            <div className="h-72 overflow-hidden rounded-3xl bg-white shadow-2xl sm:h-96">
+            <div className="overflow-hidden rounded-[1.75rem] border border-white/20 bg-white/10 p-3 shadow-2xl backdrop-blur-sm sm:p-4">
+              <div className="h-64 overflow-hidden rounded-2xl bg-white sm:h-80 lg:h-96">
               <ContentImage src={page.heroImageUrl} alt="Academic life at Ansar English School" placeholder="Academic page hero photograph" />
+              </div>
             </div>
           </div>
         </section>
 
-        <section className="mx-auto max-w-5xl px-4 py-16 text-center lg:py-24">
-          <p className="text-sm font-black uppercase tracking-widest text-emerald-600">Our Approach</p>
-          <h2 className="mt-3 text-3xl font-extrabold text-slate-900 lg:text-4xl">{page.overviewTitle}</h2>
-          <p className="mx-auto mt-6 max-w-4xl text-lg leading-8 text-slate-600">{page.overviewBody}</p>
+        <section className="mx-auto -mt-5 max-w-6xl px-4 text-center sm:-mt-8">
+          <div className="grid gap-3 rounded-3xl border border-slate-200 bg-white p-4 shadow-xl sm:grid-cols-3 sm:p-5">
+            {[
+              ['01', 'Curiosity', 'Learning that starts with questions'],
+              ['02', 'Confidence', 'Skills built through practice'],
+              ['03', 'Character', 'Values that guide every learner']
+            ].map(([number, title, text]) => (
+              <div key={number} className="rounded-2xl bg-slate-50 p-5 text-left">
+                <span className="text-xs font-black tracking-[0.2em] text-amber-600">{number}</span>
+                <h3 className="mt-2 text-lg font-black text-emerald-950">{title}</h3>
+                <p className="mt-1 text-sm leading-relaxed text-slate-600">{text}</p>
+              </div>
+            ))}
+          </div>
+          <div className="mx-auto max-w-4xl py-16 lg:py-20">
+            <p className="text-xs font-black uppercase tracking-[0.22em] text-emerald-600">Our Approach</p>
+            <h2 className="mt-3 text-3xl font-black text-emerald-950 lg:text-4xl">{page.overviewTitle}</h2>
+            <p className="mx-auto mt-6 text-lg leading-8 text-slate-600">{page.overviewBody}</p>
+          </div>
         </section>
 
-        <section className="bg-slate-50 px-4 py-16 lg:py-24">
+        <section className="rounded-[2rem] bg-slate-50 px-6 py-16 sm:px-10 lg:px-14 lg:py-20">
           <div className="mx-auto max-w-6xl">
             <div className="max-w-3xl">
-              <p className="text-sm font-black uppercase tracking-widest text-emerald-600">Holistic Learning</p>
-              <h2 className="mt-3 text-3xl font-extrabold text-slate-900 lg:text-4xl">{page.beyondTitle}</h2>
+              <p className="text-xs font-black uppercase tracking-[0.22em] text-emerald-600">Holistic Learning</p>
+              <h2 className="mt-3 text-3xl font-black text-emerald-950 lg:text-4xl">{page.beyondTitle}</h2>
               <p className="mt-5 text-lg leading-relaxed text-slate-600">{page.beyondIntroduction}</p>
             </div>
             <div className="mt-10 grid gap-5 md:grid-cols-2 lg:grid-cols-3">
               {page.beyondItems.map((item, index) => (
-                <article key={`${item.title}-${index}`} className="rounded-2xl border border-slate-100 bg-white p-6 shadow-sm">
-                  <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-emerald-100 font-black text-emerald-700">{index + 1}</span>
-                  <h3 className="mt-5 text-xl font-extrabold text-slate-900">{item.title}</h3>
+                <article key={`${item.title}-${index}`} className="group rounded-2xl border border-slate-200 bg-white p-6 shadow-sm transition duration-300 hover:-translate-y-1 hover:border-emerald-200 hover:shadow-xl">
+                  <span className="flex h-11 w-11 items-center justify-center rounded-xl bg-emerald-950 font-black text-amber-300 transition group-hover:bg-amber-400 group-hover:text-emerald-950">{String(index + 1).padStart(2, '0')}</span>
+                  <h3 className="mt-5 text-xl font-black text-emerald-950">{item.title}</h3>
                   <p className="mt-3 leading-relaxed text-slate-600">{item.description}</p>
                 </article>
               ))}
@@ -72,11 +90,11 @@ export default function Academics() {
           </div>
         </section>
 
-        <section className="bg-emerald-50/70 px-4 py-16 lg:py-24">
+        <section className="rounded-[2rem] border border-emerald-100 bg-gradient-to-br from-emerald-50 via-white to-amber-50 px-6 py-16 sm:px-10 lg:px-14 lg:py-20">
           <div className="mx-auto max-w-6xl">
             <div className="max-w-3xl">
-              <p className="text-sm font-black uppercase tracking-widest text-emerald-600">Academic Calendar</p>
-              <h2 className="mt-3 text-3xl font-extrabold text-slate-900 lg:text-4xl">Academic Year 2026-2027</h2>
+              <p className="text-xs font-black uppercase tracking-[0.22em] text-emerald-600">Academic Calendar</p>
+              <h2 className="mt-3 text-3xl font-black text-emerald-950 lg:text-4xl">Academic Year 2026-2027</h2>
               <p className="mt-5 text-lg leading-relaxed text-slate-600">Explore the monthly calendar for Ansar English School, including working days, important dates, holidays, assessments, and school activities.</p>
             </div>
             <AcademicCalendar calendar={withSavedCalendarMonths(SCHOOL_ACADEMIC_CALENDAR, settings?.academicCalendars?.school)} />
@@ -85,19 +103,19 @@ export default function Academics() {
 
         <section className="mx-auto max-w-6xl px-4 py-16 lg:py-24">
           <div className="mx-auto max-w-4xl text-center">
-            <p className="text-sm font-black uppercase tracking-widest text-emerald-600">Academic Sections</p>
-            <h2 className="mt-3 text-3xl font-extrabold text-slate-900 lg:text-4xl">{page.sectionsTitle}</h2>
+            <p className="text-xs font-black uppercase tracking-[0.22em] text-emerald-600">Academic Sections</p>
+            <h2 className="mt-3 text-3xl font-black text-emerald-950 lg:text-4xl">{page.sectionsTitle}</h2>
             <p className="mt-5 text-lg leading-relaxed text-slate-600">{page.sectionsIntroduction}</p>
           </div>
           <div className="mt-12 space-y-8">
             {sections.map((section, index) => (
-              <article key={`${section.title}-${index}`} className="grid overflow-hidden rounded-3xl border border-slate-100 bg-white shadow-sm md:grid-cols-2">
+              <article key={`${section.title}-${index}`} className="grid overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-lg transition duration-300 hover:-translate-y-1 hover:shadow-xl md:grid-cols-2">
                 <div className={`min-h-72 ${index % 2 ? 'md:order-2' : ''}`}>
                   <ContentImage src={section.imageUrl} alt={`${section.title} at Ansar English School`} placeholder={`${section.title} photograph`} />
                 </div>
                 <div className="flex flex-col justify-center p-7 sm:p-10">
-                  <p className="text-xs font-black uppercase tracking-[0.2em] text-amber-600">Stage {index + 1}</p>
-                  <h3 className="mt-3 text-2xl font-extrabold text-slate-900 lg:text-3xl">{section.title}</h3>
+                  <p className="text-xs font-black uppercase tracking-[0.2em] text-amber-600">Stage {String(index + 1).padStart(2, '0')}</p>
+                  <h3 className="mt-3 text-2xl font-black text-emerald-950 lg:text-3xl">{section.title}</h3>
                   <p className="mt-2 font-bold text-emerald-700">{section.tagline}</p>
                   <p className="mt-5 leading-7 text-slate-600">{section.description}</p>
                 </div>

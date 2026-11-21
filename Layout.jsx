@@ -30,7 +30,7 @@ export default function Layout({ children, isHome = false, fullWidth = false }) 
 
       {/* Global layout grid wrapper. On very narrow screens this stays full-bleed
           so fixed toolbar chrome does not trap the page inside a too-narrow column. */}
-      <main className={fullWidth ? 'flex-grow w-full overflow-x-hidden' : 'flex-grow w-full max-w-7xl overflow-x-hidden mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8 md:py-10 lg:py-12'}>
+      <main className={fullWidth ? 'flex-grow w-full overflow-x-hidden' : `flex-grow w-full max-w-7xl overflow-x-hidden mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8 md:py-10 lg:py-12 ${isHome ? 'home-layout-shell' : ''}`}>
         {children}
       </main>
 

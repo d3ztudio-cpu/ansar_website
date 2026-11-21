@@ -8,7 +8,6 @@ import { softDeleteRecord } from './adminUndo';
 import { deleteSheetRecord } from './googleSheetsAdminApi';
 import { FIELD_TRIP_SECTIONS } from './FieldTrips';
 
-const MAX_IMAGES = 30;
 const initialForm = (section = 'Ansar Sprouts') => ({ title: '', section, destination: '', date: '', description: '', coverImageUrl: '', imageUrls: [''], published: true });
 
 function isLegacySproutsFieldTrip(activity) {
@@ -32,14 +31,14 @@ export default function AdminFieldTrips({ lockedSection = '' }) {
   const [deletedLegacyIds, setDeletedLegacyIds] = useState([]);
 
   const setField = event => { const { name, value, type, checked } = event.target; setForm(current => ({ ...current, [name]: type === 'checkbox' ? checked : value })); };
-  const appendImages = urls => setForm(current => ({ ...current, imageUrls: [...new Set([...current.imageUrls.filter(Boolean), ...urls])].slice(0, MAX_IMAGES) }));
+  const appendImages = urls => setForm(current => ({ ...current, imageUrls: [...new Set([...current.imageUrls.filter(Boolean), ...urls])] }));
   const reset = () => { setEditingId(null); setLegacySourceId(''); setForm(initialForm(lockedSection || 'Ansar Sprouts')); };
   const edit = trip => { setEditingId(trip.isLegacySproutsTrip ? null : trip.id); setLegacySourceId(trip.isLegacySproutsTrip ? String(trip.sourceId || '') : ''); setForm({ title: trip.title || '', section: lockedSection || trip.section || 'General', destination: trip.destination || '', date: trip.date || '', description: trip.description || '', coverImageUrl: trip.coverImageUrl || trip.imageUrls?.[0] || '', imageUrls: Array.isArray(trip.imageUrls) && trip.imageUrls.length ? trip.imageUrls : [''], published: trip.published !== false }); window.scrollTo({ top: 0, behavior: 'smooth' }); };
 
   const save = async event => {
     event.preventDefault(); setSaving(true);
     try {
-      const imageUrls = [...new Set(form.imageUrls.map(normalizeImageUrl).filter(Boolean))].slice(0, MAX_IMAGES);
+      const imageUrls = [...new Set(form.imageUrls.map(normalizeImageUrl).filter(Boolean))];
       const payload = { title: form.title.trim(), section: lockedSection || form.section, destination: form.destination.trim(), date: form.date, description: form.description.trim(), coverImageUrl: normalizeImageUrl(form.coverImageUrl), imageUrls, published: !!form.published, updatedAt: serverTimestamp() };
       if (editingId) await updateDoc(doc(db, 'fieldTrips', editingId), payload);
       else {
@@ -69,7 +68,7 @@ export default function AdminFieldTrips({ lockedSection = '' }) {
       </div>
       <label className="mt-4 block"><span className="text-sm font-bold text-slate-700">Description *</span><textarea name="description" value={form.description} onChange={setField} required className="mt-1 h-40 w-full rounded-xl border border-slate-200 p-3 outline-none focus:ring-2 focus:ring-emerald-500" /></label>
       <div className="mt-5 rounded-2xl border border-slate-200 bg-slate-50 p-4"><div className="flex flex-wrap items-center justify-between gap-3"><div><h3 className="font-extrabold text-slate-900">Cover image</h3><p className="text-sm text-slate-500">Shown on the field-trip card only.</p></div><button type="button" onClick={() => setShowImageLibrary(open => !open)} className="rounded-xl border border-emerald-200 bg-white px-4 py-2 text-sm font-bold text-emerald-700">Choose from image library</button></div><div className="mt-4"><ImgBbUrlImporter allowUrlPaste={false} label="Upload cover image" onExtracted={url => setForm(current => ({ ...current, coverImageUrl: url }))} />{form.coverImageUrl && <div className="mt-3 flex items-center gap-3"><img src={form.coverImageUrl} alt="Cover preview" className="h-20 w-28 rounded-lg object-cover" /><button type="button" onClick={() => setForm(current => ({ ...current, coverImageUrl: '' }))} className="text-sm font-bold text-red-600">Remove cover</button></div>}</div>{showImageLibrary && <div className="mt-4 grid max-h-72 grid-cols-2 gap-3 overflow-y-auto sm:grid-cols-4">{libraryImages.length ? libraryImages.map(url => <button key={url} type="button" onClick={() => { setForm(current => ({ ...current, coverImageUrl: url })); setShowImageLibrary(false); }} className="overflow-hidden rounded-lg border-2 border-transparent bg-white hover:border-emerald-500"><img src={url} alt="Choose as cover" className="aspect-[4/3] w-full object-cover" /></button>) : <p className="col-span-full text-sm font-semibold text-slate-500">No images are available in the Image Library yet.</p>}</div>}</div>
-      <div className="mt-5 flex flex-wrap items-center justify-between gap-3"><div><h3 className="font-extrabold text-slate-900">Trip carousel images</h3><p className="text-sm text-slate-500">Up to {MAX_IMAGES} images, shown only inside the article.</p></div><ImgBbUrlImporter multiple allowUrlPaste={false} label="Upload trip images" onExtracted={appendImages} /></div>
+      <div className="mt-5 flex flex-wrap items-center justify-between gap-3"><div><h3 className="font-extrabold text-slate-900">Trip carousel images</h3><p className="text-sm text-slate-500">Add as many images as needed; they are shown inside the article.</p></div><ImgBbUrlImporter multiple allowUrlPaste={false} label="Upload trip images" onExtracted={appendImages} /></div>
       <div className="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-4">{form.imageUrls.filter(Boolean).map((url, index) => <div key={url} className="relative overflow-hidden rounded-xl border border-slate-200"><img src={url} alt={`Trip image ${index + 1}`} className="aspect-[4/3] w-full object-cover" /><button type="button" onClick={() => setForm(current => ({ ...current, imageUrls: current.imageUrls.filter(image => image !== url) }))} className="absolute right-2 top-2 rounded-lg bg-white/90 px-2 py-1 text-xs font-bold text-red-600">Remove</button></div>)}</div>
       <div className="mt-6 flex flex-wrap items-center justify-between gap-4 border-t border-slate-100 pt-6"><label className="flex items-center gap-2 font-bold text-slate-700"><input type="checkbox" name="published" checked={form.published} onChange={setField} className="h-5 w-5" /> Published</label><div className="flex gap-3">{editingId && <button type="button" onClick={reset} className="rounded-xl px-5 py-3 font-bold text-slate-600">Cancel</button>}<button type="submit" disabled={saving} className="rounded-xl bg-emerald-700 px-6 py-3 font-bold text-white disabled:opacity-50">{saving ? 'Saving...' : 'Save Field Trip'}</button></div></div>
     </form>

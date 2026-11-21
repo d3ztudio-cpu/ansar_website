@@ -7,6 +7,9 @@ import { DEFAULT_ACADEMICS_PAGE, DEFAULT_ACADEMIC_SECTIONS, mergeListWithDefault
 export default function AdminAcademics() {
   const [formData, setFormData] = useState({
     feeStructurePdfUrl: '',
+    prospectusYear: '2027 - 2028',
+    prospectusDescription: 'Read the official prospectus for admissions, school information, programmes, facilities, and important guidance for the 2027 - 2028 academic year.',
+    prospectusPdfUrl: '',
     academicSections: DEFAULT_ACADEMIC_SECTIONS,
     academicsPage: DEFAULT_ACADEMICS_PAGE
   });
@@ -22,6 +25,9 @@ export default function AdminAcademics() {
       setFormData(prev => ({
         ...prev,
         feeStructurePdfUrl: data.feeStructurePdfUrl || prev.feeStructurePdfUrl,
+        prospectusYear: data.prospectusYear || prev.prospectusYear,
+        prospectusDescription: data.prospectusDescription || prev.prospectusDescription,
+        prospectusPdfUrl: data.prospectusPdfUrl || prev.prospectusPdfUrl,
         academicSections: mergeListWithDefaults(data.academicSections, DEFAULT_ACADEMIC_SECTIONS),
         academicsPage: {
           ...DEFAULT_ACADEMICS_PAGE,
@@ -68,6 +74,9 @@ export default function AdminAcademics() {
     try {
       await setDoc(doc(db, 'settings', 'global'), {
         feeStructurePdfUrl: formData.feeStructurePdfUrl,
+        prospectusYear: formData.prospectusYear.trim(),
+        prospectusDescription: formData.prospectusDescription.trim(),
+        prospectusPdfUrl: formData.prospectusPdfUrl.trim(),
         academicSections: normalizeItems(formData.academicSections),
         academicsPage: {
           ...formData.academicsPage,
@@ -97,6 +106,21 @@ export default function AdminAcademics() {
               <label className="mb-2 block text-sm font-bold text-slate-700">Latest Fee Structure (Google Drive PDF URL)</label>
               <input name="feeStructurePdfUrl" type="url" value={formData.feeStructurePdfUrl} onChange={handleChange} placeholder="https://drive.google.com/file/d/..." className="w-full rounded-lg border border-slate-200 p-3 outline-none focus:ring-2 focus:ring-emerald-500" />
               <p className="mt-2 text-xs text-slate-500">Paste the shareable link to the PDF. The frontend will use this for the fee structure button.</p>
+            </div>
+            <div className="mt-6 border-t border-slate-200 pt-6">
+              <p className="mb-4 text-sm font-black uppercase tracking-widest text-emerald-700">Prospectus</p>
+              <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
+                <label className="text-sm font-bold text-slate-700">Academic year
+                  <input name="prospectusYear" value={formData.prospectusYear} onChange={handleChange} placeholder="2027 - 2028" className="mt-2 w-full rounded-lg border border-slate-200 p-3 font-normal outline-none focus:ring-2 focus:ring-emerald-500" />
+                </label>
+                <label className="text-sm font-bold text-slate-700">Google Drive PDF URL
+                  <input name="prospectusPdfUrl" type="url" value={formData.prospectusPdfUrl} onChange={handleChange} placeholder="https://drive.google.com/file/d/..." className="mt-2 w-full rounded-lg border border-slate-200 p-3 font-normal outline-none focus:ring-2 focus:ring-emerald-500" />
+                </label>
+              </div>
+              <label className="mt-4 block text-sm font-bold text-slate-700">Description
+                <textarea name="prospectusDescription" value={formData.prospectusDescription} onChange={handleChange} className="mt-2 h-24 w-full rounded-lg border border-slate-200 p-3 font-normal outline-none focus:ring-2 focus:ring-emerald-500" />
+              </label>
+              <p className="mt-2 text-xs text-slate-500">Paste a Google Drive link with sharing set to “Anyone with the link”.</p>
             </div>
           </section>
 

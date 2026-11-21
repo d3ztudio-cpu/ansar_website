@@ -249,7 +249,7 @@ export default function Footer() {
               Admission FAQS
             </Link>
             <Link
-              to="/admission"
+              to="/admission#prospectus"
               className="text-slate-400 hover:text-emerald-400 transition-colors"
             >
               Prospectus
