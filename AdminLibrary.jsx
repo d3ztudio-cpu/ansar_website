@@ -122,8 +122,10 @@ function normalizedLibraryType(item) {
     event: "Event", activity: "Activity", winner: "Winner", clipping: "Clipping",
     file: "File", vocabulary: "Vocabulary",
     creative_corner: "Creative Corner",
+    ansari_quill: "Ansari Quill",
   };
   if (canonicalTypes[canonical]) return canonicalTypes[canonical];
+  if (canonical === "ansari_quill") return "Ansari Quill";
   const type = String(item?.type || "").trim();
   const text = `${item?.title || ""} ${item?.summary || ""} ${item?.category || ""} ${item?.venue || ""}`;
   if (
@@ -157,6 +159,7 @@ const TABS = [
   ["e-learning", "E-Learning"],
   ["short-films", "Short Films"],
   ["creative-corner", "Creative Corner"],
+  ["ansari-quill", "The Ansari Quill"],
   ["quizzes", "Quizzes"],
   ["events", "Events & Activities"],
   ["winners", "Winners & Gallery"],
@@ -174,6 +177,7 @@ const SECTION_TYPES = {
   "e-learning": ["E-Learning"],
   "short-films": ["Short Film"],
   "creative-corner": ["Creative Corner"],
+  "ansari-quill": ["Ansari Quill"],
   quizzes: ["Quiz"],
   events: ["Event", "Activity"],
   winners: ["Winner"],
@@ -187,6 +191,7 @@ const TAB_LIBRARY_CATEGORIES = {
   events: "event", winners: "winner", newspaper: "clipping", files: "file",
   "vocabulary-vault": "vocabulary",
   "creative-corner": "creative_corner",
+  "ansari-quill": "ansari_quill",
 };
 
 const fieldClass =
@@ -389,7 +394,9 @@ export default function AdminLibrary() {
                 ? /activit/i.test(post.type)
                   ? "Activity"
                   : "Event"
-                : post.type;
+                : tab === "ansari-quill"
+                  ? "Ansari Quill"
+                  : post.type;
       const libraryCategory =
         normalizedType === "Activity" ? "activity" :
         normalizedType === "Event" ? "event" :
@@ -427,7 +434,7 @@ export default function AdminLibrary() {
         published: !!post.published,
         updatedAt: serverTimestamp(),
       };
-      if (tab === "creative-corner") {
+      if (tab === "creative-corner" || tab === "ansari-quill") {
         payload.contributorType = post.contributorType || "Student";
       }
       if (editingStaticId) {
@@ -479,6 +486,7 @@ export default function AdminLibrary() {
       showAuthor = false,
       eventToggle = false,
       creativeCorner = false,
+      ansariQuill = false,
     } = {},
   ) => (
     <form onSubmit={savePost} className={cardClass}>
@@ -534,7 +542,7 @@ export default function AdminLibrary() {
             </select>
           </label>
         )}
-        {showDate && (
+        {showDate && !ansariQuill && (
           <label className="text-sm font-bold text-slate-700">
             Date
             <input
@@ -567,8 +575,15 @@ export default function AdminLibrary() {
             {post.contributorType === "Student" && <label className="text-sm font-bold text-slate-700">Class &amp; division<input required value={post.className} onChange={(e) => setPost((value) => ({ ...value, className: e.target.value }))} placeholder="VII A" className={fieldClass} /><span className="mt-1 block text-xs font-medium text-slate-500">Enter the student’s class and division, for example VII A.</span></label>}
           </>
         )}
+        {ansariQuill && (
+          <>
+            <label className="text-sm font-bold text-slate-700">Contributor category<select value={post.contributorType} onChange={(e) => setPost((value) => ({ ...value, contributorType: e.target.value, category: e.target.value }))} className={fieldClass}><option>STUDENTS</option><option>ALUMNI</option><option>PARENTS</option><option>STAFFS</option></select></label>
+            <label className="text-sm font-bold text-slate-700">Name<input required value={post.author} onChange={(e) => setPost((value) => ({ ...value, author: e.target.value }))} className={fieldClass} /></label>
+            <label className="text-sm font-bold text-slate-700">Year<input required value={post.year} onChange={(e) => setPost((value) => ({ ...value, year: e.target.value }))} placeholder="2026" className={fieldClass} /></label>
+          </>
+        )}
         <label className="text-sm font-bold text-slate-700 md:col-span-2">
-          {showAuthor ? "Title of the book" : "Title"}
+          {showAuthor || ansariQuill ? "Title of the book" : "Title"}
           <input
             required
             value={post.title}
@@ -816,7 +831,7 @@ export default function AdminLibrary() {
         {showImage && (
           <div className="md:col-span-2">
             <p className="text-sm font-bold text-slate-700">
-              {showFile ? "Cover thumbnail (optional)" : "Image (optional)"}
+              {ansariQuill ? "Book cover image" : showFile ? "Cover thumbnail (optional)" : "Image (optional)"}
             </p>
             <div className="mt-2">
               <LibraryMediaUploader
@@ -825,7 +840,7 @@ export default function AdminLibrary() {
                 onChange={(url) =>
                   setPost((value) => ({ ...value, imageUrl: url || "" }))
                 }
-                folder="images"
+                folder={ansariQuill ? ["ansari-quill", "covers"] : "images"}
               />
             </div>
           </div>
@@ -845,7 +860,7 @@ export default function AdminLibrary() {
           </label>
         )}
 
-        {!eventToggle && !showAcademicFields &&
+        {!eventToggle && !showAcademicFields && !ansariQuill &&
           !showFile &&
           !showGallery &&
           !hideExtraFields && !creativeCorner && (
@@ -1128,6 +1143,16 @@ export default function AdminLibrary() {
         onAdd={() => newPost("Creative Corner")}
       />
     ),
+    "ansari-quill": (
+      <PostSectionTab
+        intro="Add books published by Ansar students, alumni, parents and staff. Upload the cover directly from the device."
+        types={["Ansari Quill"]}
+        typeOptions={["Ansari Quill"]}
+        form={postForm(["Ansari Quill"], { ansariQuill: true, hideExtraFields: true, showDescription: false, formTitle: "an Ansari Quill publication", formHint: "Required: contributor name, category, year, book title and cover image." })}
+        list={postList(["Ansari Quill"])}
+        onAdd={() => newPost("Ansari Quill")}
+      />
+    ),
     quizzes: (
       <PostSectionTab
         intro="Publish quizzes and learning activities. Required: title and the quiz URL. Use the website’s quiz portal link or an approved external quiz link."
@@ -1270,6 +1295,8 @@ export default function AdminLibrary() {
         tabsByKey["short-films"]
       ) : tab === "creative-corner" ? (
         tabsByKey["creative-corner"]
+      ) : tab === "ansari-quill" ? (
+        tabsByKey["ansari-quill"]
       ) : tab === "quizzes" ? (
         tabsByKey.quizzes
       ) : tab === "events" ? (

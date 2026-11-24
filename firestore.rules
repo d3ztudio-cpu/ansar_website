@@ -272,7 +272,7 @@ service cloud.firestore {
     function isValidLibraryPost() {
       return hasOnlyAllowedFields(['type', 'libraryCategory', 'title', 'summary', 'body', 'date', 'imageUrl', 'linkUrl', 'bookNumber', 'bookStatus', 'category', 'author', 'venue', 'fileUrl', 'fileType', 'className', 'subject', 'year', 'imageUrls', 'contributorType', 'published', 'createdAt', 'updatedAt']) &&
              request.resource.data.keys().hasAll(['type', 'title', 'summary', 'body', 'date', 'imageUrl', 'linkUrl', 'category', 'author', 'venue', 'published', 'createdAt', 'updatedAt']) &&
-             request.resource.data.type in ['Event', 'Activity', 'New Arrival', 'Resource', 'Publication', 'Announcement', 'E-Book', 'E-Learning', 'Short Film', 'Quiz', 'Winner', 'Clipping', 'Question Paper', 'File', 'Vocabulary', 'Creative Corner'] &&
+             request.resource.data.type in ['Event', 'Activity', 'New Arrival', 'Resource', 'Publication', 'Announcement', 'E-Book', 'E-Learning', 'Short Film', 'Quiz', 'Winner', 'Clipping', 'Question Paper', 'File', 'Vocabulary', 'Creative Corner', 'Ansari Quill'] &&
              isValidStringLength('title', 1, 200) &&
              isValidOptionalString('libraryCategory', 0, 40) &&
              // Library descriptions are intentionally unrestricted by the UI.
@@ -317,7 +317,12 @@ service cloud.firestore {
     }
 
     function hasValidLibraryUpdateTimestamps() {
-      return request.resource.data.createdAt == resource.data.createdAt &&
+      // Older library documents may predate the timestamp fields. Allow the
+      // first edit to backfill createdAt, but keep it immutable afterwards.
+      return ((('createdAt' in resource.data) &&
+               request.resource.data.createdAt == resource.data.createdAt) ||
+              (!('createdAt' in resource.data) &&
+               request.resource.data.createdAt == request.time)) &&
              request.resource.data.updatedAt == request.time;
     }
 

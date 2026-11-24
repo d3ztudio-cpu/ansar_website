@@ -53,6 +53,7 @@ const PUBLIC_TABS = [
   ["e-learning", "E-Learning"],
   ["short-films", "Short Films"],
   ["creative-corner", "Creative Corner"],
+  ["ansari-quill", "The Ansari Quill"],
   ["quizzes", "Quizzes"],
   ["events", "Events & Activities"],
   ["winners", "Winners & Gallery"],
@@ -72,6 +73,7 @@ const TAB_POST_TYPES = {
   winners: ["Winner"],
   newspaper: ["Clipping"],
   vocabulary: ["Vocabulary"],
+  "ansari-quill": ["Ansari Quill"],
 };
 
 const EXTERNAL_QUIZZES = [
@@ -173,6 +175,7 @@ function libraryType(post) {
     creative_corner: "Creative Corner",
   };
   if (canonicalTypes[canonical]) return canonicalTypes[canonical];
+  if (canonical === "ansari_quill") return "Ansari Quill";
   const type = String(post.type || "").trim();
   const text = `${post.title || ""} ${post.summary || ""} ${post.category || ""} ${post.venue || ""}`;
   // Event/activity is the owning section. Check it before the legacy
@@ -597,6 +600,7 @@ export default function LibraryPage() {
   const creativeStudents = creativeEntries.filter((post) => String(post.contributorType || post.category || "Student").toLowerCase() === "student");
   const creativeStaff = creativeEntries.filter((post) => String(post.contributorType || post.category || "Staff").toLowerCase() === "staff");
   const creativeParents = creativeEntries.filter((post) => String(post.contributorType || "").toLowerCase() === "parents" || String(post.contributorType || "").toLowerCase() === "parent");
+  const quillEntries = posts.filter((post) => libraryType(post) === "Ansari Quill");
   return (
     <Layout fullWidth>
       <main className="min-h-screen bg-[#f7faf8] text-slate-900">
@@ -994,6 +998,15 @@ export default function LibraryPage() {
                     {entries.length ? <div className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">{entries.map((entry) => <ResourceCard key={entry.id} post={{...entry, type: 'Creative Corner'}} onOpenArticle={setSelectedArticle} />)}</div> : <div className="mt-6"><EmptyState label={heading.toLowerCase()} /></div>}
                   </section>
                 ))}
+              </div>
+            ) : activeTab === "ansari-quill" ? (
+              <div className="mt-10">
+                <div className="rounded-3xl border border-amber-100 bg-gradient-to-br from-amber-50 via-white to-emerald-50 p-6 sm:p-9">
+                  <p className="text-sm font-black uppercase tracking-widest text-amber-700">Ansar publications</p>
+                  <h2 className="mt-2 text-3xl font-extrabold text-emerald-950 sm:text-4xl">The Ansari Quill</h2>
+                  <p className="mt-3 max-w-3xl text-base leading-8 text-slate-600">Books and publications created by the students, alumni, parents and staff of Ansar English School.</p>
+                </div>
+                {quillEntries.length ? <div className="mt-8 grid gap-5 sm:grid-cols-2 lg:grid-cols-4">{quillEntries.map((entry) => <article key={entry.id} className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm transition hover:-translate-y-1 hover:shadow-lg"><div className="aspect-[3/4] bg-slate-100">{entry.imageUrl ? <img src={entry.imageUrl} alt={`Cover of ${entry.title}`} className="h-full w-full object-cover" loading="lazy" /> : <div className="flex h-full items-center justify-center p-6 text-center text-sm font-bold text-slate-400">Book cover coming soon</div>}</div><div className="p-5"><span className="rounded-full bg-emerald-50 px-3 py-1 text-[10px] font-black uppercase tracking-widest text-emerald-700">{entry.contributorType || entry.category}</span><h3 className="mt-3 text-xl font-extrabold text-slate-900">{entry.title}</h3><p className="mt-2 text-sm font-bold text-slate-500">{entry.author}</p>{entry.year && <p className="mt-1 text-xs font-bold text-slate-400">{entry.year}</p>}</div></article>)}</div> : <div className="mt-8"><EmptyState label="Ansari Quill publications" /></div>}
               </div>
             ) : activeTab === "question-papers" ? (
               <div className="mt-8">
