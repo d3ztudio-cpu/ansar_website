@@ -1073,3 +1073,7 @@ button[aria-label="Next new arrivals"] {
   [class~="grid-cols-[1fr_1fr_96px]"] { grid-template-columns: 1fr 1fr !important; }
   [class~="grid-cols-[1fr_1fr_96px]"] img, [class~="grid-cols-[1fr_1fr_96px]"] > div { grid-column: 1 / -1; }
 }
+ .admin-input { margin-top: .5rem; display: block; width: 100%; border-radius: .75rem; border: 1px solid rgb(226 232 240); background: white; padding: .75rem 1rem; color: rgb(15 23 42); outline: none; transition: border-color .2s, box-shadow .2s; }
+ .admin-input:focus { border-color: rgb(13 148 136); box-shadow: 0 0 0 3px rgb(204 251 241); }
+ @keyframes testimonial-in-out { 0%, 8% { opacity: 0; transform: translateY(14px) scale(.985); } 16%, 78% { opacity: 1; transform: translateY(0) scale(1); } 92%, 100% { opacity: 0; transform: translateY(-14px) scale(.985); } }
+ @media (prefers-reduced-motion: reduce) { .motion-safe\:animate-\[testimonial-in-out_5200ms_ease-in-out_infinite\] { animation: none !important; } }

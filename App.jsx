@@ -49,6 +49,7 @@ import { mergeTransportStaff } from "./transportStaffData";
 import AdmissionDesk from "./AdmissionDesk";
 import AdmissionPortal from "./AdmissionPortal";
 import SchoolChatbot from "./SchoolChatbot";
+import Testimonials from "./Testimonials";
 
 // Keep the first visit small: secondary pages and all admin modules are fetched only
 // when their route is opened instead of delaying the homepage on mobile networks.
@@ -89,6 +90,7 @@ const QuizPortal = lazy(() => import("./QuizPortal"));
 const StaffExamPortal = lazy(() => import("./StaffExamPortal"));
 const AdminLayout = lazy(() => import("./AdminLayout"));
 const AdminUpdates = lazy(() => import("./AdminUpdates"));
+const AdminTestimonials = lazy(() => import("./AdminTestimonials"));
 const AdminEvents = lazy(() => import("./AdminEvents"));
 const AdminAchievements = lazy(() => import("./AdminAchievements"));
 const AdminAnsarTimes = lazy(() => import("./AdminAnsarTimes"));
@@ -2501,6 +2503,7 @@ export default function App() {
             <Route path="/ansar-times/:editionId" element={<AnsarTimes />} />
             <Route path="/ansar-family" element={<Staff />} />
             <Route path="/alumni" element={<Alumni />} />
+            <Route path="/testimonials" element={<Testimonials />} />
             <Route path="/alumni/:section/:index" element={<AlumniArticle />} />
             <Route path="/achievements" element={<Achievements />} />
             <Route path="/sports-achievements/:id" element={<ArticleView />} />
@@ -2618,6 +2621,7 @@ export default function App() {
                               path="/news"
                               element={<AdminUpdates fixedCategory="News" />}
                             />
+                            <Route path="/testimonials" element={<AdminTestimonials />} />
                             <Route path="/events" element={<AdminEvents />} />
                             <Route
                               path="/achievements"

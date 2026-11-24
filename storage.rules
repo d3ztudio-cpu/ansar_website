@@ -8,6 +8,7 @@ service firebase.storage {
           'd3ztudio@gmail.com',
           'ansarmedia@ansarschool.in',
           'ansarschooloffice@gmail.com',
+          'ansarschooloffice@ansarschool.in',
           'aesmedia2025@gmail.com'
         ];
     }
@@ -36,6 +37,12 @@ service firebase.storage {
         (request.auth.token.email == 'hr@ansar.in' || isAdmin());
     }
 
+    function isTestimonialsAdmin() {
+      return request.auth != null && request.auth.token.email != null &&
+        request.auth.token.email_verified == true &&
+        (isAdmin() || request.auth.token.email.matches('.*@ansarschool[.]in$') || request.auth.token.email.matches('.*@ansar[.]in$'));
+    }
+
     match /careersApplications/{applicationId}/{fileName} {
       allow read: if isCareersUser();
       allow write: if (
@@ -59,6 +66,12 @@ service firebase.storage {
         && request.resource.size < 10 * 1024 * 1024
         && request.resource.contentType.matches('image/.*');
       allow delete: if isAdmin();
+    }
+
+    match /testimonials/{testimonialId}/{fileName} {
+      allow read: if true;
+      allow create, update: if isTestimonialsAdmin() && request.resource.size <= 12 * 1024 * 1024 && request.resource.contentType.matches('image/(jpeg|png|webp)');
+      allow delete: if isTestimonialsAdmin();
     }
 
     // Library media (images + PDFs) live only on the school's Hostinger storage

@@ -9,6 +9,7 @@ import { Link } from 'react-router-dom';
 import { compareByUploadOrder, compareContentNewestFirst, getDisplayYear, isYearOnly } from './dateUtils';
 import EventCountdown from './EventCountdown';
 import NoticePopup from './NoticePopup';
+import Testimonials from './Testimonials';
 
 // Transformed into a Bento Layout configuration using Lucide-style SVG icons
 const FALLBACK_FEATURES = [
@@ -570,6 +571,15 @@ export default function Home() {
               </div>
             </div>
           )}
+        </div>
+      </AnimatedSection>
+
+      <AnimatedSection className="mt-24" id="voices-of-ansar">
+        <Testimonials compact />
+        <div className="mt-8 text-center">
+          <Link to="/testimonials" className="inline-flex items-center justify-center rounded-full bg-emerald-800 px-6 py-3 text-sm font-black text-white shadow-lg transition hover:-translate-y-0.5 hover:bg-emerald-700 hover:shadow-xl">
+            View More Testimonials
+          </Link>
         </div>
       </AnimatedSection>
 

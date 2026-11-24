@@ -216,6 +216,12 @@ export default function Footer() {
             >
               Alumni
             </Link>
+            <Link
+              to="/testimonials"
+              className="text-slate-400 hover:text-emerald-400 transition-colors"
+            >
+              Testimonials
+            </Link>
           </nav>
         </div>
 

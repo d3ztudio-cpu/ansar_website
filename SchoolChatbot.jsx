@@ -495,9 +495,8 @@ export default function SchoolChatbot() {
         aria-label={isOpen ? 'Close Ansar AI Assistant' : 'Open Ansar AI Assistant'}
       >
         <svg className="h-7 w-7" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.8" d="M4 20V9.5L12 4l8 5.5V20H4Z" />
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.8" d="M8 20v-5h8v5M9 10h.01M15 10h.01" />
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.8" d="m18.5 4.5.4 1.1 1.1.4-1.1.4-.4 1.1-.4-1.1-1.1-.4 1.1-.4.4-1.1Z" />
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.8" d="M20 11.5a7.5 7.5 0 0 1-7.5 7.5H8l-4 2v-5.1A7.5 7.5 0 0 1 4.5 8.5 7.5 7.5 0 0 1 12 4a7.5 7.5 0 0 1 8 7.5Z" />
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 12h.01M12 12h.01M16 12h.01" />
         </svg>
       </button>
     </div>

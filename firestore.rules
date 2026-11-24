@@ -831,6 +831,18 @@ service cloud.firestore {
       allow delete: if isAdmin();
     }
 
+    match /testimonials/{testimonialId} {
+      allow read: if resource.data.published == true || isAdmin();
+      allow create, update: if isAdmin()
+        && request.resource.data.name is string && request.resource.data.name.size() >= 2 && request.resource.data.name.size() <= 120
+        && request.resource.data.category in ['parents', 'alumni', 'staff']
+        && request.resource.data.testimonial is string && request.resource.data.testimonial.size() >= 20 && request.resource.data.testimonial.size() <= 1500
+        && request.resource.data.published is bool && request.resource.data.featured is bool
+        && request.resource.data.imageUrl is string && request.resource.data.imageUrl.size() <= 2000
+        && request.resource.data.imagePath is string && request.resource.data.imagePath.size() <= 300;
+      allow delete: if isAdmin();
+    }
+
     // Carousel Images
     match /carousel/{carouselId} {
       allow read: if true;
